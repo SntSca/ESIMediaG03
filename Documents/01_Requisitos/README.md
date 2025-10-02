@@ -13,4 +13,8 @@ Este directorio contiene los documentos relacionados con los **requisitos** del 
 - **03_Diagramas/**  
   Diagramas UML, casos de uso, etc..
 
+- **04_Reuniones_-_Clases_Recogida_y_Cuestiones/**  
+  Aquí podrá encontrar todos los documentos que contienen información relevante en clase sobre requisitos.
+  
+
 ---
