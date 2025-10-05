@@ -1,6 +1,7 @@
 import { Injectable } from '@angular/core';
 import { HttpClient } from '@angular/common/http';
 import { Observable } from 'rxjs';
+ 
 
 @Injectable({
   providedIn: 'root'
@@ -25,5 +26,10 @@ export class UsersService {
   }): Observable<string> {
     return this.http.post(this.url, datos, { responseType: 'text' });
   }
+
+  forgotPassword(data: { email: string }): Observable<any> {
+      return this.http.post('http://localhost:8080/users/forgot-password', data);
+  }
+
 
 }

@@ -1,17 +1,22 @@
 package com.example.usersbe.services;
 
 
-import com.example.usersbe.dao.UserDao;
-import com.example.usersbe.model.User;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 
+import com.example.usersbe.dao.UserDao;
+import com.example.usersbe.model.User;
+import java.time.LocalDateTime;
+import java.util.UUID;
 
 @Service
 public class UserService {
 
     @Autowired
     private UserDao userDao;
+
+    @Autowired
+    private EmailService emailService;
 
     public void registrar(String nombre, String apellidos, String alias, String email, 
                           String fechaNac, String pwd, boolean vip, String foto,
@@ -35,5 +40,37 @@ public class UserService {
         user.setRole(role);
         this.userDao.save(user);
     }
+
+     public void enviarTokenRecuperacion(String email) {
+        User user = userDao.findByEmail(email);
+        if (user == null) return; // no revelar si existe o no
+
+        String token = UUID.randomUUID().toString();
+        user.setResetPasswordToken(token);
+        user.setResetPasswordExpires(LocalDateTime.now().plusHours(1));
+        userDao.save(user);
+
+        String link = "http://localhost:4200/reset-password?token=" + token;
+        String cuerpo = "Hola " + user.getNombre() + ",\n\n" +
+                        "Haz clic en este enlace para restablecer tu contraseña:\n" +
+                        link + "\n\nEste enlace caduca en 1 hora.";
+        emailService.sendMail(email, "Recuperar contraseña", cuerpo);
+    }
+
+    public boolean cambiarPasswordConToken(String token, String nuevaPwd) {
+        User user = userDao.findByResetPasswordToken(token);
+        if (user == null || user.getResetPasswordExpires().isBefore(LocalDateTime.now())) {
+            return false;
+        }
+
+        String hashed = org.mindrot.jbcrypt.BCrypt.hashpw(nuevaPwd, org.mindrot.jbcrypt.BCrypt.gensalt());
+        user.setPwd(hashed);
+        user.setResetPasswordToken(null);
+        user.setResetPasswordExpires(null);
+        userDao.save(user);
+        return true;
+    }
+
+ 
 }
 

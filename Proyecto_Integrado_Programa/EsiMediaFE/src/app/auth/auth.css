@@ -337,3 +337,27 @@ html, body {
 
 
 }
+
+/* Recuperar contraseña */
+.forgot-password {
+  margin: 15px 0;
+  text-align: center;
+}
+
+.forgot-password .btn-link {
+  background: none;            
+  border: none;                
+  color: #007bff;               
+  cursor: pointer;
+  text-decoration: underline;   
+  font-weight: bold;
+  font-size: 0.95em;
+  display: inline-flex;
+  align-items: center;                  
+  transition: color 0.3s ease;
+}
+
+.forgot-password .btn-link:hover {
+  color: #0056b3;               
+}
+

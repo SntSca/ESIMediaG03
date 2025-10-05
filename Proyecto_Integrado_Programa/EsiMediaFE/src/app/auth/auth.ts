@@ -1,6 +1,8 @@
 import { Component } from '@angular/core';
 import { RouterModule } from '@angular/router';
-import { CommonModule } from '@angular/common';  
+import { CommonModule } from '@angular/common';
+import { FormsModule } from '@angular/forms';  
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-auth',
@@ -9,7 +11,8 @@ import { CommonModule } from '@angular/common';
   styleUrls: ['./auth.css'],
   imports: [
     RouterModule,
-    CommonModule                  
+    CommonModule,
+    FormsModule
   ]
 })
 export class Auth {
@@ -23,7 +26,7 @@ export class Auth {
   ];
 
   currentIndex = 0;
-menuOpen = false;
+  menuOpen = false;
 
   toggleMenu() {
     this.menuOpen = !this.menuOpen;
@@ -36,4 +39,9 @@ menuOpen = false;
   next() {
     this.currentIndex = (this.currentIndex + 1) % this.fotos.length;
   }
+
+  //Luego cambiar a Login
+  constructor(public router: Router) {}
+
+  
 }

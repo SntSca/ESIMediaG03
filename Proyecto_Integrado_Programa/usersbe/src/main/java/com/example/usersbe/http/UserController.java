@@ -1,13 +1,18 @@
 package com.example.usersbe.http;
 
-import com.example.usersbe.services.UserService;
-
 import java.util.Map;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
-import org.springframework.web.bind.annotation.*;
+import org.springframework.http.ResponseEntity;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.server.ResponseStatusException;
+
+import com.example.usersbe.services.UserService;
 
 
 @RestController
@@ -95,5 +100,44 @@ public class UserController {
         if (!pwd.matches(".*[!@#$%^&*(),.?\":{}|<>].*"))  return "un carácter especial";
         return null;
     }
+
+    @PostMapping("/forgot-password")
+    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+        try {
+            String email = body.get("email");
+            if (email == null || email.isBlank()) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Email requerido"));
+            }
+            userService.enviarTokenRecuperacion(email);
+            return ResponseEntity.ok(Map.of("message", "Si el email existe, se envió un correo de recuperación"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("message", "Error interno del servidor"));
+        }
+    }
+
+    @PostMapping("/reset-password")
+    public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+        try {
+            String token = body.get("token");
+            String pwd = body.get("pwd");
+            String pwd2 = body.get("pwd2");
+
+            if (token == null || token.isBlank() || pwd == null || pwd2 == null || !pwd.equals(pwd2)) {
+                return ResponseEntity.badRequest().body(Map.of("message", "Datos inválidos o contraseñas no coinciden"));
+            }
+
+            boolean ok = userService.cambiarPasswordConToken(token, pwd);
+            if (!ok) {
+                return ResponseEntity.status(400).body(Map.of("message", "Token inválido o caducado"));
+            }
+
+            return ResponseEntity.ok(Map.of("message", "Contraseña restablecida correctamente"));
+        } catch (Exception e) {
+            e.printStackTrace();
+            return ResponseEntity.internalServerError().body(Map.of("message", "Error interno del servidor"));
+        }
+    }
+ 
 }
 

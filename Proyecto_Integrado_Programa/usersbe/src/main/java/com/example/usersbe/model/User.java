@@ -1,10 +1,13 @@
 package com.example.usersbe.model;
+
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import java.util.UUID;
+
 import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
-import org.springframework.data.mongodb.core.index.Indexed;
 import org.springframework.data.annotation.Transient;
+import org.springframework.data.mongodb.core.index.Indexed;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "users")
 public class User {
@@ -30,6 +33,9 @@ public class User {
 
     @Transient
     private String confirmarPwd;
+
+    private String resetPasswordToken;
+    private LocalDateTime resetPasswordExpires;
 
     public User() {
         this.id = UUID.randomUUID().toString();
@@ -67,4 +73,11 @@ public class User {
 
     public Role getRole() { return role; }
     public void setRole(Role role) { this.role = role; }
+
+    public String getResetPasswordToken() { return resetPasswordToken; }
+    public void setResetPasswordToken(String resetPasswordToken) { this.resetPasswordToken = resetPasswordToken; }
+
+    public LocalDateTime getResetPasswordExpires() { return resetPasswordExpires; }
+    public void setResetPasswordExpires(LocalDateTime resetPasswordExpires) { this.resetPasswordExpires = resetPasswordExpires; }
+
 }

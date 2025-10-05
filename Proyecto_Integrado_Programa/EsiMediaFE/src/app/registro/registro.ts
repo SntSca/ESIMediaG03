@@ -253,4 +253,5 @@ export class Registro {
     }
     this.foto = file;
   }
+
 }
