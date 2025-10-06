@@ -2,13 +2,12 @@ import { Component } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
 import Swal from 'sweetalert2';
-import { HttpClientModule } from '@angular/common/http';
 import { UsersService } from '../users';
 
 @Component({
   selector: 'app-registro',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './registro.html',
   styleUrls: ['./registro.css']
 })
@@ -155,7 +154,6 @@ export class Registro {
       return;
     }
 
-    // 1) Validaciones locales
     if (form.invalid || this.pwdIssues.length > 0 || this.pwdMismatch || this.fechaInvalida) {
       const firstInvalid = document.querySelector('.input.input-error') as HTMLElement | null;
       firstInvalid?.focus();

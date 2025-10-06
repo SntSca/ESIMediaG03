@@ -1,8 +1,7 @@
 import { Component } from '@angular/core';
-import { RouterModule } from '@angular/router';
+import { RouterModule,Router } from '@angular/router';
 import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';  
-import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-auth',
@@ -40,7 +39,6 @@ export class Auth {
     this.currentIndex = (this.currentIndex + 1) % this.fotos.length;
   }
 
-  //Luego cambiar a Login
   constructor(public router: Router) {}
 
   

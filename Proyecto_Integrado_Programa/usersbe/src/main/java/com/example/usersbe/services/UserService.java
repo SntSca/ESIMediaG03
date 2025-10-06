@@ -7,7 +7,10 @@ import org.springframework.stereotype.Service;
 import com.example.usersbe.dao.UserDao;
 import com.example.usersbe.model.User;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.UUID;
+import java.security.SecureRandom;
+import java.util.Base64;
 
 @Service
 public class UserService {
@@ -41,36 +44,106 @@ public class UserService {
         this.userDao.save(user);
     }
 
-     public void enviarTokenRecuperacion(String email) {
-        User user = userDao.findByEmail(email);
-        if (user == null) return; // no revelar si existe o no
+    public UserService(UserDao userDao, EmailService emailService) {
+        this.userDao = userDao;
+        this.emailService = emailService;
+    }
 
-        String token = UUID.randomUUID().toString();
+    
+    public void sendPasswordRecoveryEmail(String email) throws Exception {
+        User user = userDao.findByEmail(email);
+        if (user == null) {
+            return;
+        }
+
+        SecureRandom random = new SecureRandom();
+        byte[] bytes = new byte[32];
+        random.nextBytes(bytes);
+        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(bytes);
+
         user.setResetPasswordToken(token);
         user.setResetPasswordExpires(LocalDateTime.now().plusHours(1));
         userDao.save(user);
 
-        String link = "http://localhost:4200/reset-password?token=" + token;
-        String cuerpo = "Hola " + user.getNombre() + ",\n\n" +
-                        "Haz clic en este enlace para restablecer tu contraseña:\n" +
-                        link + "\n\nEste enlace caduca en 1 hora.";
-        emailService.sendMail(email, "Recuperar contraseña", cuerpo);
+        String link = "http://localhost:4200/auth/reset-password?token=" + token;
+
+        String body = """
+        <!DOCTYPE html>
+        <html>
+            <head>
+                <meta charset="UTF-8">
+                <title>Recuperación de contraseña - EsiMedia</title>
+                <style>
+                    body { font-family: Arial, sans-serif; background-color: #f7f8fa; color: #333; padding: 20px; }
+                    .container { background-color: #fff; border-radius: 8px; box-shadow: 0 2px 8px rgba(0,0,0,0.1); padding: 25px; max-width: 600px; margin: auto; }
+                    .button { background-color: #007bff; color: white; text-decoration: none; padding: 10px 18px; border-radius: 5px; display: inline-block; margin-top: 15px; }
+                    .footer { margin-top: 20px; font-size: 0.9em; color: #666; text-align: center; }
+                </style>
+            </head>
+            <body>
+                <div class="container">
+                     <img src="cid:logoEsiMedia" alt="EsiMedia Logo" style="width:100px; margin-bottom:10px;">
+                    <h2>🔐 Recuperación de contraseña</h2>
+                    <p>Hola, <strong>%s</strong>,</p>
+                    <p>Hemos recibido una solicitud para restablecer la contraseña de tu cuenta en <strong>EsiMedia</strong>.</p>
+                    <p>Si realizaste esta solicitud, haz clic en el siguiente botón:</p>
+                    <p><a href="%s" class="button" style="color: black; text-decoration: none;">Restablecer contraseña</a></p>
+                    <p>Este enlace caducará en <strong>1 hora</strong>.</p>
+                    <p>Si no solicitaste este cambio, ignora este mensaje.</p>
+                    <p>Atentamente,<br><strong>El equipo de EsiMedia 🎬</strong></p>
+                    <div class="footer">© 2025 EsiMedia - Todos los derechos reservados.</div>
+                </div>
+            </body>
+        </html>
+        """.formatted(user.getNombre(), link);
+
+        emailService.sendMail(user.getEmail(), "Recuperación de contraseña - EsiMedia", body);
+
     }
 
-    public boolean cambiarPasswordConToken(String token, String nuevaPwd) {
-        User user = userDao.findByResetPasswordToken(token);
-        if (user == null || user.getResetPasswordExpires().isBefore(LocalDateTime.now())) {
-            return false;
+    public void resetPassword(String token, String newPassword) throws Exception {
+        if (token == null || token.trim().isEmpty()) {
+            throw new Exception("Token no proporcionado");
         }
 
-        String hashed = org.mindrot.jbcrypt.BCrypt.hashpw(nuevaPwd, org.mindrot.jbcrypt.BCrypt.gensalt());
+        User user = userDao.findByResetPasswordToken(token.trim());
+
+        
+        if (user == null || user.getResetPasswordExpires() == null) {
+            logInvalidToken(token);
+            throw new Exception("Token inválido o no encontrado");
+        }
+
+        if (user.getResetPasswordExpires().isBefore(LocalDateTime.now())) {
+            logExpiredToken(token, user.getEmail());
+            throw new Exception("Token caducado. Solicita uno nuevo.");
+        }
+
+        if (newPassword == null || newPassword.length() < 8) {
+            throw new Exception("La nueva contraseña debe tener al menos 8 caracteres");
+        }
+
+        String hashed = org.mindrot.jbcrypt.BCrypt.hashpw(newPassword, org.mindrot.jbcrypt.BCrypt.gensalt());
         user.setPwd(hashed);
+
         user.setResetPasswordToken(null);
         user.setResetPasswordExpires(null);
         userDao.save(user);
-        return true;
+
+        logPasswordReset(user.getEmail());
     }
 
- 
-}
 
+    private void logInvalidToken(String token) {
+        System.out.println("[AUDITORÍA] Intento de uso de token inválido: " + token + " - " + LocalDateTime.now());
+    }
+
+    private void logExpiredToken(String token, String email) {
+        System.out.println("[AUDITORÍA] Intento de uso de token caducado: " + token + " para email: " + email + " - " + LocalDateTime.now());
+    }
+
+    private void logPasswordReset(String email) {
+        System.out.println("[AUDITORÍA] Contraseña restablecida para: " + email + " - " + LocalDateTime.now());
+    }
+}
+    

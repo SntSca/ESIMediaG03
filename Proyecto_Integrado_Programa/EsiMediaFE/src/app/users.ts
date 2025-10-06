@@ -28,7 +28,7 @@ export class UsersService {
   }
 
   forgotPassword(data: { email: string }): Observable<any> {
-      return this.http.post('http://localhost:8080/users/forgot-password', data);
+      return this.http.post('http://localhost:8081/users/forgot-password', data);
   }
 
 

@@ -27,6 +27,7 @@ public class User {
     private LocalDate fechaNac;
     private String pwd; 
     private boolean vip;
+    private LocalDate fechaVip;
     private String foto; 
 
     private Role role = Role.USUARIO;
@@ -63,7 +64,17 @@ public class User {
     public void setPwd(String pwd) { this.pwd = pwd; }
 
     public boolean isVip() { return vip; }
-    public void setVip(boolean vip) { this.vip = vip; }
+
+    public void setVip(boolean vip) { this.vip = vip; 
+        if (vip && this.fechaVip == null) {
+            this.fechaVip = LocalDate.now();
+        } else if (!vip) {
+            this.fechaVip = null;
+        }
+    }
+
+    public LocalDate getFechaVip() { return fechaVip; }
+    public void setFechaVip(LocalDate fechaVip) { this.fechaVip = fechaVip;}
 
     public String getFoto() { return foto; }
     public void setFoto(String foto) { this.foto = foto; }
