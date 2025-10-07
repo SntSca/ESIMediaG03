@@ -7,10 +7,9 @@ import org.springframework.stereotype.Service;
 import com.example.usersbe.dao.UserDao;
 import com.example.usersbe.model.User;
 import java.time.LocalDateTime;
-import java.time.temporal.ChronoUnit;
-import java.util.UUID;
 import java.security.SecureRandom;
 import java.util.Base64;
+import java.util.regex.Pattern;
 
 @Service
 public class UserService {
@@ -20,6 +19,8 @@ public class UserService {
 
     @Autowired
     private EmailService emailService;
+
+     private static final Pattern EMAIL_VALIDO = Pattern.compile("^[A-Za-z0-9._%+-áéíóúÁÉÍÓÚñÑ]+@[A-Za-z0-9.-]+\\.[A-Za-z]{2,}$");
 
     public void registrar(String nombre, String apellidos, String alias, String email, 
                           String fechaNac, String pwd, boolean vip, String foto,
@@ -49,8 +50,15 @@ public class UserService {
         this.emailService = emailService;
     }
 
-    
+
+
     public void sendPasswordRecoveryEmail(String email) throws Exception {
+
+        if (email == null || email.isBlank() || !EMAIL_VALIDO.matcher(email).matches()) {
+            throw new Exception("Dirección de correo inválida: " + email);
+        }
+        
+
         User user = userDao.findByEmail(email);
         if (user == null) {
             return;
@@ -111,11 +119,12 @@ public class UserService {
         
         if (user == null || user.getResetPasswordExpires() == null) {
             logInvalidToken(token);
-            throw new Exception("Token inválido o no encontrado");
+            throw new Exception("Token inválido o caducado. Solicita uno nuevo.");
         }
 
         if (user.getResetPasswordExpires().isBefore(LocalDateTime.now())) {
             logExpiredToken(token, user.getEmail());
+            logInvalidToken(token);
             throw new Exception("Token caducado. Solicita uno nuevo.");
         }
 

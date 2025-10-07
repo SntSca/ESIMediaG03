@@ -1,10 +1,10 @@
 package com.example.usersbe.http;
 
 import java.util.Map;
-import org.springframework.http.ResponseEntity;
 
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -14,6 +14,17 @@ import org.springframework.web.server.ResponseStatusException;
 
 import com.example.usersbe.services.UserService;
 
+import jakarta.servlet.http.HttpServletRequest;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+
+import java.io.BufferedReader;
+import java.io.File;
+import java.io.FileReader;
+import java.io.FileWriter;
+import java.io.IOException;
+
+
 
 @RestController
 @RequestMapping("users")
@@ -22,6 +33,12 @@ public class UserController {
 
     @Autowired
     private UserService userService;
+
+    private static final Logger logger = LoggerFactory.getLogger(UserController.class);
+    private static final int MAX_ATTEMPTS = 3;
+    private static final long WINDOW_MS = 10 * 60 * 1000;
+    private File logFile = new File("logs/forgot-password.log");
+
 
     private static final java.util.regex.Pattern EMAIL_RX =
         java.util.regex.Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$");
@@ -97,12 +114,56 @@ public class UserController {
         if (!pwd.chars().anyMatch(Character::isUpperCase)) return "una letra mayúscula";
         if (!pwd.chars().anyMatch(Character::isLowerCase)) return "una letra minúscula";
         if (!pwd.chars().anyMatch(Character::isDigit))     return "un número";
-        if (!pwd.matches(".*[!@#$%^&*(),.?\":{}|<>].*"))  return "un carácter especial";
+        if (!pwd.matches(".*[!@#$%^&*(),.?\":{}|<>-_].*"))  return "un carácter especial";
         return null;
     }
 
+    private int countRecentAttempts(String ip) {
+        if (!logFile.exists()) return 0;
+        int count = 0;
+        long now = System.currentTimeMillis();
+
+        try (BufferedReader br = new BufferedReader(new FileReader(logFile))) {
+            String line;
+            while ((line = br.readLine()) != null) {
+                String[] parts = line.split("\\|");
+                if (parts.length < 2) continue;
+                long timestamp = Long.parseLong(parts[0]);
+                String logIp = parts[1];
+                if (logIp.equals(ip) && now - timestamp <= WINDOW_MS) {
+                    count++;
+                }
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+        return count;
+    }
+
+    private void logAttempt(String ip) {
+        try {
+            logFile.getParentFile().mkdirs();
+            try (FileWriter fw = new FileWriter(logFile, true)) {
+                fw.write(System.currentTimeMillis() + "|" + ip + "\n");
+            }
+        } catch (IOException e) {
+            e.printStackTrace();
+        }
+    }
+
     @PostMapping("/forgot-password")
-    public ResponseEntity<?> forgotPassword(@RequestBody Map<String, String> body) {
+    public ResponseEntity<?> forgotPassword(HttpServletRequest request , @RequestBody Map<String, String> body) {
+
+        String ip = request.getRemoteAddr();
+
+        int attempts = countRecentAttempts(ip);
+        if (attempts >= MAX_ATTEMPTS) {
+            throw new ResponseStatusException(HttpStatus.TOO_MANY_REQUESTS,
+                    "Has superado el límite de intentos. Intenta de nuevo más tarde.");
+        }
+
+        logAttempt(ip);
+
         try {
             String email = body.get("email");
             userService.sendPasswordRecoveryEmail(email);
@@ -114,6 +175,7 @@ public class UserController {
 
     @PostMapping("/reset-password")
     public ResponseEntity<?> resetPassword(@RequestBody Map<String, String> body) {
+
         try {
             String token = body.get("token");
             String newPassword = body.get("newPassword");

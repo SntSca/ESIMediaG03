@@ -35,7 +35,7 @@ export class ResetPassword {
     if (!/[A-Z]/.test(this.pwd)) errores.push('Una letra mayúscula');
     if (!/[a-z]/.test(this.pwd)) errores.push('Una letra minúscula');
     if (!/\d/.test(this.pwd)) errores.push('Un número');
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(this.pwd)) errores.push('Un carácter especial');
+    if (!/[!@#$%^&*(),.?":{}|<>_-]/.test(this.pwd)) errores.push('Un carácter especial');
     return errores;
   }
 

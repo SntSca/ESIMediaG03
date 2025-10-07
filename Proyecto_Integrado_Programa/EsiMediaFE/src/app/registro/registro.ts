@@ -44,7 +44,7 @@ export class Registro {
     if (!/[A-Z]/.test(this.pwd)) issues.push('Una letra mayúscula');
     if (!/[a-z]/.test(this.pwd)) issues.push('Una letra minúscula');
     if (!/\d/.test(this.pwd)) issues.push('Un número');
-    if (!/[!@#$%^&*(),.?":{}|<>]/.test(this.pwd)) issues.push('Un carácter especial');
+    if (!/[!@#$%^&*(),.?":{}|<>_-]/.test(this.pwd)) issues.push('Un carácter especial');
     return issues;
   }
 
