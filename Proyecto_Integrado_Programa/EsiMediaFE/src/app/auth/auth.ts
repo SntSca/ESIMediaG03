@@ -27,9 +27,7 @@ export class Auth {
   currentIndex = 0;
   menuOpen = false;
 
-  toggleMenu() {
-    this.menuOpen = !this.menuOpen;
-  }
+  toggleMenu() { this.menuOpen = !this.menuOpen; }
 
   prev() {
     this.currentIndex = (this.currentIndex - 1 + this.fotos.length) % this.fotos.length;
