@@ -12,6 +12,7 @@
       ESIMedia
     </a>
   </header>
+
   <div class="auth-box-wrapper">
     <div class="auth-left">
       <div class="title-wrapper">
@@ -41,8 +42,11 @@
     <div class="auth-box">
       <div class="login-content">
         <router-outlet></router-outlet>
+
         <div class="login-links">
-          <a routerLink="register">Crear cuenta</a>
+          <a routerLink="login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Iniciar sesión</a>
+          <span class="sep">·</span>
+          <a routerLink="register" routerLinkActive="active">Crear cuenta</a>
         </div>
       </div>
     </div>
