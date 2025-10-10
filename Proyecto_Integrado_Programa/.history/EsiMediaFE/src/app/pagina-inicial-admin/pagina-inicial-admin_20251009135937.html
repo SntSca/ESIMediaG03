@@ -1,0 +1,153 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Página de Usuarios - Estilo Netflix</title>
+    <link rel="stylesheet" href="styles.css"> <!-- Enlaza al archivo CSS separado -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Netflix+Sans:wght@400;700&display=swap" rel="stylesheet">
+</head>
+<body>
+    <!-- Barra superior de opciones -->
+    <nav class="navbar">
+        <ul class="navbar-options">
+            <li><a href="#">Inicio</a></li>
+            <li><a href="#">Usuarios</a></li>
+            <li><a href="#">Configuración</a></li>
+            <li><a href="#">Ayuda</a></li>
+        </ul>
+        
+        <!-- Rectángulo de usuario a la derecha (con foto, nombre, email y rol) -->
+        <div class="user-panel">
+            <div class="user-photo">JP</div> <!-- Foto con iniciales -->
+            <div class="user-info">
+                <div class="user-name">Juan Pérez</div>
+                <div class="user-email">juan.perez@gmail.com</div>
+                <div class="user-role">Administrador</div>
+            </div>
+            <button class="logout-btn" onclick="cerrarSesion()">Cerrar Sesión</button>
+        </div>
+    </nav>
+    <!-- Contenedor principal -->
+    <div class="main-container">
+        <!-- Rectángulo de filtrado a la izquierda -->
+        <aside class="filter-panel">
+            <h3>Filtros</h3>
+            
+            <div class="filter-section">
+                <label for="fecha">Por Fecha:</label>
+                <input type="date" id="fecha">
+            </div>
+            
+            <div class="filter-section">
+                <label for="nombre">Por Nombre:</label>
+                <input type="text" id="nombre" placeholder="Buscar nombre...">
+            </div>
+            
+            <div class="filter-section">
+                <label for="tema">Por Tema:</label>
+                <select id="tema">
+                    <option value="">Todos</option>
+                    <option value="tecnologia">Tecnología</option>
+                    <option value="educacion">Educación</option>
+                    <option value="salud">Salud</option>
+                </select>
+            </div>
+            
+            <div class="filter-section">
+                <label for="bloqueado">Por Bloqueado:</label>
+                <select id="bloqueado">
+                    <option value="">Todos</option>
+                    <option value="si">Sí</option>
+                    <option value="no">No</option>
+                </select>
+            </div>
+            
+            <div class="filter-section">
+                <label for="ordenar">Ordenar por:</label>
+                <select id="ordenar">
+                    <option value="fecha">Fecha</option>
+                    <option value="nombre">Nombre</option>
+                    <option value="tema">Tema</option>
+                    <option value="bloqueado">Bloqueado</option>
+                </select>
+            </div>
+            
+            <button class="filter-btn">Aplicar Filtros</button>
+        </aside>
+        <!-- Área principal con tabla de usuarios -->
+        <main class="content-area">
+            <table class="users-table">
+                <thead>
+                    <tr>
+                        <th>Foto</th>
+                        <th>Nombre</th>
+                        <th>Email</th>
+                        <th>Rol</th>
+                        <th>Tema</th>
+                        <th>Bloqueado</th>
+                        <th>Acciones</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Ejemplos de filas de usuarios -->
+                    <tr data-user-id="1">
+                        <td><div class="user-photo-small">ML</div></td>
+                        <td>María López</td>
+                        <td>maría.lopez@gmail.com</td>
+                        <td>Usuario Estándar</td>
+                        <td>Tecnología</td>
+                        <td>No</td>
+                        <td class="actions-cell">
+                            <button class="action-btn btn-edit" onclick="editar(1)">Editar</button>
+                            <button class="action-btn btn-block" onclick="bloquear(1)">Bloquear</button>
+                            <button class="action-btn btn-consult" onclick="consultar(1)">Consultar</button>
+                        </td>
+                    </tr>
+                    <tr data-user-id="2">
+                        <td><div class="user-photo-small">CG</div></td>
+                        <td>Carlos García</td>
+                        <td>carlos.garcia@gmail.com</td>
+                        <td>Moderador</td>
+                        <td>Educación</td>
+                        <td>No</td>
+                        <td class="actions-cell">
+                            <button class="action-btn btn-edit" onclick="editar(2)">Editar</button>
+                            <button class="action-btn btn-block" onclick="bloquear(2)">Bloquear</button>
+                            <button class="action-btn btn-consult" onclick="consultar(2)">Consultar</button>
+                        </td>
+                    </tr>
+                    
+                    <tr data-user-id="3">
+                        <td><div class="user-photo-small">AM</div></td>
+                        <td>Ana Martínez</td>
+                        <td>ana.martinez@gmail.com</td>
+                        <td>Administrador</td>
+                        <td>Salud</td>
+                        <td>Sí</td>
+                        <td class="actions-cell">
+                            <button class="action-btn btn-edit" onclick="editar(3)">Editar</button>
+                            <button class="action-btn btn-block" onclick="bloquear(3)">Bloquear</button>
+                            <button class="action-btn btn-consult" onclick="consultar(3)">Consultar</button>
+                        </td>
+                    </tr>
+                </tbody>
+            </table>
+        </main>
+    </div>
+    <!-- Modal para consultar usuario -->
+    <div id="userModal" class="modal">
+        <div class="modal-content">
+            <span class="close" onclick="cerrarModal()">&times;</span>
+            <div class="modal-user-photo" id="modalPhoto"></div>
+            <div class="modal-user-info" id="modalInfo">
+                <!-- Datos se poblarán dinámicamente aquí -->
+            </div>
+            <div class="modal-actions">
+                <button class="action-btn btn-edit" onclick="editarEnModal()">Editar</button>
+                <button class="action-btn btn-block" onclick="bloquearEnModal()">Bloquear/Desbloquear</button>
+            </div>
+        </div>
+    </div>

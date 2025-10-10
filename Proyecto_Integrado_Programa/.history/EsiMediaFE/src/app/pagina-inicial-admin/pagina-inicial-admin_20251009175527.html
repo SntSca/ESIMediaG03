@@ -1,0 +1,191 @@
+<div class="full-screen-wrapper">
+  <div class="page-wrapper">
+    <!-- 🔹 Barra superior -->
+    <nav class="navbar">
+      <ul class="navbar-options">
+        <li><a routerLink="/inicio">Inicio</a></li>
+        <li><a routerLink="/usuarios" class="active">Usuarios</a></li>
+        <li><a routerLink="/configuracion">Configuración</a></li>
+        <li><a routerLink="/ayuda">Ayuda</a></li>
+      </ul>
+
+      <div class="user-panel">
+        <!-- Foto o iniciales del usuario logueado -->
+        <div class="user-photo">
+          <img
+            *ngIf="userFotoUrl"
+            [src]="userFotoUrl"
+            alt="Foto"
+            class="user-photo-img"
+            (error)="onImgError($event)"
+            referrerpolicy="no-referrer"
+            loading="lazy"
+          />
+          <span class="user-photo-fallback">{{ userInitials }}</span>
+        </div>
+
+        <div class="user-info">
+          <div class="user-name">{{ userName }}</div>
+          <div class="user-email">{{ userEmail }}</div>
+          <div class="user-role">{{ userRole }}</div>
+        </div>
+        <button class="logout-btn" (click)="cerrarSesion()">Cerrar Sesión</button>
+      </div>
+    </nav>
+
+    <div class="main-container">
+      <!-- 🔹 Panel lateral -->
+      <aside class="filter-panel">
+        <h3>Filtros</h3>
+        <form #filtrosForm="ngForm" (ngSubmit)="aplicarFiltros()">
+          <div class="filter-section">
+            <label for="nombre">Por Nombre:</label>
+            <input id="nombre" type="text" name="nombre" [(ngModel)]="filtros.nombre" placeholder="Buscar nombre...">
+          </div>
+
+          <div class="filter-section">
+            <label for="bloqueado">Por Bloqueado:</label>
+            <select id="bloqueado" name="bloqueado" [(ngModel)]="filtros.bloqueado">
+              <option value="">Todos</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <button type="submit" class="filter-btn">Aplicar Filtros</button>
+        </form>
+      </aside>
+
+      <!-- 🔹 Contenido principal -->
+      <main class="content-area">
+        <!-- Estado de carga -->
+        <div *ngIf="loading" class="loading-container">
+          <p>Cargando usuarios...</p>
+        </div>
+
+        <!-- Error -->
+        <div *ngIf="!loading && errorMsg" class="error-container">
+          <p>{{ errorMsg }}</p>
+        </div>
+
+        <!-- Tabla de usuarios -->
+        <table class="users-table" *ngIf="!loading && !errorMsg && usuariosMostrar.length > 0; else noUsers">
+          <thead>
+            <tr>
+              <th>Nombre</th>
+              <th>Alias</th>        <!-- ✅ nuevo -->
+              <th>Email</th>
+              <th>Rol</th>
+              <th>VIP</th>          <!-- ✅ nuevo -->
+              <th>Fecha Nac.</th>   <!-- ✅ nuevo -->
+              <th>Bloqueado</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let u of usuariosMostrar">
+              <td>
+                <!-- Foto si existe; si falla o no hay, iniciales -->
+                <div class="user-photo-small">
+                  <img
+                    *ngIf="getPhotoUrl(u.foto || null)"
+                    [src]="getPhotoUrl(u.foto || null)!"
+                    alt="Foto"
+                    class="user-photo-img"
+                    (error)="onImgError($event)"
+                    referrerpolicy="no-referrer"
+                    loading="lazy"
+                  />
+                  <span class="user-photo-fallback">{{ getInitials(u.nombre) }}</span>
+                </div>
+              </td>
+
+              <td>{{ u.nombre }}</td>
+              <td>{{ u.alias || '—' }}</td> <!-- ✅ alias -->
+              <td>{{ u.email }}</td>
+              <td>{{ u.rol }}</td>
+
+              <td>
+                <!-- ✅ VIP como badge -->
+                <span class="vip-badge" [class.vip-badge--on]="u.vip" [class.vip-badge--off]="!u.vip">
+                  {{ u.vip ? 'Sí' : 'No' }}
+                </span>
+              </td>
+
+              <td>
+                <ng-container *ngIf="u.fechaNac as fn; else sinFecha">
+                  {{ fn | date:'yyyy-MM-dd' }}
+                </ng-container>
+                <ng-template #sinFecha>—</ng-template>
+              </td>
+
+              <td>{{ u.bloqueado ? 'Sí' : 'No' }}</td>
+
+              <td class="actions-cell">
+                <button class="action-btn btn-edit" (click)="editar(u)">Editar</button>
+                <button class="action-btn btn-block" (click)="bloquear(u)">
+                  {{ u.bloqueado ? 'Desbloquear' : 'Bloquear' }}
+                </button>
+                <button class="action-btn btn-consult" (click)="consultar(u)">Consultar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <!-- No hay usuarios -->
+        <ng-template #noUsers>
+          <p class="no-data">No hay usuarios que coincidan con los filtros.</p>
+        </ng-template>
+      </main>
+    </div>
+
+    <!-- 🔹 Modal de usuario -->
+    <div class="modal" *ngIf="modalAbierto">
+      <div class="modal-content">
+        <span class="close" (click)="cerrarModal()">&times;</span>
+
+        <!-- Foto grande en el modal -->
+        <div class="modal-user-photo">
+          <img
+            *ngIf="getPhotoUrl(usuarioSeleccionado?.foto || null)"
+            [src]="getPhotoUrl(usuarioSeleccionado?.foto || null)!"
+            alt="Foto"
+            class="user-photo-img"
+            (error)="onImgError($event)"
+            referrerpolicy="no-referrer"
+            loading="lazy"
+          />
+          <span class="user-photo-fallback">{{ getInitials(usuarioSeleccionado?.nombre || 'U') }}</span>
+        </div>
+
+        <div class="modal-user-info">
+          <p><strong>Nombre:</strong> {{ usuarioSeleccionado?.nombre }}</p>
+          <p><strong>Alias:</strong> {{ usuarioSeleccionado?.alias || '—' }}</p> <!-- ✅ alias -->
+          <p><strong>Email:</strong> {{ usuarioSeleccionado?.email }}</p>
+          <p><strong>Rol:</strong> {{ usuarioSeleccionado?.rol }}</p>
+          <p>
+            <strong>VIP:</strong>
+            <span class="vip-badge" [class.vip-badge--on]="usuarioSeleccionado?.vip" [class.vip-badge--off]="!usuarioSeleccionado?.vip">
+              {{ usuarioSeleccionado?.vip ? 'Sí' : 'No' }}
+            </span>
+          </p> <!-- ✅ vip -->
+          <p>
+            <strong>Fecha Nac.:</strong>
+            <ng-container *ngIf="usuarioSeleccionado?.fechaNac as fn; else sinFecha2">
+              {{ fn | date:'yyyy-MM-dd' }}
+            </ng-container>
+            <ng-template #sinFecha2>—</ng-template>
+          </p> <!-- ✅ fechaNac -->
+          <p><strong>Bloqueado:</strong> {{ usuarioSeleccionado?.bloqueado ? 'Sí' : 'No' }}</p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="action-btn btn-edit" (click)="editar(usuarioSeleccionado)">Editar</button>
+          <button class="action-btn btn-block" (click)="usuarioSeleccionado && bloquear(usuarioSeleccionado)">
+            {{ usuarioSeleccionado?.bloqueado ? 'Desbloquear' : 'Bloquear' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>
