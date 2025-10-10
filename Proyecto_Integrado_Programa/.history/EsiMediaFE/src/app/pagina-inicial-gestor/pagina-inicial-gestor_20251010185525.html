@@ -1,0 +1,222 @@
+<div class="full-screen-wrapper">
+  <div class="page-wrapper">
+    <!-- 🔹 Barra superior -->
+    <nav class="navbar">
+      <ul class="navbar-options">
+        <li><a routerLink="/contenidos" class="active">Gestión de Contenidos</a></li>
+      </ul>
+
+      <div class="user-panel">
+        <div class="user-photo">
+          <span class="user-photo-fallback">{{ userInitials }}</span>
+        </div>
+
+        <div class="user-info">
+          <div class="user-name">{{ userName }}</div>
+          <div class="user-email">{{ userEmail }}</div>
+          <div class="user-role">{{ userRole }}</div>
+        </div>
+        <button class="logout-btn" (click)="cerrarSesion()">Cerrar Sesión</button>
+      </div>
+    </nav>
+
+    <div class="main-container">
+      <!-- 🔹 Panel lateral de filtros (estrecho y sin scroll horizontal) -->
+      <aside class="filter-panel">
+        <h3>Filtros</h3>
+        <form #filtrosForm="ngForm" (ngSubmit)="aplicarFiltros()">
+          <div class="filter-section">
+            <label for="titulo">Por título:</label>
+            <input id="titulo" type="text" name="titulo" [(ngModel)]="filtros.titulo" placeholder="Buscar título...">
+          </div>
+
+          <div class="filter-section">
+            <label for="tipo">Tipo:</label>
+            <select id="tipo" name="tipo" [(ngModel)]="filtros.tipo">
+              <option value="">Todos</option>
+              <option value="AUDIO">Audio</option>
+              <option value="VIDEO">Video</option>
+            </select>
+          </div>
+
+          <div class="filter-section">
+            <label for="vip">VIP:</label>
+            <select id="vip" name="vip" [(ngModel)]="filtros.vip">
+              <option value="">Todos</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <div class="filter-section">
+            <label for="visible">Visible:</label>
+            <select id="visible" name="visible" [(ngModel)]="filtros.visible">
+              <option value="">Todos</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <div class="filter-section">
+            <label for="restringido">Restricción de edad:</label>
+            <select id="restringido" name="restringido" [(ngModel)]="filtros.restringido">
+              <option value="">Todos</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <div class="filter-section">
+            <label for="tagIncluye">Tag incluye:</label>
+            <input id="tagIncluye" type="text" name="tagIncluye" [(ngModel)]="filtros.tagIncluye" placeholder="p.ej. scifi">
+          </div>
+
+          <div class="filter-section">
+            <label for="ordenar">Ordenar por:</label>
+            <select id="ordenar" name="ordenar" [(ngModel)]="filtros.ordenar">
+              <option value="fecha">Fecha estado (reciente)</option>
+              <option value="titulo">Título (A–Z)</option>
+              <option value="vip">VIP</option>
+              <option value="visible">Visible</option>
+            </select>
+          </div>
+
+          <button type="submit" class="filter-btn">Aplicar Filtros</button>
+        </form>
+      </aside>
+
+      <!-- 🔹 Zona principal -->
+      <main class="content-area">
+        <div *ngIf="loading" class="loading-container">
+          <p>Cargando contenidos...</p>
+        </div>
+
+        <div *ngIf="!loading && errorMsg" class="error-container">
+          <p>{{ errorMsg }}</p>
+        </div>
+
+        <table class="users-table" *ngIf="!loading && !errorMsg && contenidosMostrar.length > 0; else noData">
+          <thead>
+            <tr>
+              <th>Título</th>
+              <th>Tipo</th>
+              <th>Duración</th>
+              <th>Resolución</th>
+              <th>Tags</th>
+              <th>VIP</th>
+              <th>Visible</th>
+              <th>Restric.</th>
+              <th>Fecha estado</th>
+              <th>Disponible hasta</th>
+              <th>Acciones</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr *ngFor="let c of contenidosMostrar">
+              <td>{{ c.titulo }}</td>
+              <td>{{ c.tipo }}</td>
+              <td>{{ c.duracionMinutos }} min</td>
+              <td>{{ c.resolucion || '—' }}</td>
+              <td class="cell-tags">
+                <ng-container *ngIf="c.tags?.length; else sinTags">
+                  <span class="tag" *ngFor="let t of c.tags">{{ t }}</span>
+                </ng-container>
+                <ng-template #sinTags>—</ng-template>
+              </td>
+              <td>
+                <span class="vip-badge" [class.vip-badge--on]="c.vip" [class.vip-badge--off]="!c.vip">
+                  {{ c.vip ? 'Sí' : 'No' }}
+                </span>
+              </td>
+              <td>
+                <span class="vis-badge" [class.vis-badge--on]="c.visible" [class.vis-badge--off]="!c.visible">
+                  {{ c.visible ? 'Sí' : 'No' }}
+                </span>
+              </td>
+              <td>{{ c.restringidoEdad ? 'Sí' : 'No' }}</td>
+              <td>
+                <ng-container *ngIf="c.fechaEstado as fe; else sinFecha">
+                  {{ fe | date:'yyyy-MM-dd HH:mm' }}
+                </ng-container>
+                <ng-template #sinFecha>—</ng-template>
+              </td>
+              <td>
+                <ng-container *ngIf="c.disponibleHasta as dh; else sinHasta">
+                  {{ dh | date:'yyyy-MM-dd' }}
+                </ng-container>
+                <ng-template #sinHasta>—</ng-template>
+              </td>
+
+              <td class="actions-cell">
+                <button class="action-btn btn-edit" (click)="editar(c)">Editar</button>
+                <button class="action-btn btn-block" (click)="publicar(c)">
+                  {{ c.visible ? 'Despublicar' : 'Publicar' }}
+                </button>
+                <button class="action-btn btn-consult" (click)="consultar(c)">Consultar</button>
+              </td>
+            </tr>
+          </tbody>
+        </table>
+
+        <ng-template #noData>
+          <p class="no-data">No hay contenidos que coincidan con los filtros.</p>
+        </ng-template>
+      </main>
+    </div>
+
+    <!-- 🔹 Modal de detalle -->
+    <div class="modal" *ngIf="modalAbierto">
+      <div class="modal-content">
+        <span class="close" (click)="cerrarModal()">&times;</span>
+
+        <div class="modal-user-info">
+          <p><strong>Título:</strong> {{ contenidoSeleccionado?.titulo }}</p>
+          <p><strong>Tipo:</strong> {{ contenidoSeleccionado?.tipo }}</p>
+          <p><strong>Duración:</strong> {{ contenidoSeleccionado?.duracionMinutos }} min</p>
+          <p><strong>Resolución:</strong> {{ contenidoSeleccionado?.resolucion || '—' }}</p>
+          <p><strong>VIP:</strong>
+            <span class="vip-badge" [class.vip-badge--on]="contenidoSeleccionado?.vip" [class.vip-badge--off]="!contenidoSeleccionado?.vip">
+              {{ contenidoSeleccionado?.vip ? 'Sí' : 'No' }}
+            </span>
+          </p>
+          <p><strong>Visible:</strong>
+            <span class="vis-badge" [class.vis-badge--on]="contenidoSeleccionado?.visible" [class.vis-badge--off]="!contenidoSeleccionado?.visible">
+              {{ contenidoSeleccionado?.visible ? 'Sí' : 'No' }}
+            </span>
+          </p>
+          <p><strong>Restricción de edad:</strong> {{ contenidoSeleccionado?.restringidoEdad ? 'Sí' : 'No' }}</p>
+          <p><strong>Tags:</strong>
+            <ng-container *ngIf="contenidoSeleccionado?.tags?.length; else sinTags2">
+              <span class="tag" *ngFor="let t of contenidoSeleccionado?.tags">{{ t }}</span>
+            </ng-container>
+            <ng-template #sinTags2>—</ng-template>
+          </p>
+          <p>
+            <strong>Fecha estado:</strong>
+            <ng-container *ngIf="contenidoSeleccionado?.fechaEstado as fe; else sinFecha2">
+              {{ fe | date:'yyyy-MM-dd HH:mm' }}
+            </ng-container>
+            <ng-template #sinFecha2>—</ng-template>
+          </p>
+          <p>
+            <strong>Disponible hasta:</strong>
+            <ng-container *ngIf="contenidoSeleccionado?.disponibleHasta as dh; else sinHasta2">
+              {{ dh | date:'yyyy-MM-dd' }}
+            </ng-container>
+            <ng-template #sinHasta2>—</ng-template>
+          </p>
+          <p><strong>Descripción:</strong> {{ contenidoSeleccionado?.descripcion || '—' }}</p>
+          <p><strong>Audio:</strong> {{ contenidoSeleccionado?.ficheroAudio || '—' }}</p>
+          <p><strong>Video URL:</strong> {{ contenidoSeleccionado?.urlVideo || '—' }}</p>
+        </div>
+
+        <div class="modal-actions">
+          <button class="action-btn btn-edit" (click)="editar(contenidoSeleccionado)">Editar</button>
+          <button class="action-btn btn-block" (click)="contenidoSeleccionado && publicar(contenidoSeleccionado)">
+            {{ contenidoSeleccionado?.visible ? 'Despublicar' : 'Publicar' }}
+          </button>
+        </div>
+      </div>
+    </div>
+  </div>
+</div>

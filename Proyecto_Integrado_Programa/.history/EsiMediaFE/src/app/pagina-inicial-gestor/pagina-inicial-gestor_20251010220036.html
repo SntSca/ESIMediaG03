@@ -1,0 +1,127 @@
+<div class="full-screen-wrapper">
+  <div class="page-wrapper">
+    <!-- Barra superior -->
+    <nav class="navbar">
+      <ul class="navbar-options">
+        <li><a class="active">Gestión de Contenidos</a></li>
+      </ul>
+
+      <div class="user-panel">
+        <div class="user-photo">
+          <span class="user-photo-fallback">{{ userInitials }}</span>
+        </div>
+
+        <div class="user-info">
+          <div class="user-name">{{ userName }}</div>
+          <div class="user-email">{{ userEmail }}</div>
+          <div class="user-role">{{ userRole }}</div>
+        </div>
+        <button class="logout-btn" disabled>Salir</button>
+      </div>
+    </nav>
+
+    <!-- Pestañas -->
+    <div class="tabs">
+      <button class="tab-btn" [class.active]="selectedTab==='ALL'"
+              (click)="selectedTab='ALL'; showTodosConstruction=true">
+        Todos
+      </button>
+      <button class="tab-btn" [class.active]="selectedTab==='AUDIO'"
+              (click)="selectedTab='AUDIO'; showTodosConstruction=false">
+        Audio
+      </button>
+      <button class="tab-btn" [class.active]="selectedTab==='VIDEO'"
+              (click)="selectedTab='VIDEO'; showTodosConstruction=false">
+        Video
+      </button>
+    </div>
+
+    <div class="main-container">
+      <!-- Panel lateral de filtros (decorativo) -->
+      <aside class="filter-panel">
+        <h3>Filtros</h3>
+        <form>
+          <div class="filter-section">
+            <label for="titulo">Por título:</label>
+            <input id="titulo" type="text" name="titulo" [(ngModel)]="filtros.titulo" placeholder="Buscar título...">
+          </div>
+
+          <div class="filter-section">
+            <label for="tipo">Tipo:</label>
+            <select id="tipo" name="tipo" [(ngModel)]="filtros.tipo">
+              <option value="">Todos</option>
+              <option value="AUDIO">Audio</option>
+              <option value="VIDEO">Video</option>
+            </select>
+          </div>
+
+          <div class="filter-section">
+            <label for="vip">VIP:</label>
+            <select id="vip" name="vip" [(ngModel)]="filtros.vip">
+              <option value="">Todos</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <div class="filter-section">
+            <label for="visible">Visible:</label>
+            <select id="visible" name="visible" [(ngModel)]="filtros.visible">
+              <option value="">Todos</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <div class="filter-section">
+            <label for="restringido">Restricción de edad:</label>
+            <select id="restringido" name="restringido" [(ngModel)]="filtros.restringido">
+              <option value="">Todos</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <div class="filter-section">
+            <label for="tagIncluye">Tag incluye:</label>
+            <input id="tagIncluye" type="text" name="tagIncluye" [(ngModel)]="filtros.tagIncluye" placeholder="p.ej. scifi">
+          </div>
+
+          <div class="filter-section">
+            <label for="ordenar">Ordenar por:</label>
+            <select id="ordenar" name="ordenar" [(ngModel)]="filtros.ordenar">
+              <option value="fecha">Fecha estado (reciente)</option>
+              <option value="titulo">Título (A–Z)</option>
+              <option value="vip">VIP</option>
+              <option value="visible">Visible</option>
+            </select>
+          </div>
+
+          <button type="button" class="filter-btn" disabled>Aplicar Filtros</button>
+        </form>
+      </aside>
+
+      <!-- Zona principal -->
+      <main class="content-area">
+        <div *ngIf="showTodosConstruction" class="construction">
+          <div class="construction-inner">
+            <div class="construction-emoji">🚧</div>
+            <div class="construction-title">En construcción</div>
+            <div class="construction-text">
+              Estamos preparando esta sección…
+            </div>
+          </div>
+        </div>
+        <div *ngIf="!showTodosConstruction && selectedTab==='AUDIO'" class="placeholder">
+          <h3>Audio</h3>
+          <p>Los contenidos de audio aparecerán aquí.</p>
+        </div>
+
+        <div *ngIf="!showTodosConstruction && selectedTab==='VIDEO'" class="placeholder">
+          <h3>Video</h3>
+          <p>Los contenidos de video aparecerán aquí.</p>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>

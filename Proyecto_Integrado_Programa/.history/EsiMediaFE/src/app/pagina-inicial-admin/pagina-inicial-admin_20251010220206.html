@@ -1,0 +1,87 @@
+<div class="full-screen-wrapper">
+  <div class="page-wrapper">
+    <nav class="navbar">
+      <ul class="navbar-options">
+        <li><a class="active">Gestión de Usuarios</a></li>
+      </ul>
+
+      <div class="user-panel">
+        <div class="user-photo">
+          <span class="user-photo-fallback">{{ userInitials }}</span>
+        </div>
+        <div class="user-info">
+          <div class="user-name">{{ userName }}</div>
+          <div class="user-email">{{ userEmail }}</div>
+          <div class="user-role">{{ userRole }}</div>
+        </div>
+        <button class="logout-btn" disabled>Salir</button>
+      </div>
+    </nav>
+
+    <!-- Pestañas -->
+    <div class="tabs">
+      <button class="tab-btn" [class.active]="selectedTab==='ALL'"
+              (click)="selectedTab='ALL'; showTodosConstruction=true">
+        Todos
+      </button>
+      <button class="tab-btn" [class.active]="selectedTab==='USUARIOS'"
+              (click)="selectedTab='USUARIOS'; showTodosConstruction=false">
+        Usuarios
+      </button>
+    </div>
+
+    <div class="main-container">
+      <!-- Panel lateral -->
+      <aside class="filter-panel">
+        <h3>Filtros</h3>
+        <form>
+          <div class="filter-section">
+            <label for="nombre">Por Nombre:</label>
+            <input id="nombre" type="text" name="nombre" [(ngModel)]="filtros.nombre" placeholder="Buscar nombre...">
+          </div>
+
+          <div class="filter-section">
+            <label for="bloqueado">Por Bloqueado:</label>
+            <select id="bloqueado" name="bloqueado" [(ngModel)]="filtros.bloqueado">
+              <option value="">Todos</option>
+              <option value="si">Sí</option>
+              <option value="no">No</option>
+            </select>
+          </div>
+
+          <div class="filter-section">
+            <label for="ordenar">Ordenar:</label>
+            <select id="ordenar" name="ordenar" [(ngModel)]="filtros.ordenar">
+              <option value="fecha">Fecha</option>
+              <option value="nombre">Nombre</option>
+              <option value="rol">Rol</option>
+              <option value="vip">VIP</option>
+            </select>
+          </div>
+
+          <button type="button" class="filter-btn" disabled>Aplicar Filtros</button>
+        </form>
+      </aside>
+
+      <!-- Zona principal -->
+      <main class="content-area">
+        <!-- En construcción (Todos) -->
+        <div *ngIf="showTodosConstruction" class="construction">
+          <div class="construction-inner">
+            <div class="construction-emoji">🚧</div>
+            <div class="construction-title">En construcción</div>
+            <div class="construction-text">
+              Estamos trabajando en esta sección…
+            </div>
+          </div>
+        </div>
+
+        <!-- Placeholder de Usuarios -->
+        <div *ngIf="!showTodosConstruction && selectedTab==='USUARIOS'" class="placeholder">
+          <h3>Usuarios</h3>
+          <p>El listado de usuarios aparecerá aquí.</p>
+        </div>
+      </main>
+    </div>
+  </div>
+</div>

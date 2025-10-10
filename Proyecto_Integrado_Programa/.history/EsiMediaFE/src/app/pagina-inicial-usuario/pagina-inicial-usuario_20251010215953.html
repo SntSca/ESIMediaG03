@@ -1,0 +1,111 @@
+<!-- Header del usuario -->
+<div class="usuario-header">
+  <div class="usuario-info">
+    <div class="avatar">{{ userInitials }}</div>
+    <div class="datos">
+      <div class="nombre">{{ userName }}</div>
+      <div class="email">{{ userEmail }}</div>
+    </div>
+  </div>
+  <button class="btn-cerrar" disabled>Salir</button>
+</div>
+<div class="filtros">
+  <input type="text" [(ngModel)]="filtros.titulo" placeholder="Buscar por título" />
+  <select [(ngModel)]="filtros.tipo">
+    <option value="">Todos los tipos</option>
+    <option value="AUDIO">Audio</option>
+    <option value="VIDEO">Video</option>
+  </select>
+  <select [(ngModel)]="filtros.vip">
+    <option value="">VIP / No VIP</option>
+    <option value="si">VIP</option>
+    <option value="no">No VIP</option>
+  </select>
+  <select [(ngModel)]="filtros.visible">
+    <option value="">Visible / No visible</option>
+    <option value="si">Visible</option>
+    <option value="no">No visible</option>
+  </select>
+  <input type="text" [(ngModel)]="filtros.tagIncluye" placeholder="Buscar por tag" />
+  <select [(ngModel)]="filtros.ordenar">
+    <option value="fecha">Ordenar por fecha</option>
+    <option value="titulo">Ordenar por título</option>
+    <option value="vip">Ordenar por VIP</option>
+    <option value="visible">Ordenar por visibilidad</option>
+  </select>
+</div>
+
+<!-- Pestañas principales -->
+<div class="tabs">
+  <button
+    class="tab-btn"
+    [class.active]="selectedTab==='ALL'"
+    (click)="selectedTab='ALL'; showTodosConstruction=true"
+  >
+    Todos
+  </button>
+
+  <button
+    class="tab-btn"
+    [class.active]="selectedTab==='AUDIO'"
+    (click)="selectedTab='AUDIO'; showTodosConstruction=false"
+  >
+    Audio
+  </button>
+
+  <button
+    class="tab-btn"
+    [class.active]="selectedTab==='VIDEO'"
+    (click)="selectedTab='VIDEO'; showTodosConstruction=false"
+  >
+    Video
+  </button>
+
+  <button
+    class="tab-btn"
+    [class.active]="selectedTab==='HIST'"
+    (click)="selectedTab='HIST'; showTodosConstruction=false"
+  >
+    Historial
+  </button>
+
+  <button
+    class="tab-btn"
+    [class.active]="selectedTab==='FAV'"
+    (click)="selectedTab='FAV'; showTodosConstruction=false"
+  >
+    Favoritos
+  </button>
+</div>
+
+<div class="contenidos">
+
+  <div *ngIf="showTodosConstruction" class="construction">
+    <div class="construction-inner">
+      <div class="construction-emoji">🚧</div>
+      <div class="construction-title">En construcción</div>
+      <div class="construction-text">
+        Estamos trabajando para traerte esta sección muy pronto.
+      </div>
+    </div>
+  </div>
+  <div *ngIf="!showTodosConstruction && selectedTab==='AUDIO'" class="placeholder">
+    <h3>Audio</h3>
+    <p>Contenido de audio aparecerá aquí.</p>
+  </div>
+
+  <div *ngIf="!showTodosConstruction && selectedTab==='VIDEO'" class="placeholder">
+    <h3>Video</h3>
+    <p>Contenido de video aparecerá aquí.</p>
+  </div>
+
+  <div *ngIf="!showTodosConstruction && selectedTab==='HIST'" class="placeholder">
+    <h3>Historial</h3>
+    <p>Tu historial de reproducción aparecerá aquí.</p>
+  </div>
+
+  <div *ngIf="!showTodosConstruction && selectedTab==='FAV'" class="placeholder">
+    <h3>Favoritos</h3>
+    <p>Tu lista de favoritos aparecerá aquí.</p>
+  </div>
+</div>
