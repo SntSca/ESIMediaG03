@@ -171,7 +171,7 @@ public class UserController {
                         .map(s -> s.toLowerCase(java.util.Locale.ROOT))
                         .orElse("");
 
-            userService.sendPasswordRecoveryEmail(email);
+    userService.sendPasswordRecoveryEmail(email);
             return ResponseEntity.ok(Map.of("message", "Si el email existe, se ha enviado un enlace de recuperación."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
