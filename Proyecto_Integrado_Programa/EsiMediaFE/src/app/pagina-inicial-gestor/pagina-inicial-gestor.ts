@@ -10,6 +10,7 @@ import Swal from 'sweetalert2';
 type TipoContenido = 'AUDIO' | 'VIDEO';
 type Role = UserDto['role'];
 
+
 interface ContenidoCreate {
   titulo: string;
   descripcion?: string;
