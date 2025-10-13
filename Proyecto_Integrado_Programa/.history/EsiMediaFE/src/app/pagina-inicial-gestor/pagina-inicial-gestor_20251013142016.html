@@ -1,0 +1,213 @@
+<dialog
+  class="modal-dialog"
+  [open]="crearAbierto"
+  aria-labelledby="modalTitulo"
+  (cancel)="$event.preventDefault()"
+>
+  <button class="modal-close" type="button" (click)="cerrarCrear()" aria-label="Cerrar">
+    &times;
+  </button>
+
+  <h3 id="modalTitulo">Nuevo contenido</h3>
+  <p class="helper-text">Rellena los datos y pulsa “Guardar”.</p>
+
+  <div *ngIf="crossErrorsPresent" class="error-container">
+    <p>Revisa los campos: hay incompatibilidades con el tipo seleccionado.</p>
+  </div>
+
+  <form #formSubida="ngForm" (ngSubmit)="onSubmit(formSubida)" novalidate class="upload-form">
+    <div class="form-row">
+      <label for="titulo">Título <span class="req">*</span></label>
+      <input
+        id="titulo"
+        type="text"
+        name="titulo"
+        [(ngModel)]="nuevo.titulo"
+        #tituloModel="ngModel"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        required
+        placeholder="p. ej., Interestelar"
+        autofocus
+        [class.input]="true"
+        [class.input-error]="tituloModel.invalid && (tituloModel.dirty || tituloModel.touched)"
+      />
+      <div class="field-msg" *ngIf="tituloModel.invalid && (tituloModel.dirty || tituloModel.touched)">
+        <span class="error" *ngIf="tituloModel.errors?.['required']">El título es obligatorio.</span>
+      </div>
+    </div>
+    <div class="form-row">
+      <label for="descripcion">Descripción</label>
+      <textarea
+        id="descripcion"
+        name="descripcion"
+        [(ngModel)]="nuevo.descripcion"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        rows="3"
+        placeholder="Breve descripción…"
+      ></textarea>
+    </div>
+    <div class="form-row">
+      <label for="imagen">Ruta de imagen (opcional)</label>
+      <input
+        id="imagen"
+        type="text"
+        name="imagen"
+        [(ngModel)]="nuevo.imagen"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        placeholder="/img/portadas/interestelar.jpg o https://..."
+      />
+      <div class="field-msg hint"><span>Ej.: /img/portadas/mi-portada.jpg o una URL absoluta.</span></div>
+    </div>
+    <div class="form-row">
+      <label for="tipo">Tipo <span class="req">*</span></label>
+      <select
+        id="tipo"
+        name="tipo"
+        [(ngModel)]="nuevo.tipo"
+        #tipoModel="ngModel"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        required
+        [class.input]="true"
+        [class.input-error]="tipoModel.invalid && (tipoModel.dirty || tipoModel.touched)"
+      >
+        <option value="" disabled>Selecciona…</option>
+        <option value="AUDIO">Audio</option>
+        <option value="VIDEO">Video</option>
+      </select>
+      <div class="field-msg" *ngIf="tipoModel.invalid && (tipoModel.dirty || tipoModel.touched)">
+        <span class="error" *ngIf="tipoModel.errors?.['required']">Debes seleccionar el tipo.</span>
+      </div>
+    </div>
+    <div class="form-row" *ngIf="nuevo.tipo === 'AUDIO'">
+      <label for="ficheroAudio">Fichero de audio <span class="req">*</span></label>
+      <input
+        id="ficheroAudio"
+        type="text"
+        name="ficheroAudio"
+        [(ngModel)]="nuevo.ficheroAudio"
+        #ficheroAudioModel="ngModel"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        required
+        placeholder="/ruta/o/nombre.mp3"
+        [class.input]="true"
+        [class.input-error]="(ficheroAudioModel.invalid && (ficheroAudioModel.dirty || ficheroAudioModel.touched)) || audioHasVideoFields"
+      />
+      <div
+        class="field-msg"
+        *ngIf="(ficheroAudioModel.invalid && (ficheroAudioModel.dirty || ficheroAudioModel.touched)) || audioHasVideoFields"
+      >
+        <span class="error" *ngIf="ficheroAudioModel.errors?.['required']">Debes indicar el fichero de audio.</span>
+        <span class="error" *ngIf="audioHasVideoFields">Has indicado campos de vídeo (URL/Resolución) con tipo AUDIO.</span>
+      </div>
+    </div>
+
+    <ng-container *ngIf="nuevo.tipo === 'VIDEO'">
+      <div class="form-row">
+        <label for="urlVideo">URL de vídeo <span class="req">*</span></label>
+        <input
+          id="urlVideo"
+          type="url"
+          name="urlVideo"
+          [(ngModel)]="nuevo.urlVideo"
+          #urlVideoModel="ngModel"
+          [ngModelOptions]="{ updateOn: 'change' }"
+          required
+          pattern="https?://.+"
+          placeholder="https://…"
+          [class.input]="true"
+          [class.input-error]="urlVideoModel.invalid && (urlVideoModel.dirty || urlVideoModel.touched)"
+        />
+        <div class="field-msg" *ngIf="urlVideoModel.invalid && (urlVideoModel.dirty || urlVideoModel.touched)">
+          <span class="error" *ngIf="urlVideoModel.errors?.['required']">Debes indicar la URL del vídeo.</span>
+          <span class="error" *ngIf="urlVideoModel.errors?.['pattern']">La URL debe empezar por http:// o https://</span>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <label for="resolucion">Resolución</label>
+        <select
+          id="resolucion"
+          name="resolucion"
+          [(ngModel)]="nuevo.resolucion"
+          [ngModelOptions]="{ updateOn: 'change' }"
+          [class.input]="true"
+        >
+          <option value="">Selecciona…</option>
+          <option value="720p">720p</option>
+          <option value="1080p">1080p</option>
+          <option value="4K">4K</option>
+        </select>
+        <div class="field-msg hint"><span>Sólo 720p, 1080p o 4K.</span></div>
+      </div>
+
+      <div class="field-msg" *ngIf="videoHasAudioField">
+        <span class="error">Has indicado fichero de audio con tipo VIDEO.</span>
+      </div>
+    </ng-container>
+    <div class="form-row">
+      <label for="tags">Tags (separados por comas)</label>
+      <input
+        id="tags"
+        type="text"
+        name="tags"
+        [(ngModel)]="nuevo.tagsStr"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        placeholder="drama, scifi, estreno"
+      />
+      <div class="field-msg hint"><span>Ejemplo: drama, scifi, estreno</span></div>
+    </div>
+    <div class="form-row">
+      <label for="duracion">Duración (min) <span class="req">*</span></label>
+      <input
+        id="duracion"
+        type="number"
+        name="duracion"
+        [(ngModel)]="nuevo.duracionMinutos"
+        #duracionModel="ngModel"
+        [ngModelOptions]="{ updateOn: 'change' }"
+        required
+        min="1"
+        placeholder="120"
+        [class.input]="true"
+        [class.input-error]="duracionModel.invalid && (duracionModel.dirty || duracionModel.touched)"
+      />
+      <div class="field-msg" *ngIf="duracionModel.invalid && (duracionModel.dirty || duracionModel.touched)">
+        <span class="error" *ngIf="duracionModel.errors?.['required']">La duración es obligatoria.</span>
+        <span class="error" *ngIf="duracionModel.errors?.['min']">Debe ser mayor a 0.</span>
+      </div>
+    </div>
+    <div class="form-grid">
+      <div class="form-row">
+        <label for="vip">VIP</label>
+        <select id="vip" name="vip" [(ngModel)]="nuevo.vip" [ngModelOptions]="{ updateOn: 'change' }">
+          <option value="no">No</option>
+          <option value="si">Sí</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="visible">Visible</label>
+        <select id="visible" name="visible" [(ngModel)]="nuevo.visible" [ngModelOptions]="{ updateOn: 'change' }">
+          <option value="no">No</option>
+          <option value="si">Sí</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="restriccion">Restricción de edad</label>
+        <select id="restriccion" name="restriccion" [(ngModel)]="nuevo.restringidoEdad" [ngModelOptions]="{ updateOn: 'change' }">
+          <option value="no">No</option>
+          <option value="si">Sí</option>
+        </select>
+      </div>
+    </div>
+    <div class="form-actions">
+      <button type="submit" class="primary-btn" [disabled]="loading || !formSubida.valid || crossErrorsPresent">
+        {{ loading ? 'Guardando…' : 'Guardar' }}
+      </button>
+      <button type="button" class="secondary-btn" (click)="cerrarCrear()" [disabled]="loading">
+        Cancelar
+      </button>
+    </div>
+  </form>
+</dialog>

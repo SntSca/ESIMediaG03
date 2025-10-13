@@ -1,0 +1,133 @@
+<div class="full-screen-wrapper">
+  <div class="page-wrapper">
+    <!-- 🔹 Barra superior con perfil -->
+    <nav class="navbar">
+      <ul class="navbar-options">
+        <li><a class="active">Gestión de Contenidos</a></li>
+      </ul>
+
+      <div class="user-panel">
+        <div class="user-photo">
+          <span class="user-photo-fallback">{{ userInitials }}</span>
+        </div>
+
+        <div class="user-info">
+          <div class="user-name">{{ userName }}</div>
+          <div class="user-email">{{ userEmail }}</div>
+          <div class="user-role">{{ userRole }}</div>
+        </div>
+        <button class="logout-btn" (click)="cerrarSesion()">Cerrar Sesión</button>
+      </div>
+    </nav>
+
+    <!-- 🔹 Contenido principal: Solo formulario de subida -->
+    <div class="main-container">
+      <main class="content-area">
+
+        <h2>Subir contenido</h2>
+        <p class="helper-text">
+          Completa los campos y pulsa “Subir contenido”. Los campos cambian según el tipo (AUDIO o VIDEO).
+        </p>
+
+        <!-- Mensajes -->
+        <div *ngIf="errorMsg" class="error-container"><p>{{ errorMsg }}</p></div>
+        <div *ngIf="successMsg" class="success-container"><p>{{ successMsg }}</p></div>
+
+        <form #formSubida="ngForm" (ngSubmit)="subirContenido()" novalidate class="upload-form">
+
+          <!-- Título -->
+          <div class="form-row">
+            <label for="titulo">Título <span class="req">*</span></label>
+            <input id="titulo" type="text" name="titulo" [(ngModel)]="nuevo.titulo" required placeholder="p. ej., Interestelar">
+          </div>
+
+          <!-- Descripción -->
+          <div class="form-row">
+            <label for="descripcion">Descripción</label>
+            <textarea id="descripcion" name="descripcion" [(ngModel)]="nuevo.descripcion" rows="3" placeholder="Breve descripción…"></textarea>
+          </div>
+
+          <!-- Tipo -->
+          <div class="form-row">
+            <label for="tipo">Tipo <span class="req">*</span></label>
+            <select id="tipo" name="tipo" [(ngModel)]="nuevo.tipo" required>
+              <option value="" disabled>Selecciona…</option>
+              <option value="AUDIO">Audio</option>
+              <option value="VIDEO">Video</option>
+            </select>
+          </div>
+
+          <!-- Campos dependientes de tipo -->
+          <div class="form-row" *ngIf="nuevo.tipo === 'AUDIO'">
+            <label for="ficheroAudio">Fichero de audio <span class="req">*</span></label>
+            <input id="ficheroAudio" type="text" name="ficheroAudio" [(ngModel)]="nuevo.ficheroAudio" placeholder="/ruta/o/nombre.mp3">
+          </div>
+
+          <ng-container *ngIf="nuevo.tipo === 'VIDEO'">
+            <div class="form-row">
+              <label for="urlVideo">URL de vídeo <span class="req">*</span></label>
+              <input id="urlVideo" type="url" name="urlVideo" [(ngModel)]="nuevo.urlVideo" placeholder="https://…">
+            </div>
+
+            <div class="form-row">
+              <label for="resolucion">Resolución</label>
+              <select id="resolucion" name="resolucion" [(ngModel)]="nuevo.resolucion">
+                <option value="">Selecciona…</option>
+                <option value="720p">720p</option>
+                <option value="1080p">1080p</option>
+                <option value="4K">4K</option>
+              </select>
+            </div>
+          </ng-container>
+
+          <!-- Tags -->
+          <div class="form-row">
+            <label for="tags">Tags (separados por comas)</label>
+            <input id="tags" type="text" name="tags" [(ngModel)]="nuevo.tagsStr" placeholder="drama, scifi, estreno">
+          </div>
+
+          <!-- Duración -->
+          <div class="form-row">
+            <label for="duracion">Duración (min) <span class="req">*</span></label>
+            <input id="duracion" type="number" name="duracion" [(ngModel)]="nuevo.duracionMinutos" min="1" placeholder="120">
+          </div>
+
+          <!-- Flags -->
+          <div class="form-grid">
+            <div class="form-row">
+              <label for="vip">VIP</label>
+              <select id="vip" name="vip" [(ngModel)]="nuevo.vip">
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="visible">Visible</label>
+              <select id="visible" name="visible" [(ngModel)]="nuevo.visible">
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+              </select>
+            </div>
+
+            <div class="form-row">
+              <label for="restriccion">Restricción de edad</label>
+              <select id="restriccion" name="restriccion" [(ngModel)]="nuevo.restringidoEdad">
+                <option value="no">No</option>
+                <option value="si">Sí</option>
+              </select>
+            </div>
+          </div>
+          <div class="form-actions">
+            <button type="submit" class="primary-btn" [disabled]="loading">
+              {{ loading ? 'Subiendo…' : 'Subir contenido' }}
+            </button>
+            <button type="button" class="secondary-btn" (click)="resetForm()" [disabled]="loading">
+              Limpiar
+            </button>
+          </div>
+        </form>
+      </main>
+    </div>
+  </div>
+</div>

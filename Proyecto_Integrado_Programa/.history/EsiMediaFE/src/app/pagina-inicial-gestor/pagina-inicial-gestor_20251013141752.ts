@@ -1,0 +1,284 @@
+import { Component, OnInit, inject } from '@angular/core';
+import { FormsModule, NgForm } from '@angular/forms';
+import { CommonModule } from '@angular/common';
+import { Router } from '@angular/router';
+
+import { AuthService } from '../auth/auth.service';
+import { UserDto } from '../auth/models';
+import { Contenidos } from '../contenidos';
+import Swal from 'sweetalert2';
+
+type TipoContenido = 'AUDIO' | 'VIDEO';
+type Role = UserDto['role'];
+
+interface ContenidoCreate {
+  titulo: string;
+  descripcion?: string;
+  tipo: TipoContenido;
+  ficheroAudio?: string | null;
+  urlVideo?: string | null;
+  resolucion?: string | null;
+  tags: string[];
+  duracionMinutos: number;
+  vip: boolean;
+  visible: boolean;
+  restringidoEdad: boolean;
+  imagen?: string | null;
+}
+
+@Component({
+  selector: 'app-pagina-inicial-gestor',
+  standalone: true,
+  imports: [CommonModule, FormsModule],
+  templateUrl: './pagina-inicial-gestor.html',
+  styleUrls: ['./pagina-inicial-gestor.css']
+})
+export class PaginaInicialGestor implements OnInit {
+
+  userName = 'Gestor de Contenido';
+  userEmail = 'gestor@esimedia.com';
+  userRole = 'Gestor de contenido';
+  userInitials = this.getInitials(this.userName);
+  private loggedUser: UserDto | null = null;
+
+  nuevo: {
+    titulo: string;
+    descripcion: string;
+    tipo: TipoContenido | '';
+    ficheroAudio: string;
+    urlVideo: string;
+    resolucion: '720p' | '1080p' | '4K' | '';
+    tagsStr: string;
+    duracionMinutos: number | null;
+    vip: 'si' | 'no';
+    visible: 'si' | 'no';
+    restringidoEdad: 'si' | 'no';
+    imagen: string;
+  } = {
+    titulo: '',
+    descripcion: '',
+    tipo: '',
+    ficheroAudio: '',
+    urlVideo: '',
+    resolucion: '',
+    tagsStr: '',
+    duracionMinutos: null,
+    vip: 'no',
+    visible: 'no',
+    restringidoEdad: 'no',
+    imagen: ''
+  };
+
+  loading = false;
+  errorMsg = '';
+  successMsg = '';
+  crearAbierto = false;
+  lastSubmitAt = 0;
+
+  private readonly contenidosService = inject(Contenidos);
+  private readonly auth = inject(AuthService);
+  private readonly router = inject(Router);
+
+  ngOnInit(): void {
+    const stateUser = (history.state?.user ?? null) as UserDto | null;
+    const sessionUser = this.auth.getCurrentUser?.() ?? this.getUserFromLocalStorage();
+    this.setLoggedUser(stateUser ?? sessionUser ?? null);
+  }
+
+  private setLoggedUser(user: UserDto | null) {
+    this.loggedUser = user;
+    if (!user) return;
+    const nombre = user.nombre?.trim() || user.email.split('@')[0];
+    this.userName = nombre;
+    this.userEmail = user.email;
+    this.userRole = this.mapRoleToLabel(user.role);
+    this.userInitials = this.getInitials(this.userName);
+  }
+
+  type KnownRole = 'USUARIO' | 'GESTOR_CONTENIDO' | 'ADMINISTRADOR';
+
+  function isKnownRole(v: unknown): v is KnownRole {
+    return v === 'USUARIO' || v === 'GESTOR_CONTENIDO' || v === 'ADMINISTRADOR';
+  }
+
+  // 👇 sin “| string”, tolera undefined/null si llega algo raro
+  private mapRoleToLabel(role: UserDto['role'] | undefined | null): string {
+    if (isKnownRole(role)) {
+      const labels: Record<KnownRole, string> = {
+        ADMINISTRADOR: 'Administrador',
+        USUARIO: 'Usuario',
+        GESTOR_CONTENIDO: 'Gestor de contenido',
+      };
+      return labels[role];
+    }
+    return 'Desconocido';
+  }
+
+
+  private getUserFromLocalStorage(): UserDto | null {
+    try {
+      const raw = localStorage.getItem('user');
+      if (!raw) return null;
+
+      const parsed = JSON.parse(raw) as Partial<UserDto>;
+      return (parsed?.email && parsed?.role) ? (parsed as UserDto) : null;
+    } catch {
+      return null;
+    }
+  }
+
+  getInitials(nombre: string): string {
+    const safe = (nombre || '').trim();
+    if (!safe) return 'U';
+    return safe.split(/\s+/).filter(Boolean).map(p => p[0]).join('').toUpperCase();
+  }
+
+  abrirCrear(): void {
+    this.errorMsg = '';
+    this.successMsg = '';
+    this.crearAbierto = true;
+  }
+
+  cerrarCrear(): void {
+    if (this.loading) return;
+    this.crearAbierto = false;
+  }
+
+  get audioHasVideoFields(): boolean {
+    return this.nuevo?.tipo === 'AUDIO' && (!!this.nuevo?.urlVideo || !!this.nuevo?.resolucion);
+  }
+  get videoHasAudioField(): boolean {
+    return this.nuevo?.tipo === 'VIDEO' && !!this.nuevo?.ficheroAudio;
+  }
+  get crossErrorsPresent(): boolean {
+    return this.audioHasVideoFields || this.videoHasAudioField;
+  }
+
+  private markAllTouched(form: NgForm) {
+    Object.values(form.controls).forEach(c => c.markAsTouched());
+  }
+
+  onSubmit(form: NgForm): void {
+    const now = Date.now();
+    if (now - this.lastSubmitAt < 5000) {
+      void Swal.fire({
+        title: 'Demasiados intentos',
+        text: 'Espera unos segundos antes de volver a intentarlo.',
+        icon: 'warning',
+        confirmButtonText: 'Cerrar'
+      });
+      return;
+    }
+
+    if (this.crossErrorsPresent) {
+      this.markAllTouched(form);
+      const firstInvalid = document.querySelector<HTMLElement>('.input-error');
+      firstInvalid?.focus();
+      void Swal.fire({
+        title: 'Revisa el formulario',
+        text: 'Hay incompatibilidades con el tipo seleccionado.',
+        icon: 'error',
+        confirmButtonText: 'Cerrar'
+      });
+      return;
+    }
+
+    if (form.invalid) {
+      this.markAllTouched(form);
+      const firstInvalid = document.querySelector<HTMLElement>('.input-error');
+      firstInvalid?.focus();
+      void Swal.fire({
+        title: 'Revisa el formulario',
+        text: 'Hay campos con errores. Corrígelos y vuelve a intentarlo.',
+        icon: 'error',
+        confirmButtonText: 'Cerrar'
+      });
+      return;
+    }
+
+    const payload: ContenidoCreate = {
+      titulo: (this.nuevo.titulo ?? '').trim(),
+      descripcion: (this.nuevo.descripcion ?? '').trim() || undefined,
+      tipo: this.nuevo.tipo as TipoContenido,
+      ficheroAudio: this.nuevo.tipo === 'AUDIO' ? (this.nuevo.ficheroAudio ?? '').trim() : null,
+      urlVideo: this.nuevo.tipo === 'VIDEO' ? (this.nuevo.urlVideo ?? '').trim() : null,
+      resolucion: this.nuevo.tipo === 'VIDEO' && this.nuevo.resolucion ? this.nuevo.resolucion : null,
+      tags: (this.nuevo.tagsStr ?? '').split(',').map(t => t.trim()).filter(Boolean),
+      duracionMinutos: Number(this.nuevo.duracionMinutos),
+      vip: this.nuevo.vip === 'si',
+      visible: this.nuevo.visible === 'si',
+      restringidoEdad: this.nuevo.restringidoEdad === 'si',
+      imagen: this.nuevo.imagen?.trim() ? this.nuevo.imagen.trim() : null
+    };
+
+    this.loading = true;
+    this.lastSubmitAt = now;
+
+    this.contenidosService.subirContenido(payload).subscribe({
+      next: () => {
+        this.loading = false;
+        void Swal.fire({
+          title: '¡Éxito!',
+          text: 'Contenido subido correctamente.',
+          icon: 'success',
+          confirmButtonText: 'Cerrar'
+        }).then(() => {
+          this.resetForm();
+          this.crearAbierto = false;
+        });
+      },
+      error: (error) => {
+        this.loading = false;
+
+        let mensajeError = 'No se pudo subir el contenido.';
+        const raw = error?.error;
+        if (raw) {
+          if (typeof raw === 'object' && (raw as any).message) {
+            mensajeError = (raw as any).message;
+          } else if (typeof raw === 'string') {
+            try {
+              const obj = JSON.parse(raw);
+              if (obj.message) mensajeError = obj.message;
+            } catch {
+              mensajeError = raw;
+            }
+          }
+        }
+
+        void Swal.fire({
+          title: 'Error',
+          text: mensajeError,
+          icon: 'error',
+          confirmButtonText: 'Cerrar'
+        });
+      }
+    });
+  }
+
+  resetForm(): void {
+    Object.assign(this.nuevo, {
+      titulo: '',
+      descripcion: '',
+      tipo: '',
+      ficheroAudio: '',
+      urlVideo: '',
+      resolucion: '',
+      tagsStr: '',
+      duracionMinutos: null,
+      vip: 'no',
+      visible: 'no',
+      restringidoEdad: 'no',
+      imagen: ''
+    });
+  }
+
+  cerrarSesion(): void {
+    const confirmacion = confirm('¿Seguro que deseas cerrar sesión?');
+    if (confirmacion) {
+      this.auth.logout?.();
+      localStorage.removeItem('user');
+      alert('Sesión cerrada correctamente.');
+      this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+    }
+  }
+}
