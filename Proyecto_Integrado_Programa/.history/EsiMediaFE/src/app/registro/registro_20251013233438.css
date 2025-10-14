@@ -1,0 +1,225 @@
+html, body {
+  height: 100%;
+  margin: -16px;
+  overflow: hidden;
+  font-family: 'Arial', sans-serif;
+  background: #111;
+  color: #fff;
+}
+
+.auth-container {
+  position: relative;
+  width: 100%;
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  justify-content: center;
+  align-items: center;
+  background: url('https://images.unsplash.com/photo-1581092795369-5f0c2a95d4f0?auto=format&fit=crop&w=1650&q=80')
+              no-repeat center center/cover;
+}
+
+.auth-container::before {
+  content: "";
+  position: absolute;
+  inset: 0;
+  background: rgba(0,0,0,0.65);
+  z-index: 1;
+}
+.auth-container h2 {
+  position: relative;
+  z-index: 2;
+  margin-bottom: 10px;
+  font-size: 28px;
+  font-weight: bold;
+  letter-spacing: 1px;
+  text-align: center;
+}
+
+/* Formulario */
+.auth-container form {
+  position: relative;
+  z-index: 2;
+  width: 100%;
+  max-width: 500px;
+  background: rgba(0,0,0,0.75);
+  backdrop-filter: blur(10px);
+  border-radius: 15px;
+  padding: 25px 30px;
+  box-shadow: 0 8px 30px rgba(0,0,0,0.7);
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  max-height: 110vh;
+  overflow-y: auto;
+  box-sizing: border-box;
+}
+
+.auth-container form::-webkit-scrollbar {
+  width: 8px;
+}
+.auth-container form::-webkit-scrollbar-thumb {
+  background: rgba(255,255,255,0.3);
+  border-radius: 4px;
+}
+
+.input, .role-select {
+  width: 100%;
+  padding: 12px 15px;
+  border: none;
+  border-radius: 8px;
+  font-size: 16px;
+  background: rgba(255,255,255,0.1);
+  color: #fff;
+  outline: none;
+  transition: background 0.2s, box-shadow 0.2s;
+  box-sizing: border-box;
+}
+
+.input:focus, .role-select:focus {
+  background: rgba(255,255,255,0.2);
+  box-shadow: 0 0 10px rgba(255,255,255,0.3);
+}
+
+.input-error {
+  border: 1px solid #e50914;
+}
+
+.error-msg {
+  color: #ff5555;
+  font-size: 13px;
+  margin: -5px 0 5px;
+}
+
+.error-list {
+  list-style: none;
+  padding-left: 10px;
+  margin: 0;
+}
+
+.password-field {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+}
+
+.password-field .input {
+  flex: 1;
+}
+
+.toggle-eye {
+  border: none;
+  background: rgba(255,255,255,0.1);
+  padding: 8px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  color: #fff;
+  transition: background 0.2s;
+}
+
+.toggle-eye:hover {
+  background: rgba(255,255,255,0.2);
+}
+
+.strength-wrapper {
+  margin-top: 5px;
+}
+
+.strength-bar {
+  height: 6px;
+  border-radius: 4px;
+  background: rgba(255,255,255,0.1);
+  margin-bottom: 4px;
+  transition: background 0.3s;
+}
+
+.strength-bar.s1 { background: #e50914; }
+.strength-bar.s2 { background: #ff9900; }
+.strength-bar.s3 { background: #ffee00; }
+.strength-bar.s4 { background: #00cc66; }
+
+.strength-label {
+  font-size: 13px;
+  color: rgba(255,255,255,0.8);
+}
+
+.chkline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+}
+
+.terms a {
+  color: #e50914;
+  text-decoration: none;
+}
+
+.terms a:hover {
+  text-decoration: underline;
+}
+
+.file-upload {
+  font-size: 14px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  color: #ccc;
+}
+
+.file-upload input[type="file"] {
+  color: #bbb;
+}
+
+.btn {
+  padding: 14px;
+  border-radius: 30px;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  background: linear-gradient(90deg, #e50914, #ff0000);
+  color: #fff;
+  transition: transform 0.2s, box-shadow 0.2s;
+  margin-top: 10px;
+}
+
+.btn:hover {
+  transform: scale(1.05);
+  box-shadow: 0 4px 20px rgba(255,0,0,0.6);
+}
+
+.spinner {
+  width: 20px;
+  height: 20px;
+  border: 3px solid rgba(255,255,255,0.3);
+  border-top-color: #fff;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 600px) {
+  .auth-container form {
+    width: 90%;
+    padding: 20px;
+  }
+
+  .auth-container h2 {
+    font-size: 22px;
+  }
+
+  .input, .role-select {
+    font-size: 14px;
+    padding: 10px 12px;
+  }
+
+  .btn {
+    font-size: 14px;
+    padding: 12px;
+  }
+}
