@@ -1,0 +1,183 @@
+<div class="auth-fullscreen">
+
+  <div class="auth-box-wrapper">
+
+    <!-- Sección izquierda: descripción y carrusel -->
+    <div class="auth-left">
+      <h2>Bienvenido a ESIMedia</h2>
+      <p>
+        La experiencia de streaming definitiva: disfruta de películas, series, documentales, música y pódcasts en un mismo lugar. 
+        Accede a un catálogo variado de contenidos multimedia con la mejor calidad de imagen y sonido, disponible en cualquier 
+        dispositivo y en cualquier momento. Personaliza tu experiencia, descubre nuevas recomendaciones y comparte tus favoritos 
+        con amigos y comunidad.
+      </p>
+
+      <!-- Carrusel de fotos -->
+      <div class="carousel-container">
+        <button class="carousel-btn left" (click)="prev()">‹</button>
+        <div class="carousel-viewport">
+          <div class="carousel-inner" [style.transform]="'translateX(-' + (currentIndex * 100) + '%)'">
+            <img *ngFor="let foto of fotos" [src]="foto" alt="Foto de película">
+          </div>
+        </div>
+        <button class="carousel-btn right" (click)="next()">›</button>
+      </div>
+    </div>
+
+    <!-- Sección derecha: formulario de registro -->
+    <div class="auth-card">
+      <h2>Crear Cuenta</h2>
+
+      <form #f="ngForm" (ngSubmit)="onSubmit(f)">
+
+        <!-- Nombre -->
+        <input class="input"
+               name="nombre"
+               [(ngModel)]="nombre"
+               required
+               #nombreModel="ngModel"
+               [disabled]="isLoading"
+               [ngClass]="{'input-error': nombreModel.invalid && nombreModel.dirty}"
+               placeholder="Nombre *">
+        <small class="error-msg" *ngIf="nombreModel.invalid && nombreModel.dirty">Falta el nombre</small>
+
+        <!-- Apellidos -->
+        <input class="input"
+               name="apellidos"
+               [(ngModel)]="apellidos"
+               required
+               #apellidosModel="ngModel"
+               [disabled]="isLoading"
+               [ngClass]="{'input-error': apellidosModel.invalid && apellidosModel.dirty}"
+               placeholder="Apellidos *">
+        <small class="error-msg" *ngIf="apellidosModel.invalid && apellidosModel.dirty">Faltan los apellidos</small>
+
+        <!-- Email -->
+        <input class="input"
+               name="email"
+               type="email"
+               [(ngModel)]="email"
+               required
+               [pattern]="emailPattern.source"
+               #emailModel="ngModel"
+               [disabled]="isLoading"
+               [ngClass]="{'input-error': emailModel.invalid && emailModel.dirty}"
+               placeholder="Email *">
+        <small class="error-msg" *ngIf="emailModel.errors?.['required'] && emailModel.dirty">Falta el email</small>
+        <small class="error-msg" *ngIf="emailModel.errors?.['pattern'] && emailModel.dirty">Email no válido</small>
+
+        <!-- Alias -->
+        <input class="input" name="alias" [(ngModel)]="alias" [disabled]="isLoading" placeholder="Alias (opcional)">
+
+        <!-- Fecha de nacimiento -->
+        <input class="input"
+               name="fechaNac"
+               type="date"
+               [(ngModel)]="fechaNac"
+               required
+               #fechaModel="ngModel"
+               [disabled]="isLoading"
+               [ngClass]="{'input-error': (fechaModel.invalid && fechaModel.dirty) || (fechaModel.dirty && fechaInvalida)}"
+               placeholder="Fecha Nacimiento *">
+        <small class="error-msg" *ngIf="fechaModel.errors?.['required'] && fechaModel.dirty">Falta la fecha de nacimiento</small>
+        <small class="error-msg" *ngIf="fechaModel.dirty && fechaInvalida">La fecha no puede ser futura</small>
+
+        <!-- Rol -->
+        <select class="input role-select"
+                name="role"
+                [(ngModel)]="role"
+                required
+                #roleModel="ngModel"
+                [disabled]="isLoading"
+                [ngClass]="{'input-error': roleModel.invalid && roleModel.dirty}">
+          <option value="" disabled selected>Selecciona un rol *</option>
+          <option value="usuario">Usuario</option>
+          <option value="Gestor de Contenido">Gestor de Contenido</option>
+          <option value="Administrador">Administrador</option>
+        </select>
+        <small class="error-msg" *ngIf="roleModel.invalid && roleModel.dirty">Selecciona un rol</small>
+
+        <!-- Contraseña -->
+        <div class="password-field">
+          <input class="input"
+                 [type]="showPwd ? 'text' : 'password'"
+                 name="pwd"
+                 [(ngModel)]="pwd"
+                 required
+                 minlength="8"
+                 #pwdModel="ngModel"
+                 [disabled]="isLoading"
+                 [ngClass]="{'input-error': (pwdModel.invalid && pwdModel.dirty) || (pwdModel.dirty && pwdIssues.length>0)}"
+                 placeholder="Contraseña *">
+          <button type="button" class="toggle-eye" (click)="togglePwd()" [disabled]="isLoading">
+            {{ showPwd ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <small class="error-msg" *ngIf="pwdModel.errors?.['required'] && pwdModel.dirty">Falta la contraseña</small>
+
+        <ul class="error-list" *ngIf="pwdModel.dirty && pwdIssues.length">
+          <li *ngFor="let r of pwdIssues" class="error-msg">• {{ r }}</li>
+        </ul>
+        <div class="strength-wrapper" *ngIf="pwd.length">
+          <div class="strength-bar" [class.s1]="pwdScore===1" [class.s2]="pwdScore===2"
+               [class.s3]="pwdScore===3" [class.s4]="pwdScore===4"></div>
+          <small class="strength-label">Fuerza: {{ pwdStrengthLabel }}</small>
+        </div>
+
+        <small class="info-msg" *ngIf="isCheckingPwned && pwd.length">Comprobando contraseña...</small>
+        <small class="error-msg" *ngIf="!isCheckingPwned && (pwnedCount || 0) > 0">
+          Esta contraseña aparece en filtraciones {{ pwnedCount }} veces. Elige otra distinta.
+        </small>
+        <small class="ok-msg" *ngIf="!isCheckingPwned && pwd.length && pwnedCount === 0">
+          Esta contraseña no aparece en el diccionario de contraseñas comprometidas.
+        </small>
+
+        <!-- Repetir contraseña -->
+        <div class="password-field">
+          <input class="input"
+                 [type]="showPwd2 ? 'text' : 'password'"
+                 name="pwd2"
+                 [(ngModel)]="pwd2"
+                 required
+                 #pwd2Model="ngModel"
+                 [disabled]="isLoading"
+                 [ngClass]="{'input-error': (pwd2Model.invalid && pwd2Model.dirty) || (pwd2Model.dirty && pwdMismatch)}"
+                 placeholder="Repetir Contraseña *">
+          <button type="button" class="toggle-eye" (click)="togglePwd2()" [disabled]="isLoading">
+            {{ showPwd2 ? '🙈' : '👁️' }}
+          </button>
+        </div>
+        <small class="error-msg" *ngIf="pwd2Model.errors?.['required'] && pwd2Model.dirty">Falta confirmar la contraseña</small>
+        <small class="error-msg" *ngIf="pwd2Model.dirty && pwdMismatch">Las contraseñas no coinciden</small>
+
+        <!-- VIP -->
+        <label class="chkline">
+          <input type="checkbox" [(ngModel)]="vip" name="vip" [disabled]="isLoading">
+          ¿Quiere usted ser VIP?
+        </label>
+
+        <!-- Foto -->
+        <div class="file-upload">
+          <label for="foto">Foto de perfil (máx 2MB):</label>
+          <input type="file" id="foto" (change)="onFileChange($event)" [disabled]="isLoading">
+        </div>
+
+        <!-- Términos -->
+        <label class="chkline terms">
+          <input type="checkbox" [(ngModel)]="termsAccepted" name="termsAccepted" [disabled]="isLoading" required>
+          Acepto los <a href="#" target="_blank">Términos</a> y la <a href="#" target="_blank">Política de Privacidad</a> *
+        </label>
+
+        <!-- Botón -->
+        <button class="btn" type="submit"
+                [disabled]="isLoading || f.invalid || pwdIssues.length>0 || pwdMismatch || fechaInvalida || !termsAccepted">
+          <span *ngIf="!isLoading">Registrar</span>
+          <span *ngIf="isLoading" class="spinner"></span>
+        </button>
+
+      </form>
+    </div>
+
+  </div>
+
+</div>

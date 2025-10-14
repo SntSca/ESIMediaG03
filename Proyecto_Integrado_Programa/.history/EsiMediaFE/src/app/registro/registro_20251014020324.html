@@ -1,0 +1,115 @@
+<div class="auth-container">
+  <h2>Crear Cuenta</h2>
+
+  <form #f="ngForm" (ngSubmit)="onSubmit(f)">
+
+    <input class="input" name="nombre" [(ngModel)]="nombre" required
+           #nombreModel="ngModel" [disabled]="isLoading"
+           [ngClass]="{'input-error': nombreModel.invalid && nombreModel.dirty}"
+           placeholder="Nombre *">
+    <small class="error-msg" *ngIf="nombreModel.invalid && nombreModel.dirty">Falta el nombre</small>
+
+    <input class="input" name="apellidos" [(ngModel)]="apellidos" required
+           #apellidosModel="ngModel" [disabled]="isLoading"
+           [ngClass]="{'input-error': apellidosModel.invalid && apellidosModel.dirty}"
+           placeholder="Apellidos *">
+    <small class="error-msg" *ngIf="apellidosModel.invalid && apellidosModel.dirty">Faltan los apellidos</small>
+
+    <input class="input" name="email" type="email" [(ngModel)]="email" required
+           [pattern]="emailPattern.source" #emailModel="ngModel" [disabled]="isLoading"
+           [ngClass]="{'input-error': emailModel.invalid && emailModel.dirty}"
+           placeholder="Email *">
+    <small class="error-msg" *ngIf="emailModel.errors?.['required'] && emailModel.dirty">Falta el email</small>
+    <small class="error-msg" *ngIf="emailModel.errors?.['pattern'] && emailModel.dirty">Email no válido</small>
+
+    <input class="input" name="alias" [(ngModel)]="alias" [disabled]="isLoading" placeholder="Alias (opcional)">
+
+    <input class="input" name="fechaNac" type="date" [(ngModel)]="fechaNac" required
+           #fechaModel="ngModel" [disabled]="isLoading"
+           [ngClass]="{'input-error': (fechaModel.invalid && fechaModel.dirty) || (fechaModel.dirty && fechaInvalida)}"
+           placeholder="Fecha Nacimiento *">
+    <small class="error-msg" *ngIf="fechaModel.errors?.['required'] && fechaModel.dirty">Falta la fecha de nacimiento</small>
+    <small class="error-msg" *ngIf="fechaModel.dirty && fechaInvalida">La fecha no puede ser futura</small>
+
+    <select class="input role-select" name="role" [(ngModel)]="role" required
+            #roleModel="ngModel" [disabled]="isLoading"
+            [ngClass]="{'input-error': roleModel.invalid && roleModel.dirty}">
+      <option value="" disabled selected>Selecciona un rol *</option>
+      <option value="usuario">Usuario</option>
+      <option value="Gestor de Contenido">Gestor de Contenido</option>
+      <option value="Administrador">Administrador</option>
+    </select>
+    <small class="error-msg" *ngIf="roleModel.invalid && roleModel.dirty">Selecciona un rol</small>
+
+    <!-- Contraseña -->
+    <div class="password-field">
+      <input class="input" [type]="showPwd ? 'text' : 'password'" name="pwd" [(ngModel)]="pwd" required minlength="8"
+             #pwdModel="ngModel" [disabled]="isLoading"
+             [ngClass]="{'input-error': (pwdModel.invalid && pwdModel.dirty) || (pwdModel.dirty && pwdIssues.length>0)}"
+             placeholder="Contraseña *">
+      <button type="button" class="toggle-eye" (click)="togglePwd()" [disabled]="isLoading">{{ showPwd ? '🙈' : '👁️' }}</button>
+    </div>
+
+    <ul class="error-list" *ngIf="pwdModel.dirty && pwdIssues.length">
+      <li *ngFor="let r of pwdIssues" class="error-msg">• {{ r }}</li>
+    </ul>
+
+    <div class="strength-wrapper" *ngIf="pwd.length">
+      <div class="strength-bar" [class.s1]="pwdScore===1" [class.s2]="pwdScore===2"
+           [class.s3]="pwdScore===3" [class.s4]="pwdScore===4"></div>
+      <small class="strength-label">Fuerza: {{ pwdStrengthLabel }}</small>
+    </div>
+
+    <!-- Repetir contraseña -->
+    <div class="password-field">
+      <input class="input" [type]="showPwd2 ? 'text' : 'password'" name="pwd2" [(ngModel)]="pwd2" required
+             #pwd2Model="ngModel" [disabled]="isLoading"
+             [ngClass]="{'input-error': (pwd2Model.invalid && pwd2Model.dirty) || (pwd2Model.dirty && pwdMismatch)}"
+             placeholder="Repetir Contraseña *">
+      <button type="button" class="toggle-eye" (click)="togglePwd2()" [disabled]="isLoading">{{ showPwd2 ? '🙈' : '👁️' }}</button>
+    </div>
+
+    <!-- Avatar -->
+    <div class="avatar-selector">
+      <label>Elige tu avatar:</label>
+      <button type="button" class="btn" (click)="openAvatarModal()">Seleccionar avatar</button>
+
+      <div class="selected-avatar" *ngIf="selectedAvatar">
+        <img [src]="selectedAvatar" alt="avatar seleccionado">
+      </div>
+    </div>
+
+    <label class="chkline">
+      <input type="checkbox" [(ngModel)]="vip" name="vip" [disabled]="isLoading">
+      ¿Quiere usted ser VIP?
+    </label>
+
+    <label class="chkline terms">
+      <input type="checkbox" [(ngModel)]="termsAccepted" name="termsAccepted" [disabled]="isLoading" required>
+      Acepto los <a href="#" target="_blank">Términos</a> y la <a href="#" target="_blank">Política de Privacidad</a> *
+    </label>
+
+    <button class="btn" type="submit"
+            [disabled]="isLoading || f.invalid || pwdIssues.length>0 || pwdMismatch || fechaInvalida || !termsAccepted">
+      <span *ngIf="!isLoading">Registrar</span>
+      <span *ngIf="isLoading" class="spinner"></span>
+    </button>
+
+  </form>
+
+  <!-- Modal Avatares -->
+  <div class="avatar-modal" *ngIf="showAvatarModal">
+    <div class="avatar-modal-content">
+      <h3>Selecciona tu avatar</h3>
+      <div class="avatar-grid">
+        <div *ngFor="let avatar of avatars"
+             class="avatar-option"
+             [class.selected]="selectedAvatar === avatar"
+             (click)="selectAvatar(avatar)">
+          <img [src]="avatar" alt="avatar">
+        </div>
+      </div>
+      <button type="button" class="btn close-btn" (click)="toggleAvatarModal()">Cerrar</button>
+    </div>
+  </div>
+</div>

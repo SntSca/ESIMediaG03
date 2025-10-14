@@ -1,0 +1,31 @@
+<div class="password-field">
+  <input class="input"
+    [type]="showPwd ? 'text' : 'password'"
+    name="pwd"
+    [(ngModel)]="pwd"
+    required
+    minlength="8"
+    #pwdModel="ngModel"
+    (ngModelChange)="onPwdChange()"
+    [ngClass]="{
+      'input-error': (pwdModel.invalid && pwdModel.dirty) || (pwdModel.dirty && pwdIssues.length>0),
+      'input-valid': pwdModel.valid && pwdIssues.length==0
+    }"
+    placeholder="Contraseña *">
+  <button type="button" class="toggle-eye" (click)="togglePwd()">{{ showPwd ? '🙈' : '👁️' }}</button>
+</div>
+
+<ul class="error-list" *ngIf="pwdModel.dirty && pwdIssues.length">
+  <li *ngFor="let r of pwdIssues" class="error-msg">• {{ r }}</li>
+</ul>
+
+<!-- 🔹 Comprobación de contraseña comprometida -->
+<div class="pwned-info" *ngIf="pwdModel.dirty && pwd.length >= 8">
+  <span *ngIf="isCheckingPwned">🔍 Comprobando si la contraseña está comprometida...</span>
+  <span *ngIf="pwnedCount !== null && pwnedCount > 0" class="error-msg">
+    ⚠️ Esta contraseña aparece en {{ pwnedCount }} filtraciones públicas.
+  </span>
+  <span *ngIf="pwnedCount !== null && pwnedCount === 0 && !isCheckingPwned" class="success-msg">
+    ✅ Esta contraseña no aparece en filtraciones conocidas.
+  </span>
+</div>

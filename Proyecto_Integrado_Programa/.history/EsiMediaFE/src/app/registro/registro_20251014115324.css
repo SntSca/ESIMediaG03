@@ -1,0 +1,208 @@
+/* --- CONTENEDOR GENERAL --- */
+html, body {
+  margin: 0;
+  padding: 0;
+  height: 100%;
+  background: #1a1a1a;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  overflow-x: auto; /* ❌ evita scrollbar horizontal */
+  overflow-y: auto;   /* permite scroll vertical solo si es necesario */
+}
+
+/* --- CONTENEDOR DE AUTENTICACIÓN --- */
+.auth-container {
+  width: 420px;
+  margin-top: 15px; /* 🔹 sube el cuadro gris */
+  background: #111;
+  border-radius: 12px;
+  padding: 25px 30px;
+  box-shadow: 0 4px 20px rgba(0, 0, 0, 0.6);
+  color: #fff;
+  box-sizing: border-box;
+  overflow: hidden; /* ✅ evita scrollbar interno */
+}
+
+/* --- TÍTULO --- */
+.auth-container h2 {
+  text-align: center;
+  margin: 0 0 20px 0; /* 🔹 elimina espacio superior extra */
+  color: #fff;
+  font-weight: bold;
+}
+
+/* --- CAMPOS DE ENTRADA --- */
+.input {
+  width: 100%;
+  padding: 10px 14px;
+  margin: 8px 0;
+  background: #222;
+  border: 2px solid transparent;
+  border-radius: 8px;
+  color: #fff;
+  font-size: 15px;
+  box-sizing: border-box;
+  transition: border-color 0.3s ease;
+}
+
+/* Estados de validación */
+.input-error {
+  border-color: #e74c3c;
+}
+
+.input-valid {
+  border-color: #27ae60;
+}
+
+/* --- SELECT --- */
+.role-select {
+  color: #000; /* letras del select en negro */
+  background: #ddd;
+}
+
+/* --- MENSAJES DE ERROR --- */
+.error-msg {
+  display: block;
+  color: #ff6b6b;
+  font-size: 13px;
+  margin-top: -2px;
+  margin-bottom: 6px;
+}
+
+/* --- LISTA DE ERRORES DE CONTRASEÑA --- */
+.error-list {
+  list-style: none;
+  padding: 0;
+  margin: 5px 0 10px 0;
+  max-height: none; /* ✅ sin límite, sin scroll interno */
+  overflow: visible;
+}
+
+/* --- CAMPO DE CONTRASEÑA + ICONO OJO --- */
+.password-field {
+  position: relative;
+}
+
+.toggle-eye {
+  position: absolute;
+  right: 10px;
+  top: 50%;
+  transform: translateY(-50%);
+  background: none;
+  border: none;
+  color: #fff;
+  cursor: pointer;
+  font-size: 18px;
+}
+
+/* --- BOTONES --- */
+.btn {
+  width: 100%;
+  margin-top: 10px;
+  background: #e50914;
+  color: #fff;
+  border: none;
+  padding: 10px;
+  border-radius: 8px;
+  cursor: pointer;
+  font-weight: bold;
+  transition: background 0.3s ease;
+}
+
+.btn:hover {
+  background: #ff0f1c;
+}
+
+/* --- CHECKBOXES --- */
+.chkline {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 14px;
+  margin-top: 10px;
+}
+
+.chkline a {
+  color: #00bfff;
+  text-decoration: none;
+}
+
+/* --- MODAL DE AVATARES --- */
+.avatar-modal {
+  position: fixed;
+  inset: 0;
+  background: rgba(0, 0, 0, 0.75);
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  z-index: 10;
+  overflow: hidden;
+}
+
+.avatar-modal-content {
+  background: #1e1e1e;
+  padding: 20px;
+  border-radius: 10px;
+  text-align: center;
+  max-height: 90vh;
+  overflow: hidden; /* ✅ evita scroll dentro del modal */
+}
+
+.avatar-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(70px, 1fr));
+  gap: 10px;
+  margin: 15px 0;
+}
+
+.avatar-option {
+  border: 2px solid transparent;
+  border-radius: 8px;
+  cursor: pointer;
+  transition: transform 0.2s, border-color 0.2s;
+}
+
+.avatar-option img {
+  width: 70px;
+  height: 70px;
+  border-radius: 8px;
+  object-fit: cover;
+}
+
+.avatar-option:hover {
+  transform: scale(1.05);
+  border-color: #e50914;
+}
+
+.avatar-option.selected {
+  border-color: #27ae60;
+}
+
+.close-modal {
+  background: #e50914;
+  color: #fff;
+  border: none;
+  padding: 8px 16px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+
+.close-modal:hover {
+  background: #ff0f1c;
+}
+
+/* --- SPINNER DE CARGA --- */
+.spinner {
+  width: 16px;
+  height: 16px;
+  border: 2px solid #fff;
+  border-top: 2px solid transparent;
+  border-radius: 50%;
+  display: inline-block;
+  animation: spin 1s linear infinite;
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
