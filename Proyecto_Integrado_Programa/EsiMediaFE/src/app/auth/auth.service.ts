@@ -83,4 +83,31 @@ export class AuthService {
   createCreator(body: CreateCreatorRequest): Observable<{status:string}> {
     return this.http.post<{status:string}>(`${this.usersBase}/admin/creators`, body);
   }
+
+  listAdmins(search?: string, blocked?: boolean): Observable<AppUser[]> {
+    let params = new HttpParams();
+    const q = search?.trim();
+    if (q) params = params.set('search', q);
+    if (blocked != null) params = params.set('blocked', String(blocked));
+    return this.http.get<AppUser[]>(`${this.usersBase}/admin/admins`, { params });
+  }
+
+  updateAdmin(id: string, dto: any): Observable<AppUser> {
+    return this.http.patch<AppUser>(`${this.usersBase}/admin/admins/${id}`, dto);
+  }
+
+  blockAdmin(id: string): Observable<AppUser> {
+    return this.http.post<AppUser>(`${this.usersBase}/admin/admins/${id}/block`, {});
+  }
+
+  unblockAdmin(id: string): Observable<AppUser> {
+    return this.http.post<AppUser>(`${this.usersBase}/admin/admins/${id}/unblock`, {});
+  }
+
+  deleteAdmin(id: string): Observable<void> {
+    return this.http.delete<void>(`${this.usersBase}/admin/admins/${id}`);
+  }
+  createAdmin(body: any): Observable<{ status: string }> {
+    return this.http.post<{ status: string }>(`${this.usersBase}/admin/admins`, body);
+  }
 }

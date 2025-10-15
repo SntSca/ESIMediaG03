@@ -13,9 +13,12 @@ import { firstValueFrom } from 'rxjs';
   styleUrls: ['./registro.css']
 })
 export class Registro implements OnInit, OnDestroy {
-  @Input() modoAdminCreador = false;
-  @Output() creado = new EventEmitter<void>();
+  @Input() rolFijo?: 'ADMINISTRADOR' | 'GESTOR_CONTENIDO';
 
+  @Input() pedirPwdAdmin = false;
+  @Input() modoAdminCreador = false;
+
+  @Output() creado = new EventEmitter<void>();
   nombre = '';
   apellidos = '';
   email = '';
@@ -26,7 +29,7 @@ export class Registro implements OnInit, OnDestroy {
   vip = false;
   role: 'usuario' | 'Gestor de Contenido' | 'Administrador' = 'usuario';
   termsAccepted = false;
-
+  departamento = '';
   foto: string | null = null;
   descripcion = '';
   especialidad = '';
@@ -61,19 +64,52 @@ export class Registro implements OnInit, OnDestroy {
   showAvatarModal = false;
 
   constructor(private readonly usersService: UsersService) {}
-  get isGestor(): boolean { return this.role === 'Gestor de Contenido'; }
+
+  get esAltaCreador(): boolean {
+    return this.rolFijo === 'GESTOR_CONTENIDO' || this.modoAdminCreador === true;
+  }
+  get esAltaAdmin(): boolean {
+    return this.rolFijo === 'ADMINISTRADOR';
+  }
+  get isGestor(): boolean {
+    return this.esAltaCreador || this.role === 'Gestor de Contenido';
+  }
+
+  /** Mostrar contraseñas:
+   *  - Usuarios y Creadores: SIEMPRE
+   *  - Admin: solo si pedirPwdAdmin = true (alta desde botón)
+   */
+  get showPasswordFields(): boolean {
+    return this.esAltaAdmin ? this.pedirPwdAdmin : true;
+  }
+
   get hasPwd(): boolean { return this.pwd.trim().length > 0; }
+  get roleDisabled(): boolean { return !!this.rolFijo; }
 
   ngOnInit(): void {
-    if (this.modoAdminCreador) {
+    if (!this.rolFijo && this.modoAdminCreador) {
+      this.rolFijo = 'GESTOR_CONTENIDO';
+    }
+
+    if (this.esAltaCreador) {
       this.role = 'Gestor de Contenido';
       this.vip = false;
       this.termsAccepted = true;
       this.fechaNac = '';
+    } else if (this.esAltaAdmin) {
+      this.role = 'Administrador';
+      this.vip = false;
+      this.termsAccepted = true;
+      this.fechaNac = '';
+      if (!this.pedirPwdAdmin) {
+        this.pwd = '';
+        this.pwd2 = '';
+      }
     }
   }
 
   get pwdIssues(): string[] {
+    if (!this.showPasswordFields) return [];
     const issues: string[] = [];
     if (this.pwd.length < 8) issues.push('Al menos 8 caracteres');
     if (!/[A-Z]/.test(this.pwd)) issues.push('Una letra mayúscula');
@@ -82,8 +118,8 @@ export class Registro implements OnInit, OnDestroy {
     if (!/[!@#$%^&*(),.?":{}|<>_-]/.test(this.pwd)) issues.push('Un carácter especial');
     return issues;
   }
-
   get pwdScore(): number {
+    if (!this.showPasswordFields) return 0;
     let score = 0;
     if (this.pwd.length >= 8) score++;
     if (/[A-Z]/.test(this.pwd)) score++;
@@ -92,30 +128,32 @@ export class Registro implements OnInit, OnDestroy {
     if (/[!@#$%^&*(),.?":{}|<>]/.test(this.pwd)) score++;
     return Math.min(4, score);
   }
-
   get pwdStrengthLabel(): string {
+    if (!this.showPasswordFields) return '';
     if (this.pwdScore <= 1) return 'Débil';
     if (this.pwdScore <= 3) return 'Media';
     return 'Fuerte';
   }
-
   get pwdMismatch(): boolean {
+    if (!this.showPasswordFields) return false;
     return this.pwd2.length > 0 && this.pwd !== this.pwd2;
   }
 
   get fechaInvalida(): boolean {
+    if (this.esAltaAdmin) return false;
     if (!this.fechaNac) return false;
     return new Date(this.fechaNac) > new Date();
   }
 
   get pwnedSeverity(): 'ok' | 'warn' | 'unknown' {
+    if (!this.showPasswordFields) return 'unknown';
     if (!this.hasPwd) return 'unknown';
     if (this.isCheckingPwned) return 'unknown';
     if (this.pwnedCount === null) return 'unknown';
     return (this.pwnedCount ?? 0) > 0 ? 'warn' : 'ok';
   }
-
   get pwnedMessage(): string {
+    if (!this.showPasswordFields) return '';
     if (!this.hasPwd) return '';
     if (this.isCheckingPwned) return 'Comprobando en filtraciones públicas…';
     if (this.pwnedCount === null) return 'No se pudo verificar ahora. Intenta de nuevo más tarde.';
@@ -123,13 +161,12 @@ export class Registro implements OnInit, OnDestroy {
     return '✅ No aparece en filtraciones conocidas.';
   }
 
-  togglePwd() { this.showPwd = !this.showPwd; }
-  togglePwd2() { this.showPwd2 = !this.showPwd2; }
+  togglePwd()  { if (this.showPasswordFields) this.showPwd  = !this.showPwd; }
+  togglePwd2() { if (this.showPasswordFields) this.showPwd2 = !this.showPwd2; }
 
   private showAlert(title: string, text: string, icon: 'error' | 'info' | 'warning' | 'success') {
     void Swal.fire({ title, html: text, icon, confirmButtonText: 'Cerrar' });
   }
-
   private handleFormError(message: string) {
     const firstInvalid = document.querySelector('.input.input-error') as HTMLElement | null;
     firstInvalid?.focus();
@@ -139,12 +176,8 @@ export class Registro implements OnInit, OnDestroy {
   private async sha1Hex(text: string): Promise<string> {
     const data = new TextEncoder().encode(text);
     const hashBuffer = await crypto.subtle.digest('SHA-1', data);
-    return Array.from(new Uint8Array(hashBuffer))
-      .map(b => b.toString(16).padStart(2, '0'))
-      .join('')
-      .toUpperCase();
+    return Array.from(new Uint8Array(hashBuffer)).map(b => b.toString(16).padStart(2, '0')).join('').toUpperCase();
   }
-
   private async checkPasswordPwned(password: string): Promise<number> {
     if (!password) return 0;
     const fullHash = await this.sha1Hex(password);
@@ -159,8 +192,8 @@ export class Registro implements OnInit, OnDestroy {
     }
     return 0;
   }
-
   private async ensurePwnedChecked(): Promise<void> {
+    if (!this.showPasswordFields) return;
     if (!this.pwd || this.pwd === this.pwnedCheckedFor) return;
     this.isCheckingPwned = true;
     try {
@@ -173,8 +206,8 @@ export class Registro implements OnInit, OnDestroy {
       this.isCheckingPwned = false;
     }
   }
-
   async onPwdChange() {
+    if (!this.showPasswordFields) return;
     this.pwnedCheckedFor = '';
     this.pwnedCount = null;
     if (this.pwnedDebounce) clearTimeout(this.pwnedDebounce);
@@ -199,7 +232,6 @@ export class Registro implements OnInit, OnDestroy {
       this.isCheckingAlias = false;
     }
   }
-
   onAliasChange() {
     this.aliasUnique = null;
     this.aliasCheckedFor = '';
@@ -214,11 +246,16 @@ export class Registro implements OnInit, OnDestroy {
 
   openAvatarModal() { this.showAvatarModal = true; }
   closeAvatarModal() { this.showAvatarModal = false; }
-
   selectAvatar(avatar: string) {
     this.selectedAvatar = avatar;
     this.foto = avatar;
+    self.setTimeout(() => {}, 0);
     this.closeAvatarModal();
+  }
+  onRoleChange(val: string) {
+    if (this.rolFijo) return;
+    this.role = val as any;
+    if (val !== 'usuario') this.vip = false;
   }
 
   async onSubmit(form: NgForm) {
@@ -226,7 +263,7 @@ export class Registro implements OnInit, OnDestroy {
     if (now - this.lastSubmitAt < 5000)
       return this.showAlert('Demasiados intentos', 'Espera unos segundos antes de volver a intentarlo.', 'warning');
 
-    if (!this.modoAdminCreador && !this.termsAccepted)
+    if (!this.esAltaCreador && !this.esAltaAdmin && !this.termsAccepted)
       return this.showAlert('Falta aceptación', 'Debes aceptar los Términos y la Política de Privacidad.', 'info');
 
     if (!this.foto)
@@ -239,15 +276,25 @@ export class Registro implements OnInit, OnDestroy {
     if (this.aliasUnique !== true)
       return this.showAlert('Alias no disponible', 'El alias ya existe o no se ha podido verificar. Elige otro.', 'error');
 
-    const formHasErrors = form.invalid || this.pwdIssues.length > 0 || this.pwdMismatch || (!this.modoAdminCreador && this.fechaInvalida);
-    if (formHasErrors)
-      return this.handleFormError('Hay campos con errores. Corrígelos y vuelve a intentarlo.');
+    let formHasErrors = form.invalid || this.fechaInvalida;
 
-    await this.ensurePwnedChecked();
-    if ((this.pwnedCount ?? 0) > 0)
-      return this.showAlert('Contraseña insegura',
-        `Esta contraseña aparece en filtraciones públicas <b>${this.pwnedCount}</b> veces.<br>Por favor, elige otra distinta.`,
-        'error');
+    if (this.esAltaAdmin && !this.departamento.trim()) {
+      return this.handleFormError('Para Administrador, el departamento es obligatorio.');
+    }
+
+    if (this.showPasswordFields) {
+      formHasErrors = formHasErrors || this.pwdIssues.length > 0 || this.pwdMismatch;
+      if (formHasErrors) {
+        return this.handleFormError('Hay campos con errores. Corrígelos y vuelve a intentarlo.');
+      }
+      await this.ensurePwnedChecked();
+      if ((this.pwnedCount ?? 0) > 0)
+        return this.showAlert('Contraseña insegura',
+          `Esta contraseña aparece en filtraciones públicas <b>${this.pwnedCount}</b> veces.<br>Por favor, elige otra distinta.`,
+          'error');
+    } else if (formHasErrors) {
+      return this.handleFormError('Hay campos con errores. Corrígelos y vuelve a intentarlo.');
+    }
 
     if (this.isGestor) {
       if (!this.descripcion.trim() || !this.especialidad.trim() || !(this.tipoContenido === 'Audio' || this.tipoContenido === 'Video')) {
@@ -256,46 +303,66 @@ export class Registro implements OnInit, OnDestroy {
     }
 
     const base: any = {
-    nombre: this.nombre,
-    apellidos: this.apellidos,
-    email: this.email?.trim()?.toLowerCase(),
-    alias: this.alias.trim(),
-    pwd: this.pwd,
-    pwd2: this.pwd2,
-    vip: this.vip,
-    role: this.role,
-    foto: this.foto
-  };
-  if (!this.modoAdminCreador && this.fechaNac) {
-    base.fechaNac = this.fechaNac;
-  }
+      nombre: this.nombre,
+      apellidos: this.apellidos,
+      email: this.email?.trim()?.toLowerCase(),
+      alias: this.alias.trim(),
+      vip: this.vip,
+      role: this.esAltaAdmin ? 'Administrador' : (this.esAltaCreador ? 'Gestor de Contenido' : this.role),
+      foto: this.foto
+    };
+    if (!this.esAltaCreador && !this.esAltaAdmin && this.fechaNac) {
+      base.fechaNac = this.fechaNac;
+    }
     if (this.isGestor) {
       base.descripcion = this.descripcion.trim();
       base.especialidad = this.especialidad.trim();
       base.tipoContenido = this.tipoContenido;
     }
+    if (this.esAltaAdmin) {
+      base.departamento = this.departamento.trim();
+    }
+    if (this.showPasswordFields) {
+      base.pwd  = this.pwd;
+      base.pwd2 = this.pwd2;
+    }
 
     this.isLoading = true;
     this.lastSubmitAt = now;
 
-    if (this.modoAdminCreador) {
+    if (this.esAltaCreador) {
       this.usersService.crearCreadorComoAdmin(base).subscribe({
         next: () => {
           this.isLoading = false;
           this.showAlert('¡Listo!', 'Creador dado de alta.', 'success');
-          this.creado.emit();
+        this.creado.emit();
         },
         error: (error) => this.handleHttpError(error)
       });
-    } else {
-      this.usersService.registrar(base).subscribe({
+      return;
+    }
+
+    if (this.esAltaAdmin) {
+      (this.usersService as any).crearAdminComoAdmin?.(base)?.subscribe({
         next: () => {
           this.isLoading = false;
-          this.showAlert('¡Éxito!', 'Registro correcto.', 'success');
+          this.showAlert('¡Listo!', 'Administrador dado de alta.', 'success');
+          this.creado.emit();
         },
-        error: (error) => this.handleHttpError(error)
-      });
+        error: (error: any) => this.handleHttpError(error)
+      }) ?? (() => {
+        this.isLoading = false;
+        this.showAlert('Pendiente de backend', 'Implementa UsersService.crearAdminComoAdmin(base) o mapea a tu endpoint actual.', 'info');
+      })();
+      return;
     }
+    this.usersService.registrar(base).subscribe({
+      next: () => {
+        this.isLoading = false;
+        this.showAlert('¡Éxito!', 'Registro correcto.', 'success');
+      },
+      error: (error) => this.handleHttpError(error)
+    });
   }
 
   private handleHttpError(error: any) {

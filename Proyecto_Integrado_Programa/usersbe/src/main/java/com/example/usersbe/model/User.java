@@ -18,8 +18,15 @@ public class User {
     public enum MfaMethod {
         NONE, TOTP, EMAIL_OTP
     }
+
     public enum TipoContenido {
         AUDIO, VIDEO
+    }
+    public enum AdminApprovalStatus {
+        NONE,
+        PENDING,
+        APPROVED,
+        REJECTED
     }
 
     @Id
@@ -33,6 +40,7 @@ public class User {
 
     @Indexed(unique = true)
     private String alias;
+    private String departamento;
 
     private LocalDate fechaNac;
     private String pwd;
@@ -42,6 +50,7 @@ public class User {
     private String descripcion;
     private String especialidad;
     private TipoContenido tipoContenido;
+
     @Transient
     private String confirmarPwd;
 
@@ -58,6 +67,10 @@ public class User {
     private LocalDateTime lastFailedAt;
     private boolean blocked = false;
     private LocalDateTime vipSince;
+    @Indexed
+    private String adminApprovalToken;
+    private LocalDateTime adminApprovalExpires;
+    private AdminApprovalStatus adminApprovalStatus = AdminApprovalStatus.NONE;
 
     public User() { this.id = UUID.randomUUID().toString(); }
 
@@ -83,22 +96,17 @@ public class User {
     public void setPwd(String pwd) { this.pwd = pwd; }
 
     public boolean isVip() { return vip; }
-
     public void setVip(boolean vip) {
-    this.vip = vip;
-    if (vip && this.vipSince == null) {
-        this.vipSince = LocalDateTime.now();
-    } else if (!vip) {
-        this.vipSince = null;
-    }
-    }
-    public LocalDateTime getVipSince() {
-    return vipSince;
+        this.vip = vip;
+        if (vip && this.vipSince == null) {
+            this.vipSince = LocalDateTime.now();
+        } else if (!vip) {
+            this.vipSince = null;
+        }
     }
 
-    public void setVipSince(LocalDateTime vipSince) {
-        this.vipSince = vipSince;
-    }
+    public LocalDateTime getVipSince() { return vipSince; }
+    public void setVipSince(LocalDateTime vipSince) { this.vipSince = vipSince; }
 
     public String getFoto() { return foto; }
     public void setFoto(String foto) { this.foto = foto; }
@@ -132,17 +140,27 @@ public class User {
 
     public boolean isBlocked() { return blocked; }
     public void setBlocked(boolean blocked) { this.blocked = blocked; }
-        
+
     public String getResetPasswordToken() { return resetPasswordToken; }
     public void setResetPasswordToken(String resetPasswordToken) { this.resetPasswordToken = resetPasswordToken; }
 
     public LocalDateTime getResetPasswordExpires() { return resetPasswordExpires; }
     public void setResetPasswordExpires(LocalDateTime resetPasswordExpires) { this.resetPasswordExpires = resetPasswordExpires; }
+
     public String getDescripcion() { return descripcion; }
     public void setDescripcion(String descripcion) { this.descripcion = descripcion; }
+
     public String getEspecialidad() { return especialidad; }
     public void setEspecialidad(String especialidad) { this.especialidad = especialidad; }
+
     public TipoContenido getTipoContenido() { return tipoContenido; }
     public void setTipoContenido(TipoContenido tipoContenido) { this.tipoContenido = tipoContenido; }
-    
+    public String getAdminApprovalToken() { return adminApprovalToken; }
+    public void setAdminApprovalToken(String adminApprovalToken) { this.adminApprovalToken = adminApprovalToken; }
+    public LocalDateTime getAdminApprovalExpires() { return adminApprovalExpires; }
+    public void setAdminApprovalExpires(LocalDateTime adminApprovalExpires) { this.adminApprovalExpires = adminApprovalExpires; }
+    public AdminApprovalStatus getAdminApprovalStatus() { return adminApprovalStatus; }
+    public void setAdminApprovalStatus(AdminApprovalStatus adminApprovalStatus) { this.adminApprovalStatus = adminApprovalStatus; }
+    public String getDepartamento() { return departamento; }
+    public void setDepartamento(String departamento) { this.departamento = departamento; }
 }

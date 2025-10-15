@@ -33,5 +33,5 @@ public interface UserDao extends MongoRepository<User, String> {
             " { 'email':  { $regex: ?1, $options: 'i' } }, " +
             " { 'nombre': { $regex: ?1, $options: 'i' } } ] }")
     List<User> searchCreatorsByBlocked(User.Role role, String search, boolean blocked);
-
+    User findByAdminApprovalToken(String adminApprovalToken);
 }

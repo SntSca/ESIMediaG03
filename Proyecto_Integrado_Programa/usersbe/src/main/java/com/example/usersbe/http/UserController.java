@@ -25,6 +25,7 @@ import org.springframework.web.bind.annotation.RestController;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.server.ResponseStatusException;
 
+import com.example.usersbe.dto.AdminCreationRequest;
 import com.example.usersbe.model.User;
 import com.example.usersbe.services.UserService;
 
@@ -39,6 +40,21 @@ public class UserController {
     public UserController(UserService userService) {
         this.userService = userService;
     }
+    
+    private static final String FIELD_EMAIL          = "email";
+    private static final String FIELD_MESSAGE        = "message";
+    private static final String FIELD_NOMBRE         = "nombre";
+    private static final String FIELD_APELLIDOS      = "apellidos";
+    private static final String FIELD_ALIAS          = "alias";
+    private static final String FIELD_FECHA_NAC      = "fechaNac";
+    private static final String FIELD_PWD            = "pwd";
+    private static final String FIELD_PWD2           = "pwd2";
+    private static final String FIELD_ROLE           = "role";
+    private static final String FIELD_FOTO           = "foto";
+    private static final String FIELD_DESCRIPCION    = "descripcion";
+    private static final String FIELD_ESPECIALIDAD   = "especialidad";
+    private static final String FIELD_TIPO_CONTENIDO = "tipoContenido";
+    private static final String FIELD_DEPARTAMENTO   = "departamento";
 
     private static final int MAX_ATTEMPTS = 3;
     private static final long WINDOW_MS = 10L * 60 * 1000;
@@ -46,9 +62,6 @@ public class UserController {
 
     private static final java.util.regex.Pattern EMAIL_RX =
         java.util.regex.Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$");
-
-    private static final String FIELD_EMAIL = "email";
-    private static final String FIELD_MESSAGE = "message";
 
     @GetMapping("/check-alias/{alias}")
     public Map<String, Object> checkAlias(@PathVariable("alias") String alias) {
@@ -58,44 +71,55 @@ public class UserController {
 
     @PostMapping("/Registrar")
     public void registrar(@RequestBody Map<String, String> info) {
-        validarCamposObligatorios(info, "nombre", "apellidos", FIELD_EMAIL, "fechaNac", "pwd", "pwd2", "role", "alias", "foto");
+        validarCamposObligatorios(
+            info,
+            FIELD_NOMBRE, FIELD_APELLIDOS, FIELD_EMAIL, FIELD_FECHA_NAC,
+            FIELD_PWD, FIELD_PWD2, FIELD_ROLE, FIELD_ALIAS, FIELD_FOTO
+        );
 
-        String nombre    = trim(info.get("nombre"));
-        String apellidos = trim(info.get("apellidos"));
-        String alias     = trim(info.get("alias"));
-        String email     = trim(info.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
-        String fechaNac  = trim(info.get("fechaNac"));
-        String pwd       = info.get("pwd");
-        String pwd2      = info.get("pwd2");
-        boolean vip      = Boolean.parseBoolean(info.getOrDefault("vip", "false"));
-        String foto      = trim(info.get("foto"));
+        final String nombre    = trim(info.get(FIELD_NOMBRE));
+        final String apellidos = trim(info.get(FIELD_APELLIDOS));
+        final String alias     = trim(info.get(FIELD_ALIAS));
+        final String email     = trim(info.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
+        final String fechaNac  = trim(info.get(FIELD_FECHA_NAC));
+        final String pwd       = info.get(FIELD_PWD);
+        final String pwd2      = info.get(FIELD_PWD2);
+        final boolean vip      = Boolean.parseBoolean(info.getOrDefault("vip", "false"));
+        final String foto      = trim(info.get(FIELD_FOTO));
 
         validarEmail(email);
         validarContrasena(pwd, pwd2);
 
-        User.Role role = parseRole(trim(info.get("role")));
+        final User.Role role = parseRole(trim(info.get(FIELD_ROLE)));
+
         String descripcion = null;
         String especialidad = null;
         User.TipoContenido tipoContenido = null;
+        String departamento = null;
 
         if (role == User.Role.GESTOR_CONTENIDO) {
-            validarCamposObligatorios(info, "descripcion", "especialidad", "tipoContenido");
-            descripcion = trim(info.get("descripcion"));
-            especialidad = trim(info.get("especialidad"));
-            tipoContenido = parseTipoContenido(trim(info.get("tipoContenido")));
+            validarCamposObligatorios(info, FIELD_DESCRIPCION, FIELD_ESPECIALIDAD, FIELD_TIPO_CONTENIDO);
+            descripcion   = trim(info.get(FIELD_DESCRIPCION));
+            especialidad  = trim(info.get(FIELD_ESPECIALIDAD));
+            tipoContenido = parseTipoContenido(trim(info.get(FIELD_TIPO_CONTENIDO)));
+        } else if (role == User.Role.ADMINISTRADOR) {
+            departamento = trimOrNull(info.get(FIELD_DEPARTAMENTO));
         }
 
         try {
             userService.registrar(
                 nombre, apellidos, alias, email, fechaNac, pwd, vip, foto, role,
-                descripcion, especialidad, tipoContenido
+                descripcion, especialidad, tipoContenido,
+                departamento
             );
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
         }
     }
 
+
     private static String trim(String s) { return s == null ? "" : s.trim(); }
+    private static String trimOrNull(String s) { return s == null ? null : s.trim(); }
 
     private void validarCamposObligatorios(Map<String, String> info, String... campos) {
         for (String campo : campos) {
@@ -339,6 +363,149 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("status","ok"));
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
+        }
+    }
+    
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PatchMapping("/admin/admins/{id}")
+    public ResponseEntity<Object> actualizarAdmin(
+            @PathVariable String id,
+            @RequestBody Map<String, String> body) {
+
+        try {
+            String alias        = body.get(FIELD_ALIAS);
+            String nombre       = body.get(FIELD_NOMBRE);
+            String apellidos    = body.get(FIELD_APELLIDOS);
+            String foto         = body.get(FIELD_FOTO);
+            String departamento = body.get(FIELD_DEPARTAMENTO);
+            if (body.containsKey(FIELD_EMAIL)) {
+                return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                        .body(Map.of("message", "No se permite modificar el email del administrador."));
+            }
+            User actualizado = userService.actualizarAdmin(
+                    id,
+                    alias == null ? null : alias.trim(),
+                    nombre == null ? null : nombre.trim(),
+                    apellidos == null ? null : apellidos.trim(),
+                    null,
+                    foto == null ? null : foto.trim(),
+                    departamento == null ? null : departamento.trim()
+            );
+            Map<String, Object> response = Map.of(
+                    "id", actualizado.getId(),
+                    FIELD_ALIAS, actualizado.getAlias(),
+                    FIELD_NOMBRE, actualizado.getNombre(),
+                    FIELD_APELLIDOS, actualizado.getApellidos(),
+                    FIELD_EMAIL, actualizado.getEmail(),
+                    "foto", actualizado.getFoto(),
+                    FIELD_DEPARTAMENTO, actualizado.getDepartamento(),
+                    "message", "Administrador actualizado correctamente."
+            );
+
+            return ResponseEntity.ok(response);
+
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST)
+                    .body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PostMapping("/admin/admins/{id}/block")
+    public ResponseEntity<Object> bloquearAdmin(@PathVariable String id) {
+        try {
+            User u = userService.bloquearAdmin(id);
+            return ResponseEntity.ok(u);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PostMapping("/admin/admins/{id}/unblock")
+    public ResponseEntity<Object> desbloquearAdmin(@PathVariable String id) {
+        try {
+            User u = userService.desbloquearAdmin(id);
+            return ResponseEntity.ok(u);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @DeleteMapping("/admin/admins/{id}")
+    public ResponseEntity<Object> eliminarAdmin(@PathVariable String id) {
+        try {
+            userService.eliminarAdmin(id);
+            return ResponseEntity.noContent().build();
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PostMapping("/admin/admins")
+    public ResponseEntity<Object> crearAdminPorAdmin(@RequestBody Map<String, String> body) {
+        validarCamposObligatorios(body,
+                FIELD_NOMBRE, FIELD_APELLIDOS, FIELD_EMAIL, FIELD_ALIAS, FIELD_PWD, FIELD_PWD2, FIELD_FOTO);
+
+        final String nombre       = trim(body.get(FIELD_NOMBRE));
+        final String apellidos    = trim(body.get(FIELD_APELLIDOS));
+        final String alias        = trim(body.get(FIELD_ALIAS));
+        final String email        = trim(body.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
+        final String pwd          = body.get(FIELD_PWD);
+        final String pwd2         = body.get(FIELD_PWD2);
+        final String fechaNac     = Optional.ofNullable(body.get(FIELD_FECHA_NAC))
+                .map(String::trim).filter(s -> !s.isEmpty()).orElse("2000-01-01");
+        final String foto         = trim(body.getOrDefault(FIELD_FOTO, "/static/fotos/image.png"));
+        final String departamento = trim(body.getOrDefault(FIELD_DEPARTAMENTO, ""));
+
+        validarEmail(email);
+        validarContrasena(pwd, pwd2);
+
+        AdminCreationRequest req = new AdminCreationRequest();
+        req.setNombre(nombre);
+        req.setApellidos(apellidos);
+        req.setAlias(alias);
+        req.setEmail(email);
+        req.setFechaNac(fechaNac);
+        req.setPwd(pwd);
+        req.setFoto(foto);
+        req.setDepartamento(departamento);
+
+        User pending = userService.solicitarCreacionAdmin(req);
+        return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
+                "status", "pending",
+                "userId", pending.getId(),
+                "message", "Solicitud enviada al superAdmin para aprobación"
+        ));
+    }
+
+    @GetMapping("/admin/admins/approve")
+    public ResponseEntity<Object> aprobarAdminPorToken(@RequestParam("token") String token) {
+        try {
+            User u = userService.aprobarAdminPorToken(token);
+            return ResponseEntity.ok(Map.of("status","approved","Email", u.getEmail()));
+        } catch (com.example.usersbe.exceptions.ExpiredTokenException e) {
+            return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message", e.getMessage()));
+        } catch (com.example.usersbe.exceptions.InvalidTokenException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @GetMapping("/admin/admins/reject")
+    public ResponseEntity<Object> rechazarAdminPorToken(@RequestParam("token") String token) {
+        try {
+            User u = userService.rechazarAdminPorToken(token);
+            return ResponseEntity.ok(Map.of("status","rejected","Email", u.getEmail()));
+        } catch (com.example.usersbe.exceptions.ExpiredTokenException e) {
+            return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message", e.getMessage()));
+        } catch (com.example.usersbe.exceptions.InvalidTokenException e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
         }
     }
 }
