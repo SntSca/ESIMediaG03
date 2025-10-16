@@ -564,4 +564,17 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
         }
     }
+
+    @DeleteMapping("/darDeBajaUsuario")
+    public ResponseEntity<String> darDeBajaUsuario(@RequestParam String email) {
+        try {
+            userService.darDeBajaUsuario(email);
+            return ResponseEntity.ok("Usuario eliminado correctamente");
+        } catch (RuntimeException e) {
+            return ResponseEntity.status(HttpStatus.NOT_FOUND).body(e.getMessage());
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
+                    .body("Error al eliminar usuario");
+        }
+    }
 }

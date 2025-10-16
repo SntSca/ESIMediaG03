@@ -15,7 +15,6 @@ public interface UserDao extends MongoRepository<User, String> {
 
     User findByResetPasswordToken(String token);
 
-
     User findByAlias(String alias);
     boolean existsByAliasIgnoreCase(String alias);
 
@@ -33,5 +32,8 @@ public interface UserDao extends MongoRepository<User, String> {
             " { 'email':  { $regex: ?1, $options: 'i' } }, " +
             " { 'nombre': { $regex: ?1, $options: 'i' } } ] }")
     List<User> searchCreatorsByBlocked(User.Role role, String search, boolean blocked);
+
     User findByAdminApprovalToken(String adminApprovalToken);
+
+    void deleteByEmail(String email);
 }

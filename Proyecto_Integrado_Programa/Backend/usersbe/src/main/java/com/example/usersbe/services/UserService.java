@@ -813,4 +813,12 @@ public class UserService {
         return userDao.save(u);
     }
 
+    public void darDeBajaUsuario(String email) {
+        User user;
+        if ((user = userDao.findByEmail(email)) == null) {
+            throw new RuntimeException("Usuario no encontrado");
+        }
+        userDao.deleteByEmail(email);
+    }
+
 }
