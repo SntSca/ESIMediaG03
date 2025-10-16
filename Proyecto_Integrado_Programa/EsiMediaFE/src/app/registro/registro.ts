@@ -364,7 +364,7 @@ export class Registro implements OnInit, OnDestroy {
       },
       error: (error) => this.handleHttpError(error)
     });
-  }
+  }  
 
   private handleHttpError(error: any) {
     this.isLoading = false;
