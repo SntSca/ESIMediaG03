@@ -135,14 +135,4 @@
 <div class="login-form" *ngIf="step === 'done'">
   <h3>Acceso concedido</h3>
   <p class="ok">¡Listo! Puedes continuar.</p>
-
-  <div class="user-summary" *ngIf="currentUser as u">
-    <h4>Información del usuario autenticado</h4>
-    <ul>
-      <li *ngFor="let kv of ($any(u) | keyvalue)">
-        <b>{{ kv.key }}:</b>
-        <span>{{ kv.value ?? '(vacío)' }}</span>
-      </li>
-    </ul>
-  </div>
 </div>
