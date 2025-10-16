@@ -1,4 +1,3 @@
-// pagina-inicial-admin.ts
 import { Component, OnDestroy, OnInit } from '@angular/core';
 import { CommonModule } from '@angular/common';
 import { FormsModule, NgForm } from '@angular/forms';
@@ -6,6 +5,7 @@ import { Subject, debounceTime, takeUntil } from 'rxjs';
 import { AuthService } from '../auth/auth.service';
 import { AppUser, Role, UserDto } from '../auth/models';
 import { Registro } from '../registro/registro';
+import { Router } from '@angular/router';
 
 type EstadoFiltro = '' | 'si' | 'no';
 type TipoFiltro = '' | Role;
@@ -44,11 +44,24 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
 
   page = 1;
   pageSize = 10;
+   crearAdmin = {
+    nombre: '',
+    apellidos: '',
+    alias: '',
+    email: '',
+    pwd: '',
+    pwd2: '',
+    departamento: '',
+    foto: '',
+    fechaNac: ''
+  };
+  aliasChecking = false;
+  aliasAvailable: boolean | null = null;
 
   private readonly searchChanged$ = new Subject<void>();
   private readonly destroy$ = new Subject<void>();
 
-  constructor(private readonly api: AuthService) {
+  constructor(private readonly api: AuthService,private readonly auth: AuthService, private readonly router: Router) {
     this.searchChanged$.pipe(debounceTime(250), takeUntil(this.destroy$)).subscribe(() => this.recompute());
   }
 
@@ -483,6 +496,42 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
     this.showCreateAdminModal = false;
     this.pedirPwdAdminForModal = false;
   }
+  get pwdMismatchCreate(): boolean {
+    return !!this.crearAdmin.pwd && !!this.crearAdmin.pwd2 && this.crearAdmin.pwd !== this.crearAdmin.pwd2;
+  }
+  createAdmin(form: NgForm) {
+    if (form.invalid || this.pwdMismatchCreate || this.aliasAvailable === false) return;
+    const body = {
+      nombre: this.crearAdmin.nombre.trim(),
+      apellidos: this.crearAdmin.apellidos.trim(),
+      alias: this.crearAdmin.alias.trim(),
+      email: this.crearAdmin.email.trim(),
+      pwd: this.crearAdmin.pwd,
+      pwd2: this.crearAdmin.pwd2,
+      foto: this.crearAdmin.foto?.trim() || undefined,
+      departamento: this.crearAdmin.departamento.trim(),
+      fechaNac: this.crearAdmin.fechaNac?.trim() || undefined
+    };
+    this.loading = true;
+    this.api.createAdminByAdmin(body).subscribe({
+      next: () => {
+        this.loading = false;
+        this.showCreateAdminModal = false;
+        this.resetCreateAdmin();
+        this.fetchAll();
+      },
+      error: err => {
+        this.loading = false;
+        this.errorMsg = err?.error?.message || 'No se pudo crear el administrador';
+      }
+    });
+  }
+  private resetCreateAdmin() {
+    this.crearAdmin = { nombre: '', apellidos: '', alias: '', email: '', pwd: '', pwd2: '', departamento: '', foto: '', fechaNac: '' };
+    this.aliasAvailable = null;
+    this.aliasChecking = false;
+  }
+
   onAdminCreado() {
     this.showCreateAdminModal = false;
     this.pedirPwdAdminForModal = false;
@@ -490,4 +539,15 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
   }
 
   trackUser = (_: number, u: AppUser) => u.id;
+
+  cerrarSesion(): void {
+  const confirmacion = confirm('¿Seguro que deseas cerrar sesión?');
+  if (confirmacion) {
+    this.auth.logout?.()
+    localStorage.removeItem('user');
+    alert('Sesión cerrada correctamente.');
+    this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+  }
+}
+
 }

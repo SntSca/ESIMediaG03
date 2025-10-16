@@ -18,7 +18,7 @@
           <div class="user-email">{{ userEmail }}</div>
           <div class="user-role">🛡️ {{ userRole }}</div>
         </div>
-        <button class="logout-btn" disabled>🚪 Salir</button>
+        <button class="logout-btn" (click)="cerrarSesion()">🚪 Salir</button>
       </div>
     </nav>
 
@@ -127,7 +127,7 @@
                   <th>🏷️ Rol</th>
                   <th>🔐 Estado</th>
                   <th>⭐ VIP</th>
-                  <th style="width:260px">🛠️ Acciones</th>
+                  <th style="width:150px">🛠️ Acciones</th>
                 </tr>
               </thead>
               <tbody>
@@ -214,7 +214,7 @@
 
             <form #editForm="ngForm" (ngSubmit)="saveEdit(editForm)">
               <div class="filter-section">
-                <label>Alias</label>
+                <label for="alias">Alias</label>
                 <input
                   name="alias"
                   [(ngModel)]="editModel.alias"
@@ -227,7 +227,7 @@
               </div>
 
               <div class="filter-section">
-                <label>Nombre</label>
+                <label for="nombre">Nombre</label>
                 <input
                   name="nombre"
                   [(ngModel)]="editModel.nombre"
@@ -238,7 +238,7 @@
               </div>
 
               <div class="filter-section">
-                <label>Apellidos</label>
+                <label for="apellidos">Apellidos</label>
                 <input
                   name="apellidos"
                   [(ngModel)]="editModel.apellidos"
@@ -247,7 +247,7 @@
               </div>
 
               <div class="filter-section">
-                <label>Descripción</label>
+                <label for="descripcion">Descripción</label>
                 <textarea
                   name="descripcion"
                   [(ngModel)]="editModel.descripcion"
@@ -258,7 +258,7 @@
               </div>
 
               <div class="filter-section">
-                <label>Especialidad</label>
+                <label for="especialidad">Especialidad</label>
                 <input
                   name="especialidad"
                   [(ngModel)]="editModel.especialidad"
@@ -267,7 +267,7 @@
               </div>
 
               <div class="filter-section">
-                <label>Avatar</label>
+                <label for="avatar">Avatar</label>
                 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
                   <div *ngIf="editModel.fotoPreviewUrl" style="display:flex;align-items:center;gap:10px">
                     <img [src]="editModel.fotoPreviewUrl" alt="avatar preview" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:1px solid #444" />
@@ -302,11 +302,17 @@
                 style="background:none;border:none;cursor:pointer;padding:0"
                 title="Elegir"
               >
-                <img [src]="a" alt="avatar"
-                     style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid #333;transition:transform .15s"
-                     onmouseover="this.style.transform='scale(1.05)';"
-                     onmouseout="this.style.transform='scale(1)';"
-                />
+                <button
+                  type="button"
+                  style="background:none;border:none;cursor:pointer;padding:0"
+                  onfocus="this.querySelector('img').style.transform='scale(1.05)';"
+                  onblur="this.querySelector('img').style.transform='scale(1)';"
+                  title="Elegir"
+                >
+                  <img [src]="a" alt="avatar"
+                       style="width:90px;height:90px;border-radius:50%;object-fit:cover;border:2px solid #333;transition:transform .15s"
+                  />
+                </button>
               </button>
             </div>
 
@@ -375,7 +381,7 @@
 
             <form #editAdminForm="ngForm" (ngSubmit)="saveAdminEdit(editAdminForm)">
               <div class="filter-section">
-                <label>Alias</label>
+                <label for="alias">Alias</label>
                 <input
                   name="alias"
                   [(ngModel)]="adminEditModel.alias"
@@ -388,7 +394,7 @@
               </div>
 
               <div class="filter-section">
-                <label>Nombre</label>
+                <label for="nombre">Nombre</label>
                 <input
                   name="nombre"
                   [(ngModel)]="adminEditModel.nombre"
@@ -399,7 +405,7 @@
               </div>
 
               <div class="filter-section">
-                <label>Apellidos</label>
+                <label for="apellidos">Apellidos</label>
                 <input
                   name="apellidos"
                   [(ngModel)]="adminEditModel.apellidos"
@@ -408,7 +414,7 @@
               </div>
 
               <div class="filter-section">
-                <label>Email</label>
+                <label for="email">Email</label>
                 <input
                   type="email"
                   name="email"
@@ -419,7 +425,7 @@
               </div>
 
               <div class="filter-section">
-                <label>Avatar</label>
+                <label for="avatar">Avatar</label>
                 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
                   <div *ngIf="adminEditModel.fotoPreviewUrl" style="display:flex;align-items:center;gap:10px">
                     <img [src]="adminEditModel.fotoPreviewUrl" alt="avatar preview" style="width:72px;height:72px;border-radius:50%;object-fit:cover;border:1px solid #444" />

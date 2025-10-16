@@ -107,7 +107,7 @@ export class AuthService {
   deleteAdmin(id: string): Observable<void> {
     return this.http.delete<void>(`${this.usersBase}/admin/admins/${id}`);
   }
-  createAdmin(body: any): Observable<{ status: string }> {
+  createAdminByAdmin(body: any): Observable<{ status: string }> {
     return this.http.post<{ status: string }>(`${this.usersBase}/admin/admins`, body);
   }
 }

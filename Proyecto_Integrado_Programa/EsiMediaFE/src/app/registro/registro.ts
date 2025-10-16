@@ -4,6 +4,7 @@ import { FormsModule, NgForm } from '@angular/forms';
 import Swal from 'sweetalert2';
 import { UsersService } from '../users';
 import { firstValueFrom } from 'rxjs';
+import { Router } from '@angular/router';
 
 @Component({
   selector: 'app-registro',
@@ -63,7 +64,7 @@ export class Registro implements OnInit, OnDestroy {
   selectedAvatar: string | null = null;
   showAvatarModal = false;
 
-  constructor(private readonly usersService: UsersService) {}
+  constructor(private readonly usersService: UsersService, private readonly router: Router) {}
 
   get esAltaCreador(): boolean {
     return this.rolFijo === 'GESTOR_CONTENIDO' || this.modoAdminCreador === true;
@@ -75,10 +76,6 @@ export class Registro implements OnInit, OnDestroy {
     return this.esAltaCreador || this.role === 'Gestor de Contenido';
   }
 
-  /** Mostrar contraseñas:
-   *  - Usuarios y Creadores: SIEMPRE
-   *  - Admin: solo si pedirPwdAdmin = true (alta desde botón)
-   */
   get showPasswordFields(): boolean {
     return this.esAltaAdmin ? this.pedirPwdAdmin : true;
   }
@@ -308,7 +305,11 @@ export class Registro implements OnInit, OnDestroy {
       email: this.email?.trim()?.toLowerCase(),
       alias: this.alias.trim(),
       vip: this.vip,
-      role: this.esAltaAdmin ? 'Administrador' : (this.esAltaCreador ? 'Gestor de Contenido' : this.role),
+      role: (() => {
+        if (this.esAltaAdmin) return 'Administrador';
+        if (this.esAltaCreador) return 'Gestor de Contenido';
+        return this.role;
+      })(),
       foto: this.foto
     };
     if (!this.esAltaCreador && !this.esAltaAdmin && this.fechaNac) {
@@ -343,7 +344,7 @@ export class Registro implements OnInit, OnDestroy {
     }
 
     if (this.esAltaAdmin) {
-      (this.usersService as any).crearAdminComoAdmin?.(base)?.subscribe({
+      this.usersService.createAdminByAdmin(base)?.subscribe({
         next: () => {
           this.isLoading = false;
           this.showAlert('¡Listo!', 'Administrador dado de alta.', 'success');
@@ -352,7 +353,6 @@ export class Registro implements OnInit, OnDestroy {
         error: (error: any) => this.handleHttpError(error)
       }) ?? (() => {
         this.isLoading = false;
-        this.showAlert('Pendiente de backend', 'Implementa UsersService.crearAdminComoAdmin(base) o mapea a tu endpoint actual.', 'info');
       })();
       return;
     }
@@ -360,6 +360,7 @@ export class Registro implements OnInit, OnDestroy {
       next: () => {
         this.isLoading = false;
         this.showAlert('¡Éxito!', 'Registro correcto.', 'success');
+        this.router.navigate(['/auth']);
       },
       error: (error) => this.handleHttpError(error)
     });
