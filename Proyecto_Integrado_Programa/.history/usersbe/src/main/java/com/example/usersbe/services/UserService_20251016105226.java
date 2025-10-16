@@ -402,47 +402,6 @@ public class UserService {
 
         return userDao.save(u);
     }
-    private User findValidAdmin(String id) {
-        User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new AdminNotFoundException(id);
-        if (u.getRole() != User.Role.ADMINISTRADOR)
-            throw new NotAnAdminException();
-        return u;
-    }
-
-    private void updateAliasIfValid(User u, String alias) {
-        if (alias == null || alias.isBlank()) return;
-
-        String aliasTrim = alias.trim();
-        User byAlias = userDao.findByAlias(aliasTrim);
-        if (byAlias != null && !byAlias.getId().equals(u.getId()))
-            throw new AliasAlreadyUsedException();
-
-        u.setAlias(aliasTrim);
-    }
-
-    private void updateNombreApellidos(User u, String nombre, String apellidos) {
-        if (nombre != null) u.setNombre(nombre.trim());
-        if (apellidos != null) u.setApellidos(apellidos.trim());
-    }
-
-    private void updateEmailIfValid(User u, String email) {
-        if (email == null || email.isBlank()) return;
-
-        String emailN = normalizeEmail(email);
-        validateEmail(emailN);
-        User byMail = userDao.findByEmail(emailN);
-        if (byMail != null && !byMail.getId().equals(u.getId()))
-            throw new EmailAlreadyUsedException();
-
-        u.setEmail(emailN);
-    }
-
-    private void updateOptionalFields(User u, String foto, String departamento) {
-        if (foto != null) u.setFoto(foto);
-        if (departamento != null) u.setDepartamento(departamento.trim());
-    }
-
 
     public User bloquearAdmin(String id) {
         User u = userDao.findById(id).orElse(null);

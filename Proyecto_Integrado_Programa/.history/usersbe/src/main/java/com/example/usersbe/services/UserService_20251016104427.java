@@ -5,8 +5,21 @@ import org.springframework.stereotype.Service;
 
 import com.example.usersbe.dao.UserDao;
 import com.example.usersbe.dto.AdminCreationRequest;
+import com.example.usersbe.exceptions.AdminNotFoundException;
+import com.example.usersbe.exceptions.AliasAlreadyUsedException;
+import com.example.usersbe.exceptions.EmailAlreadyUsedException;
+import com.example.usersbe.exceptions.EmailSendException;
+import com.example.usersbe.exceptions.ExpiredTokenException;
+import com.example.usersbe.exceptions.InvalidEmailException;
+import com.example.usersbe.exceptions.InvalidFieldException;
+import com.example.usersbe.exceptions.InvalidPasswordException;
+import com.example.usersbe.exceptions.InvalidTokenException;
+import com.example.usersbe.exceptions.MissingSuperAdminEmailConfigException;
+import com.example.usersbe.exceptions.NotAnAdminException;
+import com.example.usersbe.exceptions.SuperAdminProtectionException;
+import com.example.usersbe.exceptions.UserAlreadyExistsException;
 import com.example.usersbe.model.User;
-import com.example.usersbe.exceptions.*;
+import
 
 import jakarta.mail.MessagingException;
 
@@ -23,8 +36,6 @@ public class UserService {
     private static final String TOKEN_NOT_PROVIDED = "Token no proporcionado";
     private static final String INVALID_TOKEN = "Token inválido";
     private static final String EXPIRED_TOKEN = "Token caducado";
-    private static final String CREATOR_NOT_FOUND = "El creador no fue encontrado";
-    private static final String USER_NOT_A_CREATOR = "El usuario no es un creador";
 
     private final UserDao userDao;
     private final EmailService emailService;
@@ -287,10 +298,10 @@ public class UserService {
         throws UserNotFoundException, InvalidRoleException, DuplicateAliasException, DuplicateEmailException {
 
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new UserNotFoundException(CREATOR_NOT_FOUND);
+        if (u == null) throw new UserNotFoundException("Creador no encontrado");
 
         if (u.getRole() != User.Role.GESTOR_CONTENIDO)
-            throw new InvalidRoleException(USER_NOT_A_CREATOR);
+            throw new InvalidRoleException("El usuario indicado no es un creador");
 
         if (alias != null && !alias.isBlank()) {
             String aliasTrim = alias.trim();
@@ -318,11 +329,11 @@ public class UserService {
     }
 
 
-    public User bloquearCreador(String id){
+    public User bloquearCreador(String id) throws Exception {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new UserNotFoundException(CREATOR_NOT_FOUND);
+        if (u == null) throw new Exception("Creador no encontrado");
         if (u.getRole() != User.Role.GESTOR_CONTENIDO)
-            throw new InvalidRoleException(USER_NOT_A_CREATOR);
+            throw new Exception("El usuario indicado no es un creador");
 
         if (Boolean.TRUE.equals(u.isBlocked())) {
             return u;
@@ -332,11 +343,11 @@ public class UserService {
         return u;
     }
 
-    public User desbloquearCreador(String id){
+    public User desbloquearCreador(String id) throws Exception {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new UserNotFoundException(CREATOR_NOT_FOUND);
+        if (u == null) throw new Exception("Creador no encontrado");
         if (u.getRole() != User.Role.GESTOR_CONTENIDO)
-            throw new InvalidRoleException(USER_NOT_A_CREATOR);
+            throw new Exception("El usuario indicado no es un creador");
 
         if (!Boolean.TRUE.equals(u.isBlocked())) {
             return u;
@@ -346,11 +357,11 @@ public class UserService {
         return u;
     }
 
-    public void eliminarCreador(String id) {
+    public void eliminarCreador(String id) throws Exception {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new UserNotFoundException(CREATOR_NOT_FOUND);
+        if (u == null) throw new Exception("Creador no encontrado");
         if (u.getRole() != User.Role.GESTOR_CONTENIDO)
-            throw new InvalidRoleException(USER_NOT_A_CREATOR);
+            throw new Exception("El usuario indicado no es un creador");
 
         userDao.deleteById(id);
     }
@@ -390,59 +401,39 @@ public class UserService {
         );
     }
     public User actualizarAdmin(String id, String alias, String nombre,
-                            String apellidos, String email, String foto,
-                            String departamento) {
+                                String apellidos, String email, String foto,
+                                String departamento) {
+        User u = userDao.findById(id).orElse(null);
+        if (u == null) throw new AdminNotFoundException(id);
+        if (u.getRole() != User.Role.ADMINISTRADOR) throw new NotAnAdminException();
 
-        User u = findValidAdmin(id);
+        if (alias != null && !alias.isBlank()) {
+            String aliasTrim = alias.trim();
+            User byAlias = userDao.findByAlias(aliasTrim);
+            if (byAlias != null && !byAlias.getId().equals(u.getId())) {
+                throw new AliasAlreadyUsedException();
+            }
+            u.setAlias(aliasTrim);
+        }
 
-        updateAliasIfValid(u, alias);
-        updateNombreApellidos(u, nombre, apellidos);
-        updateEmailIfValid(u, email);
-        updateOptionalFields(u, foto, departamento);
+        if (nombre != null)    u.setNombre(nombre.trim());
+        if (apellidos != null) u.setApellidos(apellidos.trim());
+
+        if (email != null && !email.isBlank()) {
+            String emailN = normalizeEmail(email);
+            validateEmail(emailN);
+            User byMail = userDao.findByEmail(emailN);
+            if (byMail != null && !byMail.getId().equals(u.getId())) {
+                throw new EmailAlreadyUsedException();
+            }
+            u.setEmail(emailN);
+        }
+
+        if (foto != null) u.setFoto(foto);
+        if (departamento != null) u.setDepartamento(departamento.trim());
 
         return userDao.save(u);
     }
-    private User findValidAdmin(String id) {
-        User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new AdminNotFoundException(id);
-        if (u.getRole() != User.Role.ADMINISTRADOR)
-            throw new NotAnAdminException();
-        return u;
-    }
-
-    private void updateAliasIfValid(User u, String alias) {
-        if (alias == null || alias.isBlank()) return;
-
-        String aliasTrim = alias.trim();
-        User byAlias = userDao.findByAlias(aliasTrim);
-        if (byAlias != null && !byAlias.getId().equals(u.getId()))
-            throw new AliasAlreadyUsedException();
-
-        u.setAlias(aliasTrim);
-    }
-
-    private void updateNombreApellidos(User u, String nombre, String apellidos) {
-        if (nombre != null) u.setNombre(nombre.trim());
-        if (apellidos != null) u.setApellidos(apellidos.trim());
-    }
-
-    private void updateEmailIfValid(User u, String email) {
-        if (email == null || email.isBlank()) return;
-
-        String emailN = normalizeEmail(email);
-        validateEmail(emailN);
-        User byMail = userDao.findByEmail(emailN);
-        if (byMail != null && !byMail.getId().equals(u.getId()))
-            throw new EmailAlreadyUsedException();
-
-        u.setEmail(emailN);
-    }
-
-    private void updateOptionalFields(User u, String foto, String departamento) {
-        if (foto != null) u.setFoto(foto);
-        if (departamento != null) u.setDepartamento(departamento.trim());
-    }
-
 
     public User bloquearAdmin(String id) {
         User u = userDao.findById(id).orElse(null);
@@ -680,13 +671,13 @@ public class UserService {
 
 
     public User aprobarAdminPorToken(String token) {
-        if (token == null || token.isBlank()) throw new InvalidTokenException(TOKEN_NOT_PROVIDED);
+        if (token == null || token.isBlank()) throw new InvalidTokenException("Token no proporcionado");
         User u = userDao.findByAdminApprovalToken(token.trim());
-        if (u == null) throw new InvalidTokenException(INVALID_TOKEN);
+        if (u == null) throw new InvalidTokenException("Token inválido");
         if (u.getAdminApprovalStatus() != User.AdminApprovalStatus.PENDING)
             throw new InvalidTokenException("La solicitud no está pendiente");
         if (u.getAdminApprovalExpires() == null || u.getAdminApprovalExpires().isBefore(LocalDateTime.now()))
-            throw new ExpiredTokenException(EXPIRED_TOKEN);
+            throw new ExpiredTokenException("Token caducado");
 
         u.setAdminApprovalStatus(User.AdminApprovalStatus.APPROVED);
         u.setAdminApprovalToken(null);
@@ -700,13 +691,13 @@ public class UserService {
 
 
     public User rechazarAdminPorToken(String token) {
-        if (token == null || token.isBlank()) throw new InvalidTokenException(TOKEN_NOT_PROVIDED);
+        if (token == null || token.isBlank()) throw new InvalidTokenException("Token no proporcionado");
         User u = userDao.findByAdminApprovalToken(token.trim());
-        if (u == null) throw new InvalidTokenException(INVALID_TOKEN);
+        if (u == null) throw new InvalidTokenException("Token inválido");
         if (u.getAdminApprovalStatus() != User.AdminApprovalStatus.PENDING)
             throw new InvalidTokenException("La solicitud no está pendiente");
         if (u.getAdminApprovalExpires() == null || u.getAdminApprovalExpires().isBefore(LocalDateTime.now()))
-            throw new ExpiredTokenException(EXPIRED_TOKEN);
+            throw new ExpiredTokenException("Token caducado");
 
         u.setAdminApprovalStatus(User.AdminApprovalStatus.REJECTED);
         u.setAdminApprovalToken(null);
