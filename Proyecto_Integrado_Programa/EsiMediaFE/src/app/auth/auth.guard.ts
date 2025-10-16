@@ -31,3 +31,13 @@ export function roleGuard(allowed: Role[]): CanActivateFn {
     return router.createUrlTree([roleHome(user.role)]);
   };
 }
+export const userOrReadOnlyGuard: CanActivateFn = (): boolean | UrlTree => {
+  const router = inject(Router);
+  const auth   = inject(AuthService);
+  const readOnly = localStorage.getItem('users_readonly_mode') === '1';
+  if (readOnly) return true;
+  const user = auth.getCurrentUser();
+  if (!user) return router.createUrlTree(['/auth/login']);
+  if (user.role === 'USUARIO') return true;
+  return router.createUrlTree([roleHome(user.role)]);
+};

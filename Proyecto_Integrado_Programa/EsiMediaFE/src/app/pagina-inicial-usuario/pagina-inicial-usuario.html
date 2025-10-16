@@ -1,110 +1,156 @@
-<div class="usuario-header">
-  <div class="usuario-info">
-    <div class="avatar">{{ userInitials }}</div>
-    <div class="datos">
-      <div class="nombre">{{ userName }}</div>
-      <div class="email">{{ userEmail }}</div>
-    </div>
-  </div>
-  <button class="btn-cerrar" disabled>Salir</button>
-</div>
-<div class="filtros">
-  <input type="text" [(ngModel)]="filtros.titulo" placeholder="Buscar por título" />
-  <select [(ngModel)]="filtros.tipo">
-    <option value="">Todos los tipos</option>
-    <option value="AUDIO">Audio</option>
-    <option value="VIDEO">Video</option>
-  </select>
-  <select [(ngModel)]="filtros.vip">
-    <option value="">VIP / No VIP</option>
-    <option value="si">VIP</option>
-    <option value="no">No VIP</option>
-  </select>
-  <select [(ngModel)]="filtros.visible">
-    <option value="">Visible / No visible</option>
-    <option value="si">Visible</option>
-    <option value="no">No visible</option>
-  </select>
-  <input type="text" [(ngModel)]="filtros.tagIncluye" placeholder="Buscar por tag" />
-  <select [(ngModel)]="filtros.ordenar">
-    <option value="fecha">Ordenar por fecha</option>
-    <option value="titulo">Ordenar por título</option>
-    <option value="vip">Ordenar por VIP</option>
-    <option value="visible">Ordenar por visibilidad</option>
-  </select>
-</div>
-
-<!-- Pestañas principales -->
-<div class="tabs">
+<div class="ro-banner" *ngIf="readOnly">
+  <span>📖 Modo lectura activado — no puedes interactuar con esta página.</span>
   <button
-    class="tab-btn"
-    [class.active]="selectedTab==='ALL'"
-    (click)="selectedTab='ALL'; showTodosConstruction=true"
+    class="btn-salir-ro"
+    *ngIf="fromAdmin"
+    type="button"
+    (click)="salirModoLectura()"
+    aria-label="Salir del modo lectura"
   >
-    Todos
-  </button>
-
-  <button
-    class="tab-btn"
-    [class.active]="selectedTab==='AUDIO'"
-    (click)="selectedTab='AUDIO'; showTodosConstruction=false"
-  >
-    Audio
-  </button>
-
-  <button
-    class="tab-btn"
-    [class.active]="selectedTab==='VIDEO'"
-    (click)="selectedTab='VIDEO'; showTodosConstruction=false"
-  >
-    Video
-  </button>
-
-  <button
-    class="tab-btn"
-    [class.active]="selectedTab==='HIST'"
-    (click)="selectedTab='HIST'; showTodosConstruction=false"
-  >
-    Historial
-  </button>
-
-  <button
-    class="tab-btn"
-    [class.active]="selectedTab==='FAV'"
-    (click)="selectedTab='FAV'; showTodosConstruction=false"
-  >
-    Favoritos
+    Salir del modo lectura
   </button>
 </div>
 
-<div class="contenidos">
-
-  <div *ngIf="showTodosConstruction" class="construction">
-    <div class="construction-inner">
-      <div class="construction-emoji">🚧</div>
-      <div class="construction-title">En construcción</div>
-      <div class="construction-text">
-        Estamos trabajando para traerte esta sección muy pronto.
+<div class="ro-wrap" [class.readonly]="readOnly">
+  <div class="usuario-header">
+    <div class="usuario-info">
+      <div class="avatar">{{ userInitials }}</div>
+      <div class="datos">
+        <div class="nombre">{{ userName }}</div>
+        <div class="email">{{ userEmail }}</div>
       </div>
     </div>
-  </div>
-  <div *ngIf="!showTodosConstruction && selectedTab==='AUDIO'" class="placeholder">
-    <h3>Audio</h3>
-    <p>Contenido de audio aparecerá aquí.</p>
-  </div>
-
-  <div *ngIf="!showTodosConstruction && selectedTab==='VIDEO'" class="placeholder">
-    <h3>Video</h3>
-    <p>Contenido de video aparecerá aquí.</p>
-  </div>
-
-  <div *ngIf="!showTodosConstruction && selectedTab==='HIST'" class="placeholder">
-    <h3>Historial</h3>
-    <p>Tu historial de reproducción aparecerá aquí.</p>
+   
+    <button
+      class="btn-cerrar"
+      type="button"
+      (click)="CerrarSesion()"
+      aria-label="Cerrar sesión"
+    >
+      Cerrar Sesión
+    </button>
   </div>
 
-  <div *ngIf="!showTodosConstruction && selectedTab==='FAV'" class="placeholder">
-    <h3>Favoritos</h3>
-    <p>Tu lista de favoritos aparecerá aquí.</p>
+  <div class="filtros">
+    <input
+      type="text"
+      [(ngModel)]="filtros.titulo"
+      placeholder="Buscar por título"
+      [disabled]="readOnly"
+      aria-label="Buscar por título"
+    />
+    <select [(ngModel)]="filtros.tipo" [disabled]="readOnly" aria-label="Filtrar por tipo">
+      <option value="">Todos los tipos</option>
+      <option value="AUDIO">Audio</option>
+      <option value="VIDEO">Video</option>
+    </select>
+    <select [(ngModel)]="filtros.vip" [disabled]="readOnly" aria-label="Filtrar por VIP">
+      <option value="">VIP / No VIP</option>
+      <option value="si">VIP</option>
+      <option value="no">No VIP</option>
+    </select>
+    <select [(ngModel)]="filtros.visible" [disabled]="readOnly" aria-label="Filtrar por visibilidad">
+      <option value="">Visible / No visible</option>
+      <option value="si">Visible</option>
+      <option value="no">No visible</option>
+    </select>
+    <input
+      type="text"
+      [(ngModel)]="filtros.tagIncluye"
+      placeholder="Buscar por tag"
+      [disabled]="readOnly"
+      aria-label="Buscar por tag"
+    />
+    <select [(ngModel)]="filtros.ordenar" [disabled]="readOnly" aria-label="Ordenar resultados">
+      <option value="fecha">Ordenar por fecha</option>
+      <option value="titulo">Ordenar por título</option>
+      <option value="vip">Ordenar por VIP</option>
+      <option value="visible">Ordenar por visibilidad</option>
+    </select>
   </div>
+  <div class="tabs">
+    <button
+      class="tab-btn"
+      [class.active]="selectedTab==='ALL'"
+      (click)="selectedTab='ALL'; showTodosConstruction=true"
+      [disabled]="readOnly"
+      type="button"
+    >
+      Todos
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="selectedTab==='AUDIO'"
+      (click)="selectedTab='AUDIO'; showTodosConstruction=false"
+      [disabled]="readOnly"
+      type="button"
+    >
+      Audio
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="selectedTab==='VIDEO'"
+      (click)="selectedTab='VIDEO'; showTodosConstruction=false"
+      [disabled]="readOnly"
+      type="button"
+    >
+      Video
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="selectedTab==='HIST'"
+      (click)="selectedTab='HIST'; showTodosConstruction=false"
+      [disabled]="readOnly"
+      type="button"
+    >
+      Historial
+    </button>
+
+    <button
+      class="tab-btn"
+      [class.active]="selectedTab==='FAV'"
+      (click)="selectedTab='FAV'; showTodosConstruction=false"
+      [disabled]="readOnly"
+      type="button"
+    >
+      Favoritos
+    </button>
+  </div>
+
+  <div class="contenidos">
+    <div *ngIf="showTodosConstruction" class="construction">
+      <div class="construction-inner">
+        <div class="construction-emoji">🚧</div>
+        <div class="construction-title">En construcción</div>
+        <div class="construction-text">
+          Estamos trabajando para traerte esta sección muy pronto.
+        </div>
+      </div>
+    </div>
+
+    <div *ngIf="!showTodosConstruction && selectedTab==='AUDIO'" class="placeholder">
+      <h3>Audio</h3>
+      <p>Contenido de audio aparecerá aquí.</p>
+    </div>
+
+    <div *ngIf="!showTodosConstruction && selectedTab==='VIDEO'" class="placeholder">
+      <h3>Video</h3>
+      <p>Contenido de video aparecerá aquí.</p>
+    </div>
+
+    <div *ngIf="!showTodosConstruction && selectedTab==='HIST'" class="placeholder">
+      <h3>Historial</h3>
+      <p>Tu historial de reproducción aparecerá aquí.</p>
+    </div>
+
+    <div *ngIf="!showTodosConstruction && selectedTab==='FAV'" class="placeholder">
+      <h3>Favoritos</h3>
+      <p>Tu lista de favoritos aparecerá aquí.</p>
+    </div>
+  </div>
+
+  <div class="ro-overlay" *ngIf="readOnly" aria-hidden="true"></div>
 </div>

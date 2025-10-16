@@ -7,7 +7,7 @@ import { ResetPassword } from './auth/reset-password/reset-password';
 import { PaginaInicialAdmin } from './pagina-inicial-admin/pagina-inicial-admin';
 import { PaginaInicialUsuario } from './pagina-inicial-usuario/pagina-inicial-usuario';
 import { PaginaInicialGestor } from './pagina-inicial-gestor/pagina-inicial-gestor';
-import { roleGuard } from './auth/auth.guard';
+import { roleGuard, userOrReadOnlyGuard } from './auth/auth.guard';
 
 export const routes: Routes = [
   {
@@ -33,6 +33,7 @@ export const routes: Routes = [
     canActivate: [roleGuard(['USUARIO'])],
     component: PaginaInicialUsuario,
   },
+  { path: 'usuarioReadOnly', canActivate: [userOrReadOnlyGuard], component: PaginaInicialUsuario },
 
   {
     path: 'gestor',
