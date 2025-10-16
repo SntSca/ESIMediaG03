@@ -257,6 +257,13 @@ public class UserController {
     public List<User> getAll() {
         return userService.listarUsuarios();
     }
+    
+    @GetMapping("/obtenerPerfilUsuario")
+    public ResponseEntity<User> getUserByEmail(@RequestParam String email){
+        User u = userService.getUserByEmail(email);
+        return ResponseEntity.ok(u);
+    }
+
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @GetMapping("/admin/creators")

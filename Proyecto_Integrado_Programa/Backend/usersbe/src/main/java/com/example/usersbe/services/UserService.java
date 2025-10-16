@@ -281,6 +281,15 @@ public class UserService {
             return userDao.findByRoleAndBlocked(User.Role.GESTOR_CONTENIDO, blocked);
         }
     }
+    public User getUserByEmail(String email) {
+        User user = userDao.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("Usuario no encontrado");
+        }   
+        return user;    
+    }
+
+
 
     public User actualizarCreador(String id, String alias, String nombre,
                               String apellidos, String email, String foto)
