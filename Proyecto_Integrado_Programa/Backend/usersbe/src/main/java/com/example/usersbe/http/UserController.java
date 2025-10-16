@@ -17,6 +17,7 @@ import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.PatchMapping;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.RequestBody;
@@ -29,6 +30,12 @@ import com.example.usersbe.dto.AdminCreationRequest;
 import com.example.usersbe.model.User;
 import com.example.usersbe.services.UserService;
 
+import com.example.usersbe.dto.AdminCreationRequest;
+import com.example.usersbe.model.User;
+import com.example.usersbe.services.UserService;
+import com.example.usersbe.exceptions.ForbiddenException;
+import com.example.usersbe.exceptions.ValidationException;
+
 import jakarta.servlet.http.HttpServletRequest;
 
 @RestController
@@ -37,31 +44,32 @@ import jakarta.servlet.http.HttpServletRequest;
 public class UserController {
 
     private final UserService userService;
+
     public UserController(UserService userService) {
         this.userService = userService;
     }
-    
-    private static final String FIELD_EMAIL          = "email";
-    private static final String FIELD_MESSAGE        = "message";
-    private static final String FIELD_NOMBRE         = "nombre";
-    private static final String FIELD_APELLIDOS      = "apellidos";
-    private static final String FIELD_ALIAS          = "alias";
-    private static final String FIELD_FECHA_NAC      = "fechaNac";
-    private static final String FIELD_PWD            = "pwd";
-    private static final String FIELD_PWD2           = "pwd2";
-    private static final String FIELD_ROLE           = "role";
-    private static final String FIELD_FOTO           = "foto";
-    private static final String FIELD_DESCRIPCION    = "descripcion";
-    private static final String FIELD_ESPECIALIDAD   = "especialidad";
+
+    private static final String FIELD_EMAIL = "email";
+    private static final String FIELD_MESSAGE = "message";
+    private static final String FIELD_NOMBRE = "nombre";
+    private static final String FIELD_APELLIDOS = "apellidos";
+    private static final String FIELD_ALIAS = "alias";
+    private static final String FIELD_FECHA_NAC = "fechaNac";
+    private static final String FIELD_PWD = "pwd";
+    private static final String FIELD_PWD2 = "pwd2";
+    private static final String FIELD_ROLE = "role";
+    private static final String FIELD_FOTO = "foto";
+    private static final String FIELD_DESCRIPCION = "descripcion";
+    private static final String FIELD_ESPECIALIDAD = "especialidad";
     private static final String FIELD_TIPO_CONTENIDO = "tipoContenido";
-    private static final String FIELD_DEPARTAMENTO   = "departamento";
+    private static final String FIELD_DEPARTAMENTO = "departamento";
 
     private static final int MAX_ATTEMPTS = 3;
     private static final long WINDOW_MS = 10L * 60 * 1000;
     private final File logFile = new File("logs/forgot-password.log");
 
-    private static final java.util.regex.Pattern EMAIL_RX =
-        java.util.regex.Pattern.compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$");
+    private static final java.util.regex.Pattern EMAIL_RX = java.util.regex.Pattern
+            .compile("^[^\\s@]+@[^\\s@]+\\.[^\\s@]{2,}$");
 
     @GetMapping("/check-alias/{alias}")
     public Map<String, Object> checkAlias(@PathVariable("alias") String alias) {
@@ -72,20 +80,19 @@ public class UserController {
     @PostMapping("/Registrar")
     public void registrar(@RequestBody Map<String, String> info) {
         validarCamposObligatorios(
-            info,
-            FIELD_NOMBRE, FIELD_APELLIDOS, FIELD_EMAIL, FIELD_FECHA_NAC,
-            FIELD_PWD, FIELD_PWD2, FIELD_ROLE, FIELD_ALIAS, FIELD_FOTO
-        );
+                info,
+                FIELD_NOMBRE, FIELD_APELLIDOS, FIELD_EMAIL, FIELD_FECHA_NAC,
+                FIELD_PWD, FIELD_PWD2, FIELD_ROLE, FIELD_ALIAS, FIELD_FOTO);
 
-        final String nombre    = trim(info.get(FIELD_NOMBRE));
+        final String nombre = trim(info.get(FIELD_NOMBRE));
         final String apellidos = trim(info.get(FIELD_APELLIDOS));
-        final String alias     = trim(info.get(FIELD_ALIAS));
-        final String email     = trim(info.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
-        final String fechaNac  = trim(info.get(FIELD_FECHA_NAC));
-        final String pwd       = info.get(FIELD_PWD);
-        final String pwd2      = info.get(FIELD_PWD2);
-        final boolean vip      = Boolean.parseBoolean(info.getOrDefault("vip", "false"));
-        final String foto      = trim(info.get(FIELD_FOTO));
+        final String alias = trim(info.get(FIELD_ALIAS));
+        final String email = trim(info.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
+        final String fechaNac = trim(info.get(FIELD_FECHA_NAC));
+        final String pwd = info.get(FIELD_PWD);
+        final String pwd2 = info.get(FIELD_PWD2);
+        final boolean vip = Boolean.parseBoolean(info.getOrDefault("vip", "false"));
+        final String foto = trim(info.get(FIELD_FOTO));
 
         validarEmail(email);
         validarContrasena(pwd, pwd2);
@@ -99,8 +106,8 @@ public class UserController {
 
         if (role == User.Role.GESTOR_CONTENIDO) {
             validarCamposObligatorios(info, FIELD_DESCRIPCION, FIELD_ESPECIALIDAD, FIELD_TIPO_CONTENIDO);
-            descripcion   = trim(info.get(FIELD_DESCRIPCION));
-            especialidad  = trim(info.get(FIELD_ESPECIALIDAD));
+            descripcion = trim(info.get(FIELD_DESCRIPCION));
+            especialidad = trim(info.get(FIELD_ESPECIALIDAD));
             tipoContenido = parseTipoContenido(trim(info.get(FIELD_TIPO_CONTENIDO)));
         } else if (role == User.Role.ADMINISTRADOR) {
             departamento = trimOrNull(info.get(FIELD_DEPARTAMENTO));
@@ -108,18 +115,21 @@ public class UserController {
 
         try {
             userService.registrar(
-                nombre, apellidos, alias, email, fechaNac, pwd, vip, foto, role,
-                descripcion, especialidad, tipoContenido,
-                departamento
-            );
+                    nombre, apellidos, alias, email, fechaNac, pwd, vip, foto, role,
+                    descripcion, especialidad, tipoContenido,
+                    departamento);
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
         }
     }
 
+    private static String trim(String s) {
+        return s == null ? "" : s.trim();
+    }
 
-    private static String trim(String s) { return s == null ? "" : s.trim(); }
-    private static String trimOrNull(String s) { return s == null ? null : s.trim(); }
+    private static String trimOrNull(String s) {
+        return s == null ? null : s.trim();
+    }
 
     private void validarCamposObligatorios(Map<String, String> info, String... campos) {
         for (String campo : campos) {
@@ -146,11 +156,16 @@ public class UserController {
     }
 
     private static String firstPasswordIssue(String pwd) {
-        if (pwd == null || pwd.length() < 8) return "al menos 8 caracteres";
-        if (!pwd.chars().anyMatch(Character::isUpperCase)) return "una letra mayúscula";
-        if (!pwd.chars().anyMatch(Character::isLowerCase)) return "una letra minúscula";
-        if (!pwd.chars().anyMatch(Character::isDigit))     return "un número";
-        if (!pwd.matches(".*[!@#$%^&*(),.?\":{}|<>_\\-].*"))  return "un carácter especial";
+        if (pwd == null || pwd.length() < 8)
+            return "al menos 8 caracteres";
+        if (!pwd.chars().anyMatch(Character::isUpperCase))
+            return "una letra mayúscula";
+        if (!pwd.chars().anyMatch(Character::isLowerCase))
+            return "una letra minúscula";
+        if (!pwd.chars().anyMatch(Character::isDigit))
+            return "un número";
+        if (!pwd.matches(".*[!@#$%^&*(),.?\":{}|<>_\\-].*"))
+            return "un carácter especial";
         return null;
     }
 
@@ -164,16 +179,15 @@ public class UserController {
             case "GESTOR DE CONTENIDO", "GESTOR_CONTENIDO" -> User.Role.GESTOR_CONTENIDO;
             case "ADMINISTRADOR" -> User.Role.ADMINISTRADOR;
             default -> throw new ResponseStatusException(
-                HttpStatus.FORBIDDEN,
-                "Rol no permitido. Usa: USUARIO | GESTOR DE CONTENIDO | ADMINISTRADOR"
-            );
+                    HttpStatus.FORBIDDEN,
+                    "Rol no permitido. Usa: USUARIO | GESTOR DE CONTENIDO | ADMINISTRADOR");
         };
     }
 
     private User.TipoContenido parseTipoContenido(String tipo) {
         String norm = Optional.ofNullable(tipo)
-                              .map(t -> t.trim().toUpperCase(Locale.ROOT))
-                              .orElse("");
+                .map(t -> t.trim().toUpperCase(Locale.ROOT))
+                .orElse("");
         return switch (norm) {
             case "AUDIO" -> User.TipoContenido.AUDIO;
             case "VIDEO" -> User.TipoContenido.VIDEO;
@@ -182,7 +196,8 @@ public class UserController {
     }
 
     private int countRecentAttempts(String ip) {
-        if (!logFile.exists()) return 0;
+        if (!logFile.exists())
+            return 0;
         int count = 0;
         long now = System.currentTimeMillis();
 
@@ -190,7 +205,8 @@ public class UserController {
             String line;
             while ((line = br.readLine()) != null) {
                 String[] parts = line.split("\\|");
-                if (parts.length < 2) continue;
+                if (parts.length < 2)
+                    continue;
                 long timestamp = Long.parseLong(parts[0]);
                 String logIp = parts[1];
                 if (logIp.equals(ip) && now - timestamp <= WINDOW_MS) {
@@ -215,7 +231,7 @@ public class UserController {
     }
 
     @PostMapping("/forgot-password")
-    public ResponseEntity<Object> forgotPassword(HttpServletRequest request , @RequestBody Map<String, String> body) {
+    public ResponseEntity<Object> forgotPassword(HttpServletRequest request, @RequestBody Map<String, String> body) {
         String ip = request.getRemoteAddr();
 
         int attempts = countRecentAttempts(ip);
@@ -228,15 +244,16 @@ public class UserController {
 
         try {
             String email = Optional.ofNullable(body.get(FIELD_EMAIL))
-                        .map(String::trim)
-                        .map(s -> s.toLowerCase(Locale.ROOT))
-                        .orElse("");
+                    .map(String::trim)
+                    .map(s -> s.toLowerCase(Locale.ROOT))
+                    .orElse("");
 
             userService.sendPasswordRecoveryEmail(email);
-            return ResponseEntity.ok(Map.of(FIELD_MESSAGE, "Si el email existe, se ha enviado un enlace de recuperación."));
+            return ResponseEntity
+                    .ok(Map.of(FIELD_MESSAGE, "Si el email existe, se ha enviado un enlace de recuperación."));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR)
-                                 .body(Map.of(FIELD_MESSAGE, e.getMessage()));
+                    .body(Map.of(FIELD_MESSAGE, e.getMessage()));
         }
     }
 
@@ -249,7 +266,7 @@ public class UserController {
             return ResponseEntity.ok(Map.of(FIELD_MESSAGE, "Contraseña actualizada correctamente"));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST)
-                                 .body(Map.of(FIELD_MESSAGE, e.getMessage()));
+                    .body(Map.of(FIELD_MESSAGE, e.getMessage()));
         }
     }
 
@@ -257,33 +274,68 @@ public class UserController {
     public List<User> getAll() {
         return userService.listarUsuarios();
     }
-    
+
     @GetMapping("/obtenerPerfilUsuario")
-    public ResponseEntity<User> getUserByEmail(@RequestParam String email){
+    public ResponseEntity<User> getUserByEmail(@RequestParam String email) {
         User u = userService.getUserByEmail(email);
         return ResponseEntity.ok(u);
     }
 
+    @GetMapping("/obtenerPerfilUsuario")
+    public ResponseEntity<User> getUserByEmail(@RequestParam String email) {
+        User u = userService.getUserByEmail(email);
+        return ResponseEntity.ok(u);
+    }
+
+    @PutMapping("/modificarPerfilUsuario")
+    public User updateUser(@RequestBody Map<String, Object> body) {
+        try {
+            // Sacamos email desde el body
+            String email = (String) body.get("email");
+            if (email == null || email.trim().isEmpty()) {
+                throw new IllegalArgumentException("El email es obligatorio");
+            }
+
+            // Campos opcionales
+            String nombre = (String) body.get("nombre");
+            String apellidos = (String) body.get("apellidos");
+            String alias = (String) body.get("alias");
+            String foto = (String) body.get("foto");
+
+            return userService.updateProfile(
+                    email,
+                    nombre,
+                    apellidos,
+                    alias,
+                    foto);
+
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (ValidationException | ForbiddenException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) { // captura cualquier otra excepción checked
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @GetMapping("/admin/creators")
     public List<User> listarCreadores(
             @RequestParam(required = false) String search,
-            @RequestParam(required = false) Boolean blocked
-    ) {
+            @RequestParam(required = false) Boolean blocked) {
         return userService.listarCreadores(search, blocked);
     }
 
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PatchMapping("/admin/creators/{id}")
     public ResponseEntity<Object> actualizarCreador(@PathVariable String id,
-                                               @RequestBody Map<String, String> body) {
+            @RequestBody Map<String, String> body) {
         try {
-            String alias     = body.get("alias");
-            String nombre    = body.get("nombre");
+            String alias = body.get("alias");
+            String nombre = body.get("nombre");
             String apellidos = body.get("apellidos");
-            String email     = body.get("email");
-            String foto      = body.get("foto");
+            String email = body.get("email");
+            String foto = body.get("foto");
 
             if (email != null && !email.isBlank()) {
                 validarEmail(email.trim().toLowerCase(Locale.ROOT));
@@ -339,40 +391,40 @@ public class UserController {
     @PostMapping("/admin/creators")
     public ResponseEntity<Object> crearCreadorPorAdmin(@RequestBody Map<String, String> body) {
         validarCamposObligatorios(body,
-                "nombre","apellidos",FIELD_EMAIL,"alias","pwd","pwd2","foto",
-                "descripcion","especialidad","tipoContenido");
+                "nombre", "apellidos", FIELD_EMAIL, "alias", "pwd", "pwd2", "foto",
+                "descripcion", "especialidad", "tipoContenido");
 
-        final String nombre    = trim(body.get("nombre"));
+        final String nombre = trim(body.get("nombre"));
         final String apellidos = trim(body.get("apellidos"));
-        final String alias     = trim(body.get("alias"));
-        final String email     = trim(body.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
-        final String pwd       = body.get("pwd");
-        final String pwd2      = body.get("pwd2");
+        final String alias = trim(body.get("alias"));
+        final String email = trim(body.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
+        final String pwd = body.get("pwd");
+        final String pwd2 = body.get("pwd2");
 
         validarEmail(email);
         validarContrasena(pwd, pwd2);
 
-        String fechaNac = Optional.ofNullable(body.get("fechaNac")).map(String::trim).filter(s -> !s.isEmpty()).orElse("2000-01-01");
-        final String foto      = trim(body.getOrDefault("foto", "/static/fotos/image.png"));
-        final boolean vip      = Boolean.parseBoolean(body.getOrDefault("vip","false"));
+        String fechaNac = Optional.ofNullable(body.get("fechaNac")).map(String::trim).filter(s -> !s.isEmpty())
+                .orElse("2000-01-01");
+        final String foto = trim(body.getOrDefault("foto", "/static/fotos/image.png"));
+        final boolean vip = Boolean.parseBoolean(body.getOrDefault("vip", "false"));
 
-        final String descripcion  = trim(body.get("descripcion"));
+        final String descripcion = trim(body.get("descripcion"));
         final String especialidad = trim(body.get("especialidad"));
         final User.TipoContenido tipoContenido = parseTipoContenido(trim(body.get("tipoContenido")));
 
         try {
             userService.registrar(
-                nombre, apellidos, alias, email, fechaNac, pwd,
-                vip, foto,
-                User.Role.GESTOR_CONTENIDO,
-                descripcion, especialidad, tipoContenido
-            );
-            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("status","ok"));
+                    nombre, apellidos, alias, email, fechaNac, pwd,
+                    vip, foto,
+                    User.Role.GESTOR_CONTENIDO,
+                    descripcion, especialidad, tipoContenido);
+            return ResponseEntity.status(HttpStatus.CREATED).body(Map.of("status", "ok"));
         } catch (Exception e) {
             throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
         }
     }
-    
+
     @PreAuthorize("hasRole('ADMINISTRADOR')")
     @PatchMapping("/admin/admins/{id}")
     public ResponseEntity<Object> actualizarAdmin(
@@ -380,10 +432,10 @@ public class UserController {
             @RequestBody Map<String, String> body) {
 
         try {
-            String alias        = body.get(FIELD_ALIAS);
-            String nombre       = body.get(FIELD_NOMBRE);
-            String apellidos    = body.get(FIELD_APELLIDOS);
-            String foto         = body.get(FIELD_FOTO);
+            String alias = body.get(FIELD_ALIAS);
+            String nombre = body.get(FIELD_NOMBRE);
+            String apellidos = body.get(FIELD_APELLIDOS);
+            String foto = body.get(FIELD_FOTO);
             String departamento = body.get(FIELD_DEPARTAMENTO);
             if (body.containsKey(FIELD_EMAIL)) {
                 return ResponseEntity.status(HttpStatus.FORBIDDEN)
@@ -396,8 +448,7 @@ public class UserController {
                     apellidos == null ? null : apellidos.trim(),
                     null,
                     foto == null ? null : foto.trim(),
-                    departamento == null ? null : departamento.trim()
-            );
+                    departamento == null ? null : departamento.trim());
             Map<String, Object> response = Map.of(
                     "id", actualizado.getId(),
                     FIELD_ALIAS, actualizado.getAlias(),
@@ -406,8 +457,7 @@ public class UserController {
                     FIELD_EMAIL, actualizado.getEmail(),
                     "foto", actualizado.getFoto(),
                     FIELD_DEPARTAMENTO, actualizado.getDepartamento(),
-                    "message", "Administrador actualizado correctamente."
-            );
+                    "message", "Administrador actualizado correctamente.");
 
             return ResponseEntity.ok(response);
 
@@ -456,15 +506,15 @@ public class UserController {
         validarCamposObligatorios(body,
                 FIELD_NOMBRE, FIELD_APELLIDOS, FIELD_EMAIL, FIELD_ALIAS, FIELD_PWD, FIELD_PWD2, FIELD_FOTO);
 
-        final String nombre       = trim(body.get(FIELD_NOMBRE));
-        final String apellidos    = trim(body.get(FIELD_APELLIDOS));
-        final String alias        = trim(body.get(FIELD_ALIAS));
-        final String email        = trim(body.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
-        final String pwd          = body.get(FIELD_PWD);
-        final String pwd2         = body.get(FIELD_PWD2);
-        final String fechaNac     = Optional.ofNullable(body.get(FIELD_FECHA_NAC))
+        final String nombre = trim(body.get(FIELD_NOMBRE));
+        final String apellidos = trim(body.get(FIELD_APELLIDOS));
+        final String alias = trim(body.get(FIELD_ALIAS));
+        final String email = trim(body.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
+        final String pwd = body.get(FIELD_PWD);
+        final String pwd2 = body.get(FIELD_PWD2);
+        final String fechaNac = Optional.ofNullable(body.get(FIELD_FECHA_NAC))
                 .map(String::trim).filter(s -> !s.isEmpty()).orElse("2000-01-01");
-        final String foto         = trim(body.getOrDefault(FIELD_FOTO, "/static/fotos/image.png"));
+        final String foto = trim(body.getOrDefault(FIELD_FOTO, "/static/fotos/image.png"));
         final String departamento = trim(body.getOrDefault(FIELD_DEPARTAMENTO, ""));
 
         validarEmail(email);
@@ -484,15 +534,14 @@ public class UserController {
         return ResponseEntity.status(HttpStatus.ACCEPTED).body(Map.of(
                 "status", "pending",
                 "userId", pending.getId(),
-                "message", "Solicitud enviada al superAdmin para aprobación"
-        ));
+                "message", "Solicitud enviada al superAdmin para aprobación"));
     }
 
     @GetMapping("/admin/admins/approve")
     public ResponseEntity<Object> aprobarAdminPorToken(@RequestParam("token") String token) {
         try {
             User u = userService.aprobarAdminPorToken(token);
-            return ResponseEntity.ok(Map.of("status","approved","Email", u.getEmail()));
+            return ResponseEntity.ok(Map.of("status", "approved", "Email", u.getEmail()));
         } catch (com.example.usersbe.exceptions.ExpiredTokenException e) {
             return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message", e.getMessage()));
         } catch (com.example.usersbe.exceptions.InvalidTokenException e) {
@@ -506,7 +555,7 @@ public class UserController {
     public ResponseEntity<Object> rechazarAdminPorToken(@RequestParam("token") String token) {
         try {
             User u = userService.rechazarAdminPorToken(token);
-            return ResponseEntity.ok(Map.of("status","rejected","Email", u.getEmail()));
+            return ResponseEntity.ok(Map.of("status", "rejected", "Email", u.getEmail()));
         } catch (com.example.usersbe.exceptions.ExpiredTokenException e) {
             return ResponseEntity.status(HttpStatus.GONE).body(Map.of("message", e.getMessage()));
         } catch (com.example.usersbe.exceptions.InvalidTokenException e) {
