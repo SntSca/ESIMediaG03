@@ -283,13 +283,12 @@ public class UserController {
     @PutMapping("/modificarPerfilUsuario")
     public User updateUser(@RequestBody Map<String, Object> body) {
         try {
-            // Sacamos email desde el body
+        
             String email = (String) body.get("email");
             if (email == null || email.trim().isEmpty()) {
                 throw new IllegalArgumentException("El email es obligatorio");
             }
 
-            // Campos opcionales
             String nombre = (String) body.get("nombre");
             String apellidos = (String) body.get("apellidos");
             String alias = (String) body.get("alias");
@@ -301,7 +300,8 @@ public class UserController {
                     nombre,
                     apellidos,
                     alias,
-                    foto);
+                    foto,
+                    vip);
 
         } catch (IllegalArgumentException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
@@ -618,10 +618,10 @@ public class UserController {
     @DeleteMapping("/admin/users/{id}")
     public ResponseEntity<Object> eliminarUsuario(@PathVariable String id) {
         try {
-            userService.eliminarUsuario(id); // lanzará UserDeletionNotAllowedException
+            userService.eliminarUsuario(id); 
             return ResponseEntity.noContent().build();
         } catch (com.example.usersbe.exceptions.UserDeletionNotAllowedException e) {
-            // Respuesta clara para la prohibición de borrar usuarios
+        
             return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", e.getMessage()));
         } catch (Exception e) {
             return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));

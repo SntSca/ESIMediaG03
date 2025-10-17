@@ -1,22 +1,31 @@
 package com.example.usersbe;
 
-import com.example.usersbe.dao.UserDao;
-import com.example.usersbe.exceptions.*;
-import com.example.usersbe.model.User;
-import com.example.usersbe.services.UserService;
+import java.time.LocalDate;
+import java.util.Optional;
 
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertFalse;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import static org.junit.jupiter.api.Assertions.assertTrue;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import static org.mockito.ArgumentMatchers.anyString;
 import org.mockito.Mock;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
 import org.mockito.junit.jupiter.MockitoExtension;
 
-import java.time.LocalDate;
-import java.util.Optional;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.Mockito.*;
+import com.example.usersbe.dao.UserDao;
+import com.example.usersbe.exceptions.DuplicateAliasException;
+import com.example.usersbe.exceptions.InvalidRoleException;
+import com.example.usersbe.exceptions.UserDeletionNotAllowedException;
+import com.example.usersbe.exceptions.UserNotFoundException;
+import com.example.usersbe.model.User;
+import com.example.usersbe.services.UserService;
 
 @ExtendWith(MockitoExtension.class)
 class UserServiceUsuariosTest {
@@ -25,11 +34,10 @@ class UserServiceUsuariosTest {
 
     private UserService userService;
 
-    private User u; // usuario básico común
+    private User u; 
 
     @BeforeEach
     void init() {
-        // Construimos el servicio pasando null en deps que no usamos en estos tests
         userService = new UserService(userDao, /*emailService*/ null, /*emailOtpService*/ null);
 
         u = user("u1", "user1", "User", "One", "USER1@MAIL.COM", "foto.png",
@@ -37,7 +45,7 @@ class UserServiceUsuariosTest {
         u.setFechaNac(LocalDate.of(2000, 1, 1));
     }
 
-    // ---------- actualizarUsuario ----------
+    
     @Test
     @DisplayName("actualizarUsuario: actualiza alias/nombre/apellidos/foto y fechaNac, sin tocar email")
     void actualizarUsuario_ok() {
@@ -47,25 +55,23 @@ class UserServiceUsuariosTest {
 
         User res = userService.actualizarUsuario(
                 "u1",
-                "  nuevo ",        // alias (se trimea y valida duplicado)
-                "  Nombre ",       // nombre (se trimea)
-                " Apellidos ",     // apellidos (se trimea)
-                null,              // email (IGNORADO para usuarios)
-                " avatar.png ",    // foto (se mantiene tal cual en Service)
-                "2001-05-09"       // fecha de nacimiento (ISO yyyy-MM-dd)
+                "  nuevo ",        
+                "  Nombre ",       
+                " Apellidos ",     
+                null,              
+                " avatar.png ",    
+                "2001-05-09"       
         );
 
         assertEquals("nuevo", res.getAlias());
         assertEquals("Nombre", res.getNombre());
         assertEquals("Apellidos", res.getApellidos());
 
-        // Email NO cambia
+     
         assertEquals("USER1@MAIL.COM", res.getEmail());
 
-        // La foto en UserService se asigna tal cual se recibe
         assertEquals(" avatar.png ", res.getFoto());
 
-        // Fecha de nacimiento actualizada
         assertEquals(LocalDate.of(2001, 5, 9), res.getFechaNac());
     }
 
@@ -98,10 +104,6 @@ class UserServiceUsuariosTest {
                 () -> userService.actualizarUsuario("u1", "dup", null, null, null, null, null));
     }
 
-    // Nota: pruebas de email duplicado/el cambio de email se eliminan
-    // porque el email ya NO es editable para ningún rol.
-
-    // ---------- bloquearUsuario ----------
     @Test
     @DisplayName("bloquearUsuario: bloquea si estaba desbloqueado")
     void bloquearUsuario_cambia() {
@@ -124,7 +126,6 @@ class UserServiceUsuariosTest {
         verify(userDao, never()).save(any());
     }
 
-    // ---------- desbloquearUsuario ----------
     @Test
     @DisplayName("desbloquearUsuario: desbloquea si estaba bloqueado")
     void desbloquearUsuario_cambia() {
@@ -147,7 +148,6 @@ class UserServiceUsuariosTest {
         verify(userDao, never()).save(any());
     }
 
-    // ---------- eliminarUsuario ----------
     @Test
     @DisplayName("eliminarUsuario: prohibido si existe (UserDeletionNotAllowedException)")
     void eliminarUsuario_prohibido() {
@@ -165,7 +165,6 @@ class UserServiceUsuariosTest {
                 () -> userService.eliminarUsuario("no"));
     }
 
-    // ---------- helper local ----------
     private static User user(String id, String alias, String nombre, String apellidos,
                              String email, String foto, User.Role role, boolean blocked) {
         User u = new User();
