@@ -47,6 +47,7 @@ export interface AppUser {
   email: string;
   role: Role;
   blocked: boolean;
+  fechaNac?:string;
   vip?: boolean;
   createdAt?: string;
   descripcion?: string;

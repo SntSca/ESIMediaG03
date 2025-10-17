@@ -1,3 +1,4 @@
+<!-- Modo lectura -->
 <div class="ro-banner" *ngIf="readOnly">
   <span>📖 Modo lectura activado — no puedes interactuar con esta página.</span>
   <button
@@ -12,145 +13,155 @@
 </div>
 
 <div class="ro-wrap" [class.readonly]="readOnly">
+  <!-- Header usuario -->
   <div class="usuario-header">
     <div class="usuario-info">
-      <div class="avatar">{{ userInitials }}</div>
+      <div class="ava">
+        <img *ngIf="userAvatar" [src]="userAvatar" alt="Avatar" class="avatar-img">
+        <span *ngIf="!userAvatar" class="avatar-initials">{{ userInitials }}</span>
+      </div>
+
       <div class="datos">
-        <div class="nombre">{{ userName }}</div>
+        <div class="nombre-wrap">
+          <div class="nombre">{{ userName }}</div>
+          <button class="edit-inline" type="button" (click)="toggleEditar()" title="Editar perfil">✏️</button>
+        </div>
         <div class="email">{{ userEmail }}</div>
       </div>
     </div>
-   
-    <button
-      class="btn-cerrar"
-      type="button"
-      (click)="CerrarSesion()"
-      aria-label="Cerrar sesión"
-    >
-      Cerrar Sesión
-    </button>
+
+    <div class="btn-wrap">
+      <!-- OJO: Usa C mayúscula porque el método se llama CerrarSesion() -->
+      <button class="btn-cerrar" (click)="CerrarSesion()">Cerrar sesión</button>
+    </div>
   </div>
 
-  <div class="filtros">
-    <input
-      type="text"
-      [(ngModel)]="filtros.titulo"
-      placeholder="Buscar por título"
-      [disabled]="readOnly"
-      aria-label="Buscar por título"
-    />
-    <select [(ngModel)]="filtros.tipo" [disabled]="readOnly" aria-label="Filtrar por tipo">
-      <option value="">Todos los tipos</option>
-      <option value="AUDIO">Audio</option>
-      <option value="VIDEO">Video</option>
-    </select>
-    <select [(ngModel)]="filtros.vip" [disabled]="readOnly" aria-label="Filtrar por VIP">
-      <option value="">VIP / No VIP</option>
-      <option value="si">VIP</option>
-      <option value="no">No VIP</option>
-    </select>
-    <select [(ngModel)]="filtros.visible" [disabled]="readOnly" aria-label="Filtrar por visibilidad">
-      <option value="">Visible / No visible</option>
-      <option value="si">Visible</option>
-      <option value="no">No visible</option>
-    </select>
-    <input
-      type="text"
-      [(ngModel)]="filtros.tagIncluye"
-      placeholder="Buscar por tag"
-      [disabled]="readOnly"
-      aria-label="Buscar por tag"
-    />
-    <select [(ngModel)]="filtros.ordenar" [disabled]="readOnly" aria-label="Ordenar resultados">
-      <option value="fecha">Ordenar por fecha</option>
-      <option value="titulo">Ordenar por título</option>
-      <option value="vip">Ordenar por VIP</option>
-      <option value="visible">Ordenar por visibilidad</option>
-    </select>
-  </div>
-  <div class="tabs">
-    <button
-      class="tab-btn"
-      [class.active]="selectedTab==='ALL'"
-      (click)="selectedTab='ALL'; showTodosConstruction=true"
-      [disabled]="readOnly"
-      type="button"
-    >
-      Todos
-    </button>
-
-    <button
-      class="tab-btn"
-      [class.active]="selectedTab==='AUDIO'"
-      (click)="selectedTab='AUDIO'; showTodosConstruction=false"
-      [disabled]="readOnly"
-      type="button"
-    >
-      Audio
-    </button>
-
-    <button
-      class="tab-btn"
-      [class.active]="selectedTab==='VIDEO'"
-      (click)="selectedTab='VIDEO'; showTodosConstruction=false"
-      [disabled]="readOnly"
-      type="button"
-    >
-      Video
-    </button>
-
-    <button
-      class="tab-btn"
-      [class.active]="selectedTab==='HIST'"
-      (click)="selectedTab='HIST'; showTodosConstruction=false"
-      [disabled]="readOnly"
-      type="button"
-    >
-      Historial
-    </button>
-
-    <button
-      class="tab-btn"
-      [class.active]="selectedTab==='FAV'"
-      (click)="selectedTab='FAV'; showTodosConstruction=false"
-      [disabled]="readOnly"
-      type="button"
-    >
-      Favoritos
-    </button>
+  <div class="promo-banner" aria-label="Contenido próximamente">
+    <div class="promo-track">
+      <span class="promo-text">Contenido Multimedia Próximamente... EsiMeida </span>
+      <span class="promo-text">Contenido Multimedia Próximamente... EsiMeida </span>
+      <span class="promo-text">Contenido Multimedia Próximamente... EsiMeida </span>
+    </div>
   </div>
 
-  <div class="contenidos">
-    <div *ngIf="showTodosConstruction" class="construction">
-      <div class="construction-inner">
-        <div class="construction-emoji">🚧</div>
-        <div class="construction-title">En construcción</div>
-        <div class="construction-text">
-          Estamos trabajando para traerte esta sección muy pronto.
+  <!-- Fondo oscuro al abrir el panel -->
+  <div class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></div>
+
+  <!-- Panel de edición perfil -->
+  <div class="edit-panel modal" [class.open]="editOpen" (click)="$event.stopPropagation()">
+    <h3>Editar perfil</h3>
+
+    <form (ngSubmit)="guardarCambios()">
+      <!-- Bloqueados -->
+      <div class="row">
+        <label class="label-lock">
+          Email
+          <span class="lock" title="Campo bloqueado">🔒</span>
+          <span class="badge-ro">bloqueado</span>
+        </label>
+        <input type="text" [ngModel]="userEmail" name="email_ro" class="ro" readonly disabled />
+      </div>
+
+      <div class="row">
+        <label class="label-lock">
+          Fecha de nacimiento
+          <span class="lock" title="Campo bloqueado">🔒</span>
+          <span class="badge-ro">bloqueado</span>
+        </label>
+        <input type="date" [ngModel]="model.fechaNac" name="fechaNac_ro" class="ro" readonly disabled />
+      </div>
+
+      <!-- Editables -->
+      <div class="row">
+        <label>Nombre</label>
+        <input type="text" [(ngModel)]="model.nombre" name="nombre" />
+      </div>
+
+      <div class="row">
+        <label>Apellidos</label>
+        <input type="text" [(ngModel)]="model.apellidos" name="apellidos" />
+      </div>
+
+      <div class="row">
+        <label>Alias</label>
+        <input type="text" [(ngModel)]="model.alias" name="alias" />
+      </div>
+
+      <div class="Avatar">
+        <label>Avatar</label>
+        <button type="button" class="btn" (click)="openAvatarModal()">Elegir Avatar</button>
+        <div *ngIf="selectedAvatar" class="selected-avatar-card">
+          <img [src]="selectedAvatar" alt="avatar" class="selected-avatar-card__img">
+          <div class="selected-avatar-card__text">
+            <b>Avatar seleccionado</b>
+            <small>Puedes cambiarlo cuando quieras</small>
+          </div>
         </div>
       </div>
-    </div>
 
-    <div *ngIf="!showTodosConstruction && selectedTab==='AUDIO'" class="placeholder">
-      <h3>Audio</h3>
-      <p>Contenido de audio aparecerá aquí.</p>
-    </div>
+      <!-- Mensajes -->
+      <p class="ok" *ngIf="okMsg">{{ okMsg }}</p>
+      <p class="err" *ngIf="errorMsg">{{ errorMsg }}</p>
 
-    <div *ngIf="!showTodosConstruction && selectedTab==='VIDEO'" class="placeholder">
-      <h3>Video</h3>
-      <p>Contenido de video aparecerá aquí.</p>
-    </div>
-
-    <div *ngIf="!showTodosConstruction && selectedTab==='HIST'" class="placeholder">
-      <h3>Historial</h3>
-      <p>Tu historial de reproducción aparecerá aquí.</p>
-    </div>
-
-    <div *ngIf="!showTodosConstruction && selectedTab==='FAV'" class="placeholder">
-      <h3>Favoritos</h3>
-      <p>Tu lista de favoritos aparecerá aquí.</p>
-    </div>
+      <!-- Acciones -->
+      <div class="actions">
+        <button class="btn-darseBaja" type="button" (click)="DarDeBaja(); $event.stopPropagation()">Eliminar Cuenta</button>
+        <button type="button" class="btn-out" (click)="cancelarEditar(); $event.stopPropagation()">Cancelar</button>
+        <button type="submit" class="btn-primario" [disabled]="saving" (click)="$event.stopPropagation()">
+          {{ saving ? 'Guardando…' : 'Guardar' }}
+        </button>
+      </div>
+    </form>
   </div>
 
+  <!-- Overlay visual de solo-lectura -->
   <div class="ro-overlay" *ngIf="readOnly" aria-hidden="true"></div>
+
+  <!-- Modal de avatares -->
+  <div
+    *ngIf="showAvatarModal"
+    class="avatar-modal"
+    tabindex="0"
+    (click)="closeAvatarModal()"
+    (keydown.enter)="closeAvatarModal()"
+    (keydown.space)="closeAvatarModal()"
+    (keydown.escape)="closeAvatarModal()">
+
+    <div
+      class="avatar-modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="avatarTitle"
+      (click)="$event.stopPropagation()">
+
+      <div class="avatar-preview" *ngIf="selectedAvatar; else noPreview">
+        <img [src]="selectedAvatar" alt="avatar seleccionado">
+        <div class="avatar-preview__caption">Seleccionado</div>
+      </div>
+      <ng-template #noPreview>
+        <div class="avatar-preview avatar-preview--placeholder">
+          <span>Selecciona uno de la galería</span>
+        </div>
+      </ng-template>
+
+      <ul class="avatar-grid">
+        <li *ngFor="let avatar of avatars"
+            class="avatar-option"
+            [class.selected]="selectedAvatar === avatar">
+          <button type="button"
+                  (click)="selectAvatar(avatar)"
+                  (keydown.enter)="selectAvatar(avatar)"
+                  [attr.aria-pressed]="selectedAvatar === avatar"
+                  [attr.aria-label]="'Elegir avatar ' + avatar">
+            <img [src]="avatar" alt="avatar">
+            <span class="avatar-check">✓</span>
+          </button>
+        </li>
+      </ul>
+
+      <div class="avatar-modal-actions">
+        <button class="btn btn--ghost" type="button" (click)="closeAvatarModal()">Cancelar</button>
+      </div>
+    </div>
+  </div>
 </div>

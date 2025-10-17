@@ -17,6 +17,10 @@ import java.util.Base64;
 import java.util.List;
 import java.util.regex.Pattern;
 
+import com.example.usersbe.dto.AdminCreationRequest;
+import com.example.usersbe.model.User;
+import com.example.usersbe.services.UserService;
+
 @Service
 public class UserService {
 
@@ -29,16 +33,16 @@ public class UserService {
     private final UserDao userDao;
     private final EmailService emailService;
     private final EmailOtpService emailOtpService;
-        @Value("${app.superadmin.email}")
+    @Value("${app.superadmin.email}")
     private String superAdminEmail;
-    private static final Pattern EMAIL_VALIDO =
-        Pattern.compile("^[\\p{L}0-9._%+-]+@[\\p{L}0-9.-]+\\.[A-Za-z]{2,}$");
+    private static final Pattern EMAIL_VALIDO = Pattern.compile("^[\\p{L}0-9._%+-]+@[\\p{L}0-9.-]+\\.[A-Za-z]{2,}$");
 
     public UserService(UserDao userDao, EmailService emailService, EmailOtpService emailOtpService) {
         this.userDao = userDao;
         this.emailService = emailService;
         this.emailOtpService = emailOtpService;
     }
+
     private String normalizeEmail(String email) {
         return (email == null) ? "" : email.trim().toLowerCase();
     }
@@ -56,7 +60,8 @@ public class UserService {
     }
 
     public boolean isAliasAvailable(String aliasRaw) {
-        if (aliasRaw == null || aliasRaw.trim().isEmpty()) return false;
+        if (aliasRaw == null || aliasRaw.trim().isEmpty())
+            return false;
         final String alias = aliasRaw.trim();
         return !userDao.existsByAliasIgnoreCase(alias);
     }
@@ -73,17 +78,18 @@ public class UserService {
     }
 
     public void registrar(String nombre, String apellidos, String alias, String email,
-                          String fechaNac, String pwd, boolean vip, String foto,
-                          User.Role role,
-                          String descripcion, String especialidad, User.TipoContenido tipoContenido) {
+            String fechaNac, String pwd, boolean vip, String foto,
+            User.Role role,
+            String descripcion, String especialidad, User.TipoContenido tipoContenido) {
         registrar(nombre, apellidos, alias, email, fechaNac, pwd, vip, foto, role,
                 descripcion, especialidad, tipoContenido, null);
     }
+
     public void registrar(String nombre, String apellidos, String alias, String email,
-                          String fechaNac, String pwd, boolean vip, String foto,
-                          User.Role role,
-                          String descripcion, String especialidad, User.TipoContenido tipoContenido,
-                          String departamento) {
+            String fechaNac, String pwd, boolean vip, String foto,
+            User.Role role,
+            String descripcion, String especialidad, User.TipoContenido tipoContenido,
+            String departamento) {
         if (alias == null || alias.trim().isEmpty()) {
             throw new InvalidFieldException("El alias es obligatorio");
         }
@@ -105,23 +111,23 @@ public class UserService {
                 throw new InvalidFieldException("La especialidad es obligatoria para Gestor de Contenido");
             }
             if (tipoContenido == null) {
-                throw new InvalidFieldException("El tipo de contenido (Audio/Video) es obligatorio para Gestor de Contenido");
+                throw new InvalidFieldException(
+                        "El tipo de contenido (Audio/Video) es obligatorio para Gestor de Contenido");
             }
         }
 
         User user = buildUser(
-            nombre, apellidos, alias, emailN, fechaNac, pwd, vip, foto, role,
-            descripcion, especialidad, tipoContenido, departamento
-        );
+                nombre, apellidos, alias, emailN, fechaNac, pwd, vip, foto, role,
+                descripcion, especialidad, tipoContenido, departamento);
 
         userDao.save(user);
     }
 
     private User buildUser(String nombre, String apellidos, String alias, String email,
-                           String fechaNac, String pwd, boolean vip, String foto,
-                           User.Role role,
-                           String descripcion, String especialidad, User.TipoContenido tipoContenido,
-                           String departamento) {
+            String fechaNac, String pwd, boolean vip, String foto,
+            User.Role role,
+            String descripcion, String especialidad, User.TipoContenido tipoContenido,
+            String departamento) {
 
         User user = new User();
         user.setNombre(nombre != null ? nombre.trim() : null);
@@ -176,59 +182,59 @@ public class UserService {
 
     private String generateRecoveryHtml(String nombre, String link) {
         return """
-        <!DOCTYPE html>
-        <html>
-            <head>
-                <meta charset="UTF-8">
-                <title>Recuperación de contraseña - EsiMedia</title>
-                <style>
-                    body {
-                        font-family: Arial, sans-serif;
-                        background-color: #f4f4f7;
-                        color: #333;
-                        padding: 20px;
-                    }
-                    .container {
-                        max-width: 600px;
-                        margin: 40px auto;
-                        background-color: #ffffff;
-                        padding: 30px;
-                        border-radius: 8px;
-                        box-shadow: 0 4px 12px rgba(0,0,0,0.1);
-                        text-align: center;
-                    }
-                    h1 { color: #333333; }
-                    p  { font-size: 16px; line-height: 1.5; }
-                    .btn {
-                        display: inline-block;
-                        padding: 12px 24px;
-                        margin-top: 20px;
-                        font-size: 16px;
-                        color: #ffffff;
-                        background-color: #007BFF;
-                        text-decoration: none;
-                        border-radius: 5px;
-                        transition: background-color 0.3s ease;
-                    }
-                    .btn:hover { background-color: #0056b3; }
-                    .footer {
-                        margin-top: 30px;
-                        font-size: 12px;
-                        color: #777;
-                    }
-                </style>
-            </head>
-            <body>
-                <div class="container">
-                    <h1>Recuperación de contraseña</h1>
-                    <p>Hola, <strong>%s</strong>,</p>
-                    <p>Haz clic en el botón de abajo para restablecer tu contraseña:</p>
-                    <a href="%s" class="btn">Restablecer contraseña</a>
-                    <p class="footer">Si no solicitaste este correo, puedes ignorarlo.</p>
-                </div>
-            </body>
-        </html>
-        """.formatted(nombre != null ? nombre : "usuario", link);
+                <!DOCTYPE html>
+                <html>
+                    <head>
+                        <meta charset="UTF-8">
+                        <title>Recuperación de contraseña - EsiMedia</title>
+                        <style>
+                            body {
+                                font-family: Arial, sans-serif;
+                                background-color: #f4f4f7;
+                                color: #333;
+                                padding: 20px;
+                            }
+                            .container {
+                                max-width: 600px;
+                                margin: 40px auto;
+                                background-color: #ffffff;
+                                padding: 30px;
+                                border-radius: 8px;
+                                box-shadow: 0 4px 12px rgba(0,0,0,0.1);
+                                text-align: center;
+                            }
+                            h1 { color: #333333; }
+                            p  { font-size: 16px; line-height: 1.5; }
+                            .btn {
+                                display: inline-block;
+                                padding: 12px 24px;
+                                margin-top: 20px;
+                                font-size: 16px;
+                                color: #ffffff;
+                                background-color: #007BFF;
+                                text-decoration: none;
+                                border-radius: 5px;
+                                transition: background-color 0.3s ease;
+                            }
+                            .btn:hover { background-color: #0056b3; }
+                            .footer {
+                                margin-top: 30px;
+                                font-size: 12px;
+                                color: #777;
+                            }
+                        </style>
+                    </head>
+                    <body>
+                        <div class="container">
+                            <h1>Recuperación de contraseña</h1>
+                            <p>Hola, <strong>%s</strong>,</p>
+                            <p>Haz clic en el botón de abajo para restablecer tu contraseña:</p>
+                            <a href="%s" class="btn">Restablecer contraseña</a>
+                            <p class="footer">Si no solicitaste este correo, puedes ignorarlo.</p>
+                        </div>
+                    </body>
+                </html>
+                """.formatted(nombre != null ? nombre : "usuario", link);
     }
 
     public void resetPassword(String token, String newPassword) {
@@ -264,8 +270,6 @@ public class UserService {
         }
     }
 
-
-
     public List<User> listarUsuarios() {
         return userDao.findAll();
     }
@@ -274,20 +278,31 @@ public class UserService {
         boolean hasSearch = (search != null && !search.isBlank());
         if (hasSearch) {
             String q = search.trim();
-            if (blocked == null) return userDao.searchCreators(User.Role.GESTOR_CONTENIDO, q);
+            if (blocked == null)
+                return userDao.searchCreators(User.Role.GESTOR_CONTENIDO, q);
             return userDao.searchCreatorsByBlocked(User.Role.GESTOR_CONTENIDO, q, blocked);
         } else {
-            if (blocked == null) return userDao.findByRole(User.Role.GESTOR_CONTENIDO);
+            if (blocked == null)
+                return userDao.findByRole(User.Role.GESTOR_CONTENIDO);
             return userDao.findByRoleAndBlocked(User.Role.GESTOR_CONTENIDO, blocked);
         }
     }
 
+    public User getUserByEmail(String email) {
+        User user = userDao.findByEmail(email);
+        if (user == null) {
+            throw new RuntimeException("Usuario no encontrado");
+        }
+        return user;
+    }
+
     public User actualizarCreador(String id, String alias, String nombre,
-                              String apellidos, String email, String foto)
-        throws UserNotFoundException, InvalidRoleException, DuplicateAliasException, DuplicateEmailException {
+            String apellidos, String email, String foto)
+            throws UserNotFoundException, InvalidRoleException, DuplicateAliasException, DuplicateEmailException {
 
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new UserNotFoundException(CREATOR_NOT_FOUND);
+        if (u == null)
+            throw new UserNotFoundException(CREATOR_NOT_FOUND);
 
         if (u.getRole() != User.Role.GESTOR_CONTENIDO)
             throw new InvalidRoleException(USER_NOT_A_CREATOR);
@@ -300,8 +315,10 @@ public class UserService {
             u.setAlias(aliasTrim);
         }
 
-        if (nombre != null) u.setNombre(nombre.trim());
-        if (apellidos != null) u.setApellidos(apellidos.trim());
+        if (nombre != null)
+            u.setNombre(nombre.trim());
+        if (apellidos != null)
+            u.setApellidos(apellidos.trim());
 
         if (email != null && !email.isBlank()) {
             String emailN = normalizeEmail(email);
@@ -312,15 +329,16 @@ public class UserService {
             u.setEmail(emailN);
         }
 
-        if (foto != null) u.setFoto(foto);
+        if (foto != null)
+            u.setFoto(foto);
 
         return userDao.save(u);
     }
 
-
-    public User bloquearCreador(String id){
+    public User bloquearCreador(String id) {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new UserNotFoundException(CREATOR_NOT_FOUND);
+        if (u == null)
+            throw new UserNotFoundException(CREATOR_NOT_FOUND);
         if (u.getRole() != User.Role.GESTOR_CONTENIDO)
             throw new InvalidRoleException(USER_NOT_A_CREATOR);
 
@@ -332,9 +350,10 @@ public class UserService {
         return u;
     }
 
-    public User desbloquearCreador(String id){
+    public User desbloquearCreador(String id) {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new UserNotFoundException(CREATOR_NOT_FOUND);
+        if (u == null)
+            throw new UserNotFoundException(CREATOR_NOT_FOUND);
         if (u.getRole() != User.Role.GESTOR_CONTENIDO)
             throw new InvalidRoleException(USER_NOT_A_CREATOR);
 
@@ -348,12 +367,14 @@ public class UserService {
 
     public void eliminarCreador(String id) {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new UserNotFoundException(CREATOR_NOT_FOUND);
+        if (u == null)
+            throw new UserNotFoundException(CREATOR_NOT_FOUND);
         if (u.getRole() != User.Role.GESTOR_CONTENIDO)
             throw new InvalidRoleException(USER_NOT_A_CREATOR);
 
         userDao.deleteById(id);
     }
+
     /* ================= USUARIOS =========== */
     // --- USUARIOS (rol básico) ---
     public User actualizarUsuario(String id,
@@ -452,10 +473,11 @@ public class UserService {
         throw new UserDeletionNotAllowedException("No se puede eliminar a usuarios");
     }
 
-
     private boolean isSuperAdmin(User u) {
-        if (u == null) return false;
-        if (u.getRole() != User.Role.ADMINISTRADOR) return false;
+        if (u == null)
+            return false;
+        if (u.getRole() != User.Role.ADMINISTRADOR)
+            return false;
         if (superAdminEmail == null || superAdminEmail.isBlank()) {
             throw new MissingSuperAdminEmailConfigException();
         }
@@ -476,21 +498,23 @@ public class UserService {
     }
 
     public void notifySuperAdminOnAdminLogin(User adminUser, String ip) {
-        if (adminUser == null) return;
-        if (adminUser.getRole() != User.Role.ADMINISTRADOR) return;
+        if (adminUser == null)
+            return;
+        if (adminUser.getRole() != User.Role.ADMINISTRADOR)
+            return;
 
         String to = resolveSuperAdminEmailOrThrow();
         emailOtpService.sendAdminLoginAlert(
-            to,
-            adminUser.getAlias(),
-            adminUser.getEmail(),
-            ip,
-            LocalDateTime.now()
-        );
+                to,
+                adminUser.getAlias(),
+                adminUser.getEmail(),
+                ip,
+                LocalDateTime.now());
     }
+
     public User actualizarAdmin(String id, String alias, String nombre,
-                            String apellidos, String email, String foto,
-                            String departamento) {
+            String apellidos, String email, String foto,
+            String departamento) {
 
         User u = findValidAdmin(id);
 
@@ -501,16 +525,19 @@ public class UserService {
 
         return userDao.save(u);
     }
+
     private User findValidAdmin(String id) {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new AdminNotFoundException(id);
+        if (u == null)
+            throw new AdminNotFoundException(id);
         if (u.getRole() != User.Role.ADMINISTRADOR)
             throw new NotAnAdminException();
         return u;
     }
 
     private void updateAliasIfValid(User u, String alias) {
-        if (alias == null || alias.isBlank()) return;
+        if (alias == null || alias.isBlank())
+            return;
 
         String aliasTrim = alias.trim();
         User byAlias = userDao.findByAlias(aliasTrim);
@@ -521,12 +548,15 @@ public class UserService {
     }
 
     private void updateNombreApellidos(User u, String nombre, String apellidos) {
-        if (nombre != null) u.setNombre(nombre.trim());
-        if (apellidos != null) u.setApellidos(apellidos.trim());
+        if (nombre != null)
+            u.setNombre(nombre.trim());
+        if (apellidos != null)
+            u.setApellidos(apellidos.trim());
     }
 
     private void updateEmailIfValid(User u, String email) {
-        if (email == null || email.isBlank()) return;
+        if (email == null || email.isBlank())
+            return;
 
         String emailN = normalizeEmail(email);
         validateEmail(emailN);
@@ -538,62 +568,76 @@ public class UserService {
     }
 
     private void updateOptionalFields(User u, String foto, String departamento) {
-        if (foto != null) u.setFoto(foto);
-        if (departamento != null) u.setDepartamento(departamento.trim());
+        if (foto != null)
+            u.setFoto(foto);
+        if (departamento != null)
+            u.setDepartamento(departamento.trim());
     }
-
 
     public User bloquearAdmin(String id) {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new AdminNotFoundException(id);
-        if (u.getRole() != User.Role.ADMINISTRADOR) throw new NotAnAdminException();
-        if (isSuperAdmin(u)) throw new SuperAdminProtectionException("bloquear");
+        if (u == null)
+            throw new AdminNotFoundException(id);
+        if (u.getRole() != User.Role.ADMINISTRADOR)
+            throw new NotAnAdminException();
+        if (isSuperAdmin(u))
+            throw new SuperAdminProtectionException("bloquear");
 
-        if (Boolean.TRUE.equals(u.isBlocked())) return u;
+        if (Boolean.TRUE.equals(u.isBlocked()))
+            return u;
         u.setBlocked(true);
         return userDao.save(u);
     }
 
     public User desbloquearAdmin(String id) {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new AdminNotFoundException(id);
-        if (u.getRole() != User.Role.ADMINISTRADOR) throw new NotAnAdminException();
+        if (u == null)
+            throw new AdminNotFoundException(id);
+        if (u.getRole() != User.Role.ADMINISTRADOR)
+            throw new NotAnAdminException();
 
-        if (!Boolean.TRUE.equals(u.isBlocked())) return u;
+        if (!Boolean.TRUE.equals(u.isBlocked()))
+            return u;
         u.setBlocked(false);
         return userDao.save(u);
     }
 
     public void eliminarAdmin(String id) {
         User u = userDao.findById(id).orElse(null);
-        if (u == null) throw new AdminNotFoundException(id);
-        if (u.getRole() != User.Role.ADMINISTRADOR) throw new NotAnAdminException();
-        if (isSuperAdmin(u)) throw new SuperAdminProtectionException("eliminar");
+        if (u == null)
+            throw new AdminNotFoundException(id);
+        if (u.getRole() != User.Role.ADMINISTRADOR)
+            throw new NotAnAdminException();
+        if (isSuperAdmin(u))
+            throw new SuperAdminProtectionException("eliminar");
 
         userDao.deleteById(id);
     }
+
     public User solicitarCreacionAdmin(AdminCreationRequest req) {
-        final String nombre       = req.getNombre();
-        final String apellidos    = req.getApellidos();
-        final String alias        = req.getAlias();
-        final String email        = req.getEmail();
-        final String fechaNac     = req.getFechaNac();
-        final String pwd          = req.getPwd();
-        final String foto         = req.getFoto();
+        final String nombre = req.getNombre();
+        final String apellidos = req.getApellidos();
+        final String alias = req.getAlias();
+        final String email = req.getEmail();
+        final String fechaNac = req.getFechaNac();
+        final String pwd = req.getPwd();
+        final String foto = req.getFoto();
         final String departamento = req.getDepartamento();
 
-        if (alias == null || alias.trim().isEmpty()) throw new InvalidFieldException("El alias es obligatorio");
-        if (!isAliasAvailable(alias)) throw new AliasAlreadyUsedException();
-        if (foto == null || foto.isBlank()) throw new InvalidFieldException("La foto (avatar) es obligatoria");
+        if (alias == null || alias.trim().isEmpty())
+            throw new InvalidFieldException("El alias es obligatorio");
+        if (!isAliasAvailable(alias))
+            throw new AliasAlreadyUsedException();
+        if (foto == null || foto.isBlank())
+            throw new InvalidFieldException("La foto (avatar) es obligatoria");
         validateEmail(email);
         final String emailN = normalizeEmail(email);
         checkUserExists(emailN);
 
         User user = buildUser(
-            nombre, apellidos, alias, emailN, fechaNac, pwd, false,
-            foto,User.Role.ADMINISTRADOR,null,null,null,departamento
-        );
-        user.setBlocked(true);                       
+                nombre, apellidos, alias, emailN, fechaNac, pwd, false,
+                foto, User.Role.ADMINISTRADOR, null, null, null, departamento);
+        user.setBlocked(true);
 
         String token = generateToken();
         user.setAdminApprovalToken(token);
@@ -604,171 +648,170 @@ public class UserService {
         return user;
     }
 
-
     private void enviarCorreoAprobacionAdmin(User pendingUser, String token) {
         String to = resolveSuperAdminEmailOrThrow();
         String approve = "http://localhost:8081/users/admin/admins/approve?token=" + token;
-        String reject  = "http://localhost:8081/users/admin/admins/reject?token=" + token;
+        String reject = "http://localhost:8081/users/admin/admins/reject?token=" + token;
 
-        String alias  = pendingUser.getAlias() != null ? pendingUser.getAlias() : "-";
+        String alias = pendingUser.getAlias() != null ? pendingUser.getAlias() : "-";
         String nombre = pendingUser.getNombre() != null ? pendingUser.getNombre() : "";
-        String apell  = pendingUser.getApellidos() != null ? pendingUser.getApellidos() : "";
-        String mail   = pendingUser.getEmail() != null ? pendingUser.getEmail() : "-";
-        String depto  = pendingUser.getDepartamento() != null ? pendingUser.getDepartamento() : "-";
+        String apell = pendingUser.getApellidos() != null ? pendingUser.getApellidos() : "";
+        String mail = pendingUser.getEmail() != null ? pendingUser.getEmail() : "-";
+        String depto = pendingUser.getDepartamento() != null ? pendingUser.getDepartamento() : "-";
 
         String body = """
-        <!DOCTYPE html>
-        <html lang="es">
-        <head>
-        <meta charset="UTF-8" />
-        <meta name="viewport" content="width=device-width,initial-scale=1" />
-        <title>ESIMedia – Aprobación de nuevo ADMIN</title>
-        <style>
-            /* Reset básico para algunos clientes */
-            body,table,td,a { text-size-adjust: 100%%; -ms-text-size-adjust: 100%%; -webkit-text-size-adjust: 100%%; }
-            table,td { border-collapse: collapse !important; }
-            img { border: 0; height: auto; line-height: 100%%; outline: none; text-decoration: none; }
-            body { margin: 0 !important; padding: 0 !important; width: 100%% !important; background: #f5f7fb; }
+                <!DOCTYPE html>
+                <html lang="es">
+                <head>
+                <meta charset="UTF-8" />
+                <meta name="viewport" content="width=device-width,initial-scale=1" />
+                <title>ESIMedia – Aprobación de nuevo ADMIN</title>
+                <style>
+                    /* Reset básico para algunos clientes */
+                    body,table,td,a { text-size-adjust: 100%%; -ms-text-size-adjust: 100%%; -webkit-text-size-adjust: 100%%; }
+                    table,td { border-collapse: collapse !important; }
+                    img { border: 0; height: auto; line-height: 100%%; outline: none; text-decoration: none; }
+                    body { margin: 0 !important; padding: 0 !important; width: 100%% !important; background: #f5f7fb; }
 
-            /* Contenedor principal */
-            .container { max-width: 640px; margin: 0 auto; padding: 24px 16px; }
-            .card {
-            background: #ffffff;
-            border-radius: 12px;
-            box-shadow: 0 6px 24px rgba(16, 24, 40, 0.06);
-            overflow: hidden;
-            }
-            .header {
-            background: linear-gradient(135deg, #2563EB 0%%, #1D4ED8 100%%);
-            color: #fff;
-            padding: 20px 24px;
-            }
-            .header h1 {
-            margin: 0;
-            font-family: Arial, Helvetica, sans-serif;
-            font-size: 20px;
-            font-weight: 700;
-            letter-spacing: .2px;
-            }
-            .content {
-            padding: 24px;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #1f2937;
-            }
-            .content h2 {
-            margin: 0 0 12px 0;
-            font-size: 18px;
-            color: #111827;
-            }
-            .muted { color: #6b7280; font-size: 13px; }
-            .list {
-            margin: 16px 0 20px 0;
-            padding: 0;
-            list-style: none;
-            }
-            .list li {
-            padding: 8px 0;
-            border-bottom: 1px solid #eef2f7;
-            font-size: 14px;
-            }
-            .list b { color: #111827; }
-            .actions {
-            padding: 8px 0 0 0;
-            text-align: center;
-            }
-            /* Botones como enlaces (alta compatibilidad) */
-            .btn {
-            display: inline-block;
-            padding: 12px 18px;
-            margin: 8px 6px;
-            border-radius: 8px;
-            text-decoration: none !important;
-            font-weight: 600;
-            font-size: 14px;
-            font-family: Arial, Helvetica, sans-serif;
-            }
-            .btn-approve { background: #16a34a; color: #ffffff !important; }
-            .btn-reject  { background: #ef4444; color: #ffffff !important; }
+                    /* Contenedor principal */
+                    .container { max-width: 640px; margin: 0 auto; padding: 24px 16px; }
+                    .card {
+                    background: #ffffff;
+                    border-radius: 12px;
+                    box-shadow: 0 6px 24px rgba(16, 24, 40, 0.06);
+                    overflow: hidden;
+                    }
+                    .header {
+                    background: linear-gradient(135deg, #2563EB 0%%, #1D4ED8 100%%);
+                    color: #fff;
+                    padding: 20px 24px;
+                    }
+                    .header h1 {
+                    margin: 0;
+                    font-family: Arial, Helvetica, sans-serif;
+                    font-size: 20px;
+                    font-weight: 700;
+                    letter-spacing: .2px;
+                    }
+                    .content {
+                    padding: 24px;
+                    font-family: Arial, Helvetica, sans-serif;
+                    color: #1f2937;
+                    }
+                    .content h2 {
+                    margin: 0 0 12px 0;
+                    font-size: 18px;
+                    color: #111827;
+                    }
+                    .muted { color: #6b7280; font-size: 13px; }
+                    .list {
+                    margin: 16px 0 20px 0;
+                    padding: 0;
+                    list-style: none;
+                    }
+                    .list li {
+                    padding: 8px 0;
+                    border-bottom: 1px solid #eef2f7;
+                    font-size: 14px;
+                    }
+                    .list b { color: #111827; }
+                    .actions {
+                    padding: 8px 0 0 0;
+                    text-align: center;
+                    }
+                    /* Botones como enlaces (alta compatibilidad) */
+                    .btn {
+                    display: inline-block;
+                    padding: 12px 18px;
+                    margin: 8px 6px;
+                    border-radius: 8px;
+                    text-decoration: none !important;
+                    font-weight: 600;
+                    font-size: 14px;
+                    font-family: Arial, Helvetica, sans-serif;
+                    }
+                    .btn-approve { background: #16a34a; color: #ffffff !important; }
+                    .btn-reject  { background: #ef4444; color: #ffffff !important; }
 
-            .divider { height: 1px; background: #eef2f7; margin: 20px 0; }
+                    .divider { height: 1px; background: #eef2f7; margin: 20px 0; }
 
-            .footer {
-            padding: 12px 24px 20px 24px;
-            text-align: center;
-            font-family: Arial, Helvetica, sans-serif;
-            color: #6b7280;
-            font-size: 12px;
-            }
-            .link {
-            color: #2563eb !important;
-            text-decoration: none;
-            word-break: break-all;
-            }
+                    .footer {
+                    padding: 12px 24px 20px 24px;
+                    text-align: center;
+                    font-family: Arial, Helvetica, sans-serif;
+                    color: #6b7280;
+                    font-size: 12px;
+                    }
+                    .link {
+                    color: #2563eb !important;
+                    text-decoration: none;
+                    word-break: break-all;
+                    }
 
-            /* Modo oscuro básico (algunos clientes lo soportan) */
-            @media (prefers-color-scheme: dark) {
-            body { background: #0B1220; }
-            .card { background: #111827; box-shadow: none; }
-            .content { color: #e5e7eb; }
-            .content h2 { color: #f3f4f6; }
-            .list li { border-bottom-color: #1f2937; }
-            .muted, .footer { color: #9ca3af; }
-            }
-        </style>
-        </head>
-        <body>
-        <div class="container">
-            <table role="presentation" width="100%%" class="card">
-            <tr>
-                <td class="header">
-                <h1>ESIMedia · Aprobación de ADMIN</h1>
-                </td>
-            </tr>
-            <tr>
-                <td class="content">
-                <h2>Solicitud de alta de <b>ADMINISTRADOR</b></h2>
-                <p class="muted">Revisa los datos y autoriza o rechaza. El enlace expira en 48&nbsp;h.</p>
+                    /* Modo oscuro básico (algunos clientes lo soportan) */
+                    @media (prefers-color-scheme: dark) {
+                    body { background: #0B1220; }
+                    .card { background: #111827; box-shadow: none; }
+                    .content { color: #e5e7eb; }
+                    .content h2 { color: #f3f4f6; }
+                    .list li { border-bottom-color: #1f2937; }
+                    .muted, .footer { color: #9ca3af; }
+                    }
+                </style>
+                </head>
+                <body>
+                <div class="container">
+                    <table role="presentation" width="100%%" class="card">
+                    <tr>
+                        <td class="header">
+                        <h1>ESIMedia · Aprobación de ADMIN</h1>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="content">
+                        <h2>Solicitud de alta de <b>ADMINISTRADOR</b></h2>
+                        <p class="muted">Revisa los datos y autoriza o rechaza. El enlace expira en 48&nbsp;h.</p>
 
-                <ul class="list">
-                    <li>Alias: <b>%s</b></li>
-                    <li>Nombre: <b>%s %s</b></li>
-                    <li>Email: <b>%s</b></li>
-                    <li>Departamento propuesto: <b>%s</b></li>
-                </ul>
+                        <ul class="list">
+                            <li>Alias: <b>%s</b></li>
+                            <li>Nombre: <b>%s %s</b></li>
+                            <li>Email: <b>%s</b></li>
+                            <li>Departamento propuesto: <b>%s</b></li>
+                        </ul>
 
-                <div class="actions">
-                    <!-- Botones (enlaces con estilo para mayor compatibilidad) -->
-                    <a class="btn btn-approve" href="%s">✔ Autorizar</a>
-                    <a class="btn btn-reject"  href="%s">✖ Rechazar</a>
+                        <div class="actions">
+                            <!-- Botones (enlaces con estilo para mayor compatibilidad) -->
+                            <a class="btn btn-approve" href="%s">✔ Autorizar</a>
+                            <a class="btn btn-reject"  href="%s">✖ Rechazar</a>
+                        </div>
+
+                        <div class="divider"></div>
+
+                        <p class="muted">
+                            Si los botones no funcionan, copia y pega estos enlaces en tu navegador:
+                        </p>
+                        <p class="muted">
+                            Autorizar: <a class="link" href="%s">%s</a><br/>
+                            Rechazar:  <a class="link" href="%s">%s</a>
+                        </p>
+                        </td>
+                    </tr>
+                    <tr>
+                        <td class="footer">
+                        © %d ESIMedia · Este enlace puede ser previsualizado por algunos clientes de correo. Si no solicitaste esta acción, ignora este mensaje.
+                        </td>
+                    </tr>
+                    </table>
                 </div>
-
-                <div class="divider"></div>
-
-                <p class="muted">
-                    Si los botones no funcionan, copia y pega estos enlaces en tu navegador:
-                </p>
-                <p class="muted">
-                    Autorizar: <a class="link" href="%s">%s</a><br/>
-                    Rechazar:  <a class="link" href="%s">%s</a>
-                </p>
-                </td>
-            </tr>
-            <tr>
-                <td class="footer">
-                © %d ESIMedia · Este enlace puede ser previsualizado por algunos clientes de correo. Si no solicitaste esta acción, ignora este mensaje.
-                </td>
-            </tr>
-            </table>
-        </div>
-        </body>
-        </html>
-        """.formatted(
-            alias, nombre, apell, mail, depto,
-            approve, reject,
-            approve, approve,
-            reject, reject,
-            java.time.Year.now().getValue()
-        );
+                </body>
+                </html>
+                """
+                .formatted(
+                        alias, nombre, apell, mail, depto,
+                        approve, reject,
+                        approve, approve,
+                        reject, reject,
+                        java.time.Year.now().getValue());
 
         try {
             emailService.sendMail(to, "ESIMedia – Aprobación de nuevo ADMIN", body);
@@ -777,11 +820,12 @@ public class UserService {
         }
     }
 
-
     public User aprobarAdminPorToken(String token) {
-        if (token == null || token.isBlank()) throw new InvalidTokenException(TOKEN_NOT_PROVIDED);
+        if (token == null || token.isBlank())
+            throw new InvalidTokenException(TOKEN_NOT_PROVIDED);
         User u = userDao.findByAdminApprovalToken(token.trim());
-        if (u == null) throw new InvalidTokenException(INVALID_TOKEN);
+        if (u == null)
+            throw new InvalidTokenException(INVALID_TOKEN);
         if (u.getAdminApprovalStatus() != User.AdminApprovalStatus.PENDING)
             throw new InvalidTokenException("La solicitud no está pendiente");
         if (u.getAdminApprovalExpires() == null || u.getAdminApprovalExpires().isBefore(LocalDateTime.now()))
@@ -797,11 +841,12 @@ public class UserService {
         return userDao.save(u);
     }
 
-
     public User rechazarAdminPorToken(String token) {
-        if (token == null || token.isBlank()) throw new InvalidTokenException(TOKEN_NOT_PROVIDED);
+        if (token == null || token.isBlank())
+            throw new InvalidTokenException(TOKEN_NOT_PROVIDED);
         User u = userDao.findByAdminApprovalToken(token.trim());
-        if (u == null) throw new InvalidTokenException(INVALID_TOKEN);
+        if (u == null)
+            throw new InvalidTokenException(INVALID_TOKEN);
         if (u.getAdminApprovalStatus() != User.AdminApprovalStatus.PENDING)
             throw new InvalidTokenException("La solicitud no está pendiente");
         if (u.getAdminApprovalExpires() == null || u.getAdminApprovalExpires().isBefore(LocalDateTime.now()))
@@ -814,6 +859,64 @@ public class UserService {
         u.setBlocked(true);
 
         return userDao.save(u);
+    }
+
+    public User updateProfile(
+            String email,
+            String nombre,
+            String apellidos,
+            String alias,
+            String foto) {
+
+        User u = getUserByEmail(email); // obtenemos directamente desde BBDD
+
+        if (u.isBlocked()) {
+            throw new ForbiddenException("Usuario bloqueado");
+        }
+
+        if (nombre != null) {
+            String n = nombre.trim();
+            if (n.isEmpty())
+                throw new ValidationException("El nombre no puede estar vacío");
+            if (n.length() > 100)
+                throw new ValidationException("Nombre demasiado largo");
+            u.setNombre(n);
+        }
+
+        if (apellidos != null) {
+            String a = apellidos.trim();
+            if (a.isEmpty())
+                throw new ValidationException("Los apellidos no pueden estar vacíos");
+            if (a.length() > 100)
+                throw new ValidationException("Apellidos demasiado largos");
+            u.setApellidos(a);
+        }
+
+        if (alias != null) {
+            String a = alias.trim();
+            if (a.length() < 3 || a.length() > 12) {
+                throw new ValidationException("El alias debe tener entre 3 y 12 caracteres");
+            }
+            if (!isAliasAvailable(alias)) {
+                throw new InvalidFieldException("El alias ya está en uso");
+            }
+            u.setAlias(a);
+        }
+
+        if (foto != null) {
+            u.setFoto(foto);
+        }
+
+        // Guardamos directamente en BBDD con UserDao
+        return userDao.save(u);
+    }
+
+    public void darDeBajaUsuario(String email) {
+        User user;
+        if ((user = userDao.findByEmail(email)) == null) {
+            throw new RuntimeException("Usuario no encontrado");
+        }
+        userDao.deleteByEmail(email);
     }
 
 }
