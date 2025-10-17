@@ -248,7 +248,7 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
   showAvatarPicker = false;
 
   openEditModal(u: AppUser) {
-    if (u.role !== 'GESTOR_CONTENIDO') return;
+    // if (u.role !== 'GESTOR_CONTENIDO') return;
     this.editingUser = u;
     this.editModel = {
       alias: u.alias ?? '',
@@ -290,7 +290,7 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
   }
 
   saveEdit(form: NgForm) {
-    if (!this.editingUser || this.editingUser.role !== 'GESTOR_CONTENIDO') return;
+    if (!this.editingUser) return;
     if (form.invalid || this.aliasTaken) return;
 
     const u = this.editingUser;
@@ -299,30 +299,44 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
     const alias        = this.editModel.alias.trim();
     const nombre       = this.editModel.nombre.trim();
     const apellidos    = this.editModel.apellidos.trim();
-    const descripcion  = this.editModel.descripcion.trim();
-    const especialidad = this.editModel.especialidad.trim();
+    const descripcion  = (this.editModel.descripcion || '').trim();
+    const especialidad = (this.editModel.especialidad || '').trim();
     const email        = this.editModel.email.trim();
     const foto         = this.editModel.foto;
 
     if (alias && alias !== u.alias) dto.alias = alias;
     if (nombre && nombre !== u.nombre) dto.nombre = nombre;
     if (apellidos !== (u.apellidos ?? '')) dto.apellidos = apellidos;
-    if (descripcion !== (u as any).descripcion) dto.descripcion = descripcion;
-    if (especialidad !== (u as any).especialidad) dto.especialidad = especialidad;
     if (email && email !== u.email) dto.email = email;
     if (foto && foto !== u.fotoUrl) dto.foto = foto;
+
+    if (u.role === 'GESTOR_CONTENIDO') {
+      if (descripcion !== (u as any).descripcion) dto.descripcion = descripcion;
+      if (especialidad !== (u as any).especialidad) dto.especialidad = especialidad;
+    }
 
     if (Object.keys(dto).length === 0) { this.cancelEdit(); return; }
 
     this.loading = true;
-    this.api.updateCreator(u.id, dto).subscribe({
-      next: (upd) => {
+
+    let obs: any;
+    if (u.role === 'GESTOR_CONTENIDO') {
+      obs = this.api.updateCreator(u.id, dto);
+    } else if (u.role === 'USUARIO') {
+      obs = this.api.updateUser(u.id, dto);
+    } else {
+      this.loading = false;
+      return;
+    }
+
+    obs.subscribe({
+      next: (upd: unknown) => {
         const i = this.users.findIndex(x => x.id === u.id);
         if (i >= 0) this.users[i] = { ...(this.users[i]), ...(upd as any) };
         this.loading = false;
         this.cancelEdit();
       },
-      error: (err) => {
+      error: (err: any) => {
         this.loading = false;
         this.errorMsg = err?.error?.message || 'Error al actualizar';
       }
@@ -418,7 +432,7 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
   targetUser: AppUser | null = null;
 
   openConfirm(kind: ConfirmKind, u: AppUser) {
-    if (!(this.isCreator(u) || this.isAdmin(u))) return;
+    if (!(this.isCreator(u) || this.isAdmin(u) || this.isUser(u))) return;
     if (this.isSuperAdmin(u)) return;
     this.confirmKind = kind;
     this.targetUser = u;
@@ -442,10 +456,15 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
       if (this.confirmKind === 'block')        obs = this.api.blockAdmin(u.id);
       else if (this.confirmKind === 'unblock') obs = this.api.unblockAdmin(u.id);
       else                                     obs = this.api.deleteAdmin(u.id);
+    } else if (this.isUser(u)) {                       // ← NUEVO
+      if (this.confirmKind === 'block')        obs = this.api.blockUser(u.id);
+      else if (this.confirmKind === 'unblock') obs = this.api.unblockUser(u.id);
+      else                                     obs = this.api.deleteUser(u.id); // backend devolverá 403 y mensaje
     } else {
       this.loading = false;
       return;
     }
+
 
     obs.subscribe({
       next: (res: Partial<AppUser> | void) => {
@@ -468,7 +487,7 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
 
   editUser(u: AppUser) {
     if (this.isSuperAdmin(u)) return;
-    if (this.isCreator(u)) this.openEditModal(u);
+    if (this.isCreator(u) || this.isUser(u)) this.openEditModal(u);
     else if (this.isAdmin(u)) this.openEditAdminModal(u);
   }
   toggleBlockUser(u: AppUser) {

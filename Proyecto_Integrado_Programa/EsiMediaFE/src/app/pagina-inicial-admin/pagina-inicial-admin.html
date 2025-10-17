@@ -171,14 +171,14 @@
                     <button
                       type="button"
                       class="action-btn btn-edit"
-                      [disabled]="!(isCreator(u) || isAdmin(u)) || isSuperAdmin(u)"
+                      [disabled]="!(isCreator(u) || isAdmin(u) || isUser(u)) || isSuperAdmin(u)"
                       (click)="editUser(u)"
                       title="Editar">✏️</button>
 
                     <button
                       type="button"
                       class="action-btn btn-block"
-                      [disabled]="!(isCreator(u) || isAdmin(u)) || isSuperAdmin(u)"
+                      [disabled]="!(isCreator(u) || isAdmin(u) || isUser(u)) || isSuperAdmin(u)"
                       (click)="toggleBlockUser(u)"
                       [title]="u.blocked ? 'Desbloquear' : 'Bloquear'">
                       {{ u.blocked ? '🔓' : '🔒' }}
@@ -187,7 +187,7 @@
                     <button
                       type="button"
                       class="action-btn btn-consult"
-                      [disabled]="!(isCreator(u) || isAdmin(u)) || isSuperAdmin(u)"
+                      [disabled]="!(isCreator(u) || isAdmin(u) || isUser(u)) || isSuperAdmin(u)"
                       (click)="deleteUser(u)"
                       title="Eliminar">🗑️</button>
                   </td>

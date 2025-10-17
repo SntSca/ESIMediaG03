@@ -110,4 +110,18 @@ export class AuthService {
   createAdminByAdmin(body: any): Observable<{ status: string }> {
     return this.http.post<{ status: string }>(`${this.usersBase}/admin/admins`, body);
   }
+  updateUser(id: string, dto: any) {
+    return this.http.patch<AppUser>(`${this.usersBase}/admin/users/${id}`, dto);
+  }
+
+  blockUser(id: string) {
+    return this.http.post<AppUser>(`${this.usersBase}/admin/users/${id}/block`, {});
+  }
+  unblockUser(id: string) {
+    return this.http.post<AppUser>(`${this.usersBase}/admin/users/${id}/unblock`, {});
+  }
+  deleteUser(id: string) {
+    return this.http.delete<void>(`${this.usersBase}/admin/users/${id}`);
+  }
+
 }
