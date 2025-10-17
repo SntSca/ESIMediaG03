@@ -10,7 +10,6 @@
   overflow-x: hidden;
 }
 
-/* Header */
 .usuario-header{
   background-color: #000;
   padding: 12px 16px;
@@ -57,7 +56,6 @@
     inset 0 0 0 1px rgba(255,255,255,.06);
 }
 
-/* RO banner */
 .ro-banner{
   position: sticky;
   top: 0;
@@ -90,7 +88,6 @@
 }
 .btn-salir-ro:hover{ transform: translateY(-1px); }
 
-/* Overlay general */
 .overlay {
   position: fixed;
   inset: 0;
@@ -101,7 +98,6 @@
 }
 @keyframes fadeIn { from { opacity: 0; } to { opacity: 1; } }
 
-/* Panel edición */
 .edit-panel {
   margin: 0;
   padding: 0 16px;
@@ -146,7 +142,6 @@
 }
 .edit-panel .actions { display: flex; gap: 10px; justify-content: flex-end; }
 
-/* Botones */
 .btn {
   width: 100%;
   margin-top: 10px;
@@ -168,11 +163,9 @@
 .btn-darseBaja { background: #b91c1c; color:#fff; border: none; border-radius: 8px; padding: 8px 12px; cursor: pointer; }
 .btn-darseBaja:hover { filter: brightness(1.08); }
 
-/* Mensajes */
 .ok { color: #7bd88f; }
 .err { color: #ff6b6b; }
 
-/* Modal de avatares */
 .avatar-modal {
   position: fixed; inset: 0; background: rgba(0, 0, 0, 0.7); backdrop-filter: blur(2px);
   display: grid; place-items: center; z-index: 1000; padding: 20px;
@@ -224,7 +217,6 @@
   .avatar-option { --avatar-size: 74px; }
 }
 
-/* Tarjeta avatar seleccionado */
 .selected-avatar-card {
   margin-top: 10px;
   background: rgba(255,255,255,0.06);
@@ -242,7 +234,6 @@
 .selected-avatar-card__text b { display: block; font-size: 14px; margin-bottom: 2px; }
 .selected-avatar-card__text small { display: block; color: rgba(255,255,255,0.75); font-size: 12px; }
 
-/* Pequeños */
 .nombre-wrap{ display: inline-flex; align-items: center; gap: 8px; }
 .edit-inline{
   background: #222; color: #fff; border: 1px solid #444; border-radius: 6px;
@@ -251,7 +242,6 @@
 }
 .edit-inline:hover{ background:#2a2a2a; transform: translateY(-1px); border-color:#666; }
 
-/* Caja blanca “chula” */
 .promo-banner{
   background: #fff;
   color: #111;
@@ -264,9 +254,6 @@
   box-shadow: 0 12px 30px rgba(0,0,0,.15);
 }
 
-/* Pista que se desplaza en bucle */
-
-/* El texto repetido para que no haya cortes */
 .promo-text{
   font-weight: 800;
   letter-spacing: .4px;
@@ -278,13 +265,12 @@
 .promo-track{
   display: inline-flex;
   gap: 256px;
-  /* padding-left: 100%;  ❌ quítalo */
-  animation: marquee 14s linear infinite; /* más rápido: baja a 8s o 6s */
+  animation: marquee 14s linear infinite; 
   will-change: transform;
   width: max-content;
 }
 
 @keyframes marquee{
-  0%   { transform: translateX(100%); }   /* empieza entrando por la derecha */
-  100% { transform: translateX(-100%); }  /* sale por la izquierda */
+  0%   { transform: translateX(100%); } 
+  100% { transform: translateX(-100%); }  
 }

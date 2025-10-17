@@ -149,7 +149,6 @@
       <small class="error-msg" *ngIf="isGestor && !(tipoContenido==='Audio' || tipoContenido==='Video')">Selecciona Audio o Video</small>
     </div>
 
-    <!-- Campo Departamento (solo Admin) -->
     <div class="field" *ngIf="esAltaAdmin">
       <input class="input"
         name="departamento"
@@ -165,7 +164,7 @@
       <small class="error-msg" *ngIf="depModel.invalid && depModel.dirty">El departamento es obligatorio.</small>
     </div>
 
-    <!-- CONTRASEÑAS: solo si no es admin -->
+
     <ng-container *ngIf="showPasswordFields">
       <div class="password-field">
         <input class="input"
@@ -270,7 +269,6 @@
   </form>
 </div>
 
-<!-- Modal Avatares -->
 <div
   *ngIf="showAvatarModal"
   class="avatar-modal"

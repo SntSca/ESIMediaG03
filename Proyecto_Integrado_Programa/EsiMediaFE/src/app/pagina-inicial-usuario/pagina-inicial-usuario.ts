@@ -15,11 +15,11 @@ import { HttpErrorResponse } from '@angular/common/http';
 })
 export class PaginaInicialUsuario implements OnInit {
 
-  // ======== SOLO LECTURA ========
+  
   readOnly = false;
   fromAdmin = false;
 
-  // ======== PERFIL/UI DATOS ========
+  
   avatars: string[] = [
     'assets/avatars/avatar1.png',
     'assets/avatars/avatar2.png',
@@ -47,7 +47,7 @@ export class PaginaInicialUsuario implements OnInit {
   saving = false;
   editOpen = false;
 
-  // ======== FORM MODEL ========
+
   model: {
     nombre?: string;
     apellidos?: string;
@@ -64,9 +64,9 @@ export class PaginaInicialUsuario implements OnInit {
     private readonly auth: AuthService
   ) {}
 
-  // ===================== CICLO VIDA =====================
+  
   ngOnInit(): void {
-    // Solo-lectura (query params + localStorage + path)
+  
     const qModo = (this.route.snapshot.queryParamMap.get('modoLectura') || '').toLowerCase();
     const qFrom = (this.route.snapshot.queryParamMap.get('from') || '').toLowerCase();
 
@@ -89,13 +89,13 @@ export class PaginaInicialUsuario implements OnInit {
       localStorage.setItem('users_readonly_from_admin', '1');
     }
 
-    // Cargar usuario (state/localStorage) y luego perfil completo
+    
     const stateUser = (history.state?.user ?? null) as UserDto | null;
     const sessionUser = this.auth.getCurrentUser?.() ?? this.getUserFromLocalStorage();
     this.setLoggedUser(stateUser ?? sessionUser ?? null);
   }
 
-  // ===================== PERFIL =====================
+  
   private setLoggedUser(user: UserDto | null) {
     this.loggedUser = user;
     if (!user) return;
@@ -106,18 +106,43 @@ export class PaginaInicialUsuario implements OnInit {
     this.auth.getPerfil(this.userEmail).subscribe({
       next: (u: any) => {
         this.paintFromProfile(u);
-        if (u.fotoUrl) {
-          this.userAvatar = u.fotoUrl || null;
-        } else {
-          this.userInitials = this.getInitials(u.nombre);
-        }
-        this.cdr.markForCheck();
-      },
+
+        const avatarRaw: string = String(
+        (u && typeof u.fotoUrl === 'string' ? u.fotoUrl :
+        u && typeof u.foto    === 'string' ? u.foto    :
+        this.model && typeof this.model.foto === 'string' ? this.model.foto :
+        '')
+      );
+
+      const avatar = this.normalizeAvatarUrl(avatarRaw);
+      if (avatar) {
+        this.userAvatar = avatar;
+      } else {
+        this.userAvatar = null;
+        this.userInitials = this.getInitials(u?.alias || u?.nombre || this.userName);
+      }
+
+      this.cdr.markForCheck();
+    },
       error: (_e: HttpErrorResponse) => {
         this.errorMsg = 'No se pudo cargar tu perfil';
         this.cdr.markForCheck();
       }
     });
+  }
+
+  private normalizeAvatarUrl(raw: unknown): string {
+    const s: string = String(raw ?? '').trim();
+    if (!s) return '';
+
+    if (/^https?:\/\//i.test(s) || s.startsWith('data:') || s.startsWith('assets/')) {
+      return s;
+    }
+
+    const API_BASE: string | null = null;
+    return API_BASE
+      ? s.replace(/^\/+/g, '')
+      : s;
   }
 
   private getUserFromLocalStorage(): UserDto | null {
@@ -143,7 +168,7 @@ export class PaginaInicialUsuario implements OnInit {
     this.router.navigateByUrl('/admin');
   }
 
-  // Nota: el HTML llama a "CerrarSesion()" (C mayúscula)
+  
   CerrarSesion(): void {
     if (confirm('¿Seguro que deseas cerrar sesión?')) {
       this.auth.logout?.();
@@ -157,7 +182,7 @@ export class PaginaInicialUsuario implements OnInit {
       this.auth.darseBaja(this.userEmail).subscribe({
         next: (msg: string) => {
           alert(msg || 'Usuario eliminado correctamente');
-          // Limpiar sesión
+          
           this.auth.logout?.();
           localStorage.removeItem('user');
           sessionStorage.clear();
@@ -172,7 +197,6 @@ export class PaginaInicialUsuario implements OnInit {
     }
   }
 
-  // ======== AVATARES / EDICIÓN PERFIL ========
   openAvatarModal() { 
     console.log('Opening avatar modal');
     this.showAvatarModal = true; 
@@ -212,12 +236,11 @@ export class PaginaInicialUsuario implements OnInit {
       return;
     }
 
-    // Limpiar mensajes previos
+    
     this.okMsg = null;
     this.errorMsg = '';
     this.saving = true;
 
-    // 1) Alias: enviar solo si realmente cambió
     const aliasNuevo = (this.model?.alias ?? '').trim();
     const aliasAEnviar =
       this.userAliasActual &&
@@ -226,10 +249,10 @@ export class PaginaInicialUsuario implements OnInit {
         ? undefined
         : (aliasNuevo || undefined);
 
-    // 2) Foto priorizando avatar seleccionado
+    
     const fotoSeleccionada = (this.selectedAvatar || this.foto || this.model?.foto || '').trim() || undefined;
 
-    // 3) Construir payload
+    
     const raw: Partial<AppUser> & { foto?: string; fotoUrl?: string } = {
       email: this.userEmail,
       alias: aliasAEnviar,
@@ -249,11 +272,11 @@ export class PaginaInicialUsuario implements OnInit {
         console.log('Profile updated successfully:', perfil);
         this.paintFromProfile(perfil);
         this.editOpen = false;
-        this.okMsg = 'Perfil actualizado correctamente';
+        this.okMsg = 'Perfil actualizado correctamente en esta sesión actual';
         this.errorMsg = '';
         this.saving = false;
         
-        // Actualizar avatar si se seleccionó uno nuevo
+        
         if (this.selectedAvatar) {
           this.userAvatar = this.selectedAvatar;
         }
@@ -269,7 +292,7 @@ export class PaginaInicialUsuario implements OnInit {
     });
   }
 
-  // Utilidad: elimina undefined y strings vacías
+
   private cleanPayload<T extends Record<string, any>>(obj: T): T {
     const out: any = {};
     for (const k of Object.keys(obj)) {
@@ -284,7 +307,6 @@ export class PaginaInicialUsuario implements OnInit {
   private paintFromProfile(u: any) {
     this.userEmail = u?.email ?? this.userEmail;
 
-    // Corregir interpolación de strings y referencias
     const nombre = (u?.nombre ?? '').trim();
     const apellidos = (u?.apellidos ?? '').trim();
     const fullName = `${nombre} ${apellidos}`.trim();
@@ -298,19 +320,17 @@ export class PaginaInicialUsuario implements OnInit {
 
     this.userAliasActual = (u?.alias ?? '').trim();
 
-    // Formatear fecha de nacimiento a yyyy-MM-dd si es posible
     let fechaNac = '';
     if (u?.fechaNac) {
       const raw = String(u.fechaNac);
-      // Si ya está en formato yyyy-MM-dd
+    
       if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
         fechaNac = raw;
       } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-        // Si viene como dd/mm/yyyy
         const [d, m, y] = raw.split('/');
         fechaNac = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
       } else {
-        // Intentar extraer los primeros 10 caracteres (caso ISO)
+        
         fechaNac = raw.slice(0, 10);
       }
     }

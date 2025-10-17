@@ -29,7 +29,7 @@ export class AuthService {
 
   constructor(private http: HttpClient) {}
 
-  // --- Auth ---
+  
   login(body: LoginRequest): Observable<BackendLoginResponse> {
     return this.http.post<BackendLoginResponse>(`${this.base}/login`, body);
   }
@@ -42,7 +42,7 @@ export class AuthService {
     return this.http.post<BackendLoginResponse>(`${this.base}/mfa3/verify`, body);
   }
 
-  // --- Session ---
+  
   saveSession(user: UserDto): void {
     sessionStorage.setItem(this.USER_KEY, JSON.stringify(user));
   }
@@ -64,12 +64,12 @@ export class AuthService {
     sessionStorage.removeItem(this.USER_KEY);
   }
 
-  // --- Users ---
+  
   listAllUsers(): Observable<AppUser[]> {
     return this.http.get<AppUser[]>(`${this.usersBase}/listarUsuarios`);
   }
 
-  // --- Creators ---
+  
   listCreators(search?: string, blocked?: boolean): Observable<CreatorDto[]> {
     let params = new HttpParams();
     if (search?.trim()) params = params.set('search', search.trim());
@@ -97,7 +97,7 @@ export class AuthService {
     return this.http.post<{ status: string }>(`${this.usersBase}/admin/creators`, body);
   }
 
-  // --- Admins ---
+  
   listAdmins(search?: string, blocked?: boolean): Observable<AppUser[]> {
     let params = new HttpParams();
     if (search?.trim()) params = params.set('search', search.trim());
@@ -125,7 +125,7 @@ export class AuthService {
     return this.http.post<{ status: string }>(`${this.usersBase}/admin/admins`, body);
   }
 
-  // --- Gestión de Usuarios por Admin ---
+  
   updateUser(id: string, dto: any): Observable<AppUser> {
     return this.http.patch<AppUser>(`${this.usersBase}/admin/users/${id}`, dto);
   }
@@ -142,7 +142,7 @@ export class AuthService {
     return this.http.delete<void>(`${this.usersBase}/admin/users/${id}`);
   }
 
-  // --- Perfil de Usuario ---
+  
   getPerfil(email: string): Observable<any> {
     return this.http.get<any>(`${this.usersBase}/obtenerPerfilUsuario`, {
       params: { email }

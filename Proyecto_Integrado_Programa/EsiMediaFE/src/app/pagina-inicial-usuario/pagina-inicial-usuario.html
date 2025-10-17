@@ -1,4 +1,3 @@
-<!-- Modo lectura -->
 <div class="ro-banner" *ngIf="readOnly">
   <span>📖 Modo lectura activado — no puedes interactuar con esta página.</span>
   <button
@@ -13,7 +12,7 @@
 </div>
 
 <div class="ro-wrap" [class.readonly]="readOnly">
-  <!-- Header usuario -->
+
   <div class="usuario-header">
     <div class="usuario-info">
       <div class="ava">
@@ -31,7 +30,6 @@
     </div>
 
     <div class="btn-wrap">
-      <!-- OJO: Usa C mayúscula porque el método se llama CerrarSesion() -->
       <button class="btn-cerrar" (click)="CerrarSesion()">Cerrar sesión</button>
     </div>
   </div>
@@ -44,15 +42,15 @@
     </div>
   </div>
 
-  <!-- Fondo oscuro al abrir el panel -->
+  
   <div class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></div>
 
-  <!-- Panel de edición perfil -->
+
   <div class="edit-panel modal" [class.open]="editOpen" (click)="$event.stopPropagation()">
     <h3>Editar perfil</h3>
 
     <form (ngSubmit)="guardarCambios()">
-      <!-- Bloqueados -->
+      
       <div class="row">
         <label class="label-lock">
           Email
@@ -71,7 +69,7 @@
         <input type="date" [ngModel]="model.fechaNac" name="fechaNac_ro" class="ro" readonly disabled />
       </div>
 
-      <!-- Editables -->
+    
       <div class="row">
         <label>Nombre</label>
         <input type="text" [(ngModel)]="model.nombre" name="nombre" />
@@ -99,11 +97,16 @@
         </div>
       </div>
 
-      <!-- Mensajes -->
+      <div class="row">
+        <label>VIP <input type="checkbox" [(ngModel)]="model.vip" name="vip" /></label>
+      </div>
+
+
+      
       <p class="ok" *ngIf="okMsg">{{ okMsg }}</p>
       <p class="err" *ngIf="errorMsg">{{ errorMsg }}</p>
 
-      <!-- Acciones -->
+      
       <div class="actions">
         <button class="btn-darseBaja" type="button" (click)="DarDeBaja(); $event.stopPropagation()">Eliminar Cuenta</button>
         <button type="button" class="btn-out" (click)="cancelarEditar(); $event.stopPropagation()">Cancelar</button>
@@ -114,10 +117,10 @@
     </form>
   </div>
 
-  <!-- Overlay visual de solo-lectura -->
+  
   <div class="ro-overlay" *ngIf="readOnly" aria-hidden="true"></div>
 
-  <!-- Modal de avatares -->
+  
   <div
     *ngIf="showAvatarModal"
     class="avatar-modal"

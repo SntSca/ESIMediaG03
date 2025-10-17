@@ -85,7 +85,7 @@
   border-color: #888;
 }
 
-/* Botones de acción de avatar */
+
 .image-actions {
   margin-top: 8px;
   display: flex;
@@ -93,7 +93,7 @@
   flex-wrap: wrap;
 }
 
-/* Contenedor estilo “uploader” */
+
 .image-uploader {
   background: #101010;
   border: 1px dashed #444;

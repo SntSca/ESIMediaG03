@@ -325,7 +325,7 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
       if (especialidad !== (u as any).especialidad) dto.especialidad = especialidad;
     }
     if (u.role === 'USUARIO') {
-      if (fechaNac) dto.fechaNac = fechaNac;  // ← añadir fechaNac
+      if (fechaNac) dto.fechaNac = fechaNac;  
     }
     if (Object.keys(dto).length === 0) { this.cancelEdit(); return; }
 
@@ -468,10 +468,10 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
       if (this.confirmKind === 'block')        obs = this.api.blockAdmin(u.id);
       else if (this.confirmKind === 'unblock') obs = this.api.unblockAdmin(u.id);
       else                                     obs = this.api.deleteAdmin(u.id);
-    } else if (this.isUser(u)) {                       // ← NUEVO
+    } else if (this.isUser(u)) {                       
       if (this.confirmKind === 'block')        obs = this.api.blockUser(u.id);
       else if (this.confirmKind === 'unblock') obs = this.api.unblockUser(u.id);
-      else                                     obs = this.api.deleteUser(u.id); // backend devolverá 403 y mensaje
+      else                                     obs = this.api.deleteUser(u.id); 
     } else {
       this.loading = false;
       return;
