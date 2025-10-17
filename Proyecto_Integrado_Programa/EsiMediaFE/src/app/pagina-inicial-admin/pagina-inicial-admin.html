@@ -171,14 +171,14 @@
                     <button
                       type="button"
                       class="action-btn btn-edit"
-                      [disabled]="!(isCreator(u) || isAdmin(u)) || isSuperAdmin(u)"
+                      [disabled]="!(isCreator(u) || isAdmin(u) || isUser(u)) || isSuperAdmin(u)"
                       (click)="editUser(u)"
                       title="Editar">✏️</button>
 
                     <button
                       type="button"
                       class="action-btn btn-block"
-                      [disabled]="!(isCreator(u) || isAdmin(u)) || isSuperAdmin(u)"
+                      [disabled]="!(isCreator(u) || isAdmin(u) || isUser(u)) || isSuperAdmin(u)"
                       (click)="toggleBlockUser(u)"
                       [title]="u.blocked ? 'Desbloquear' : 'Bloquear'">
                       {{ u.blocked ? '🔓' : '🔒' }}
@@ -187,7 +187,7 @@
                     <button
                       type="button"
                       class="action-btn btn-consult"
-                      [disabled]="!(isCreator(u) || isAdmin(u)) || isSuperAdmin(u)"
+                      [disabled]="!(isCreator(u) || isAdmin(u) || isUser(u)) || isSuperAdmin(u)"
                       (click)="deleteUser(u)"
                       title="Eliminar">🗑️</button>
                   </td>
@@ -212,7 +212,12 @@
         <div class="modal" *ngIf="showEditModal">
           <div class="modal-content">
             <span class="close" (click)="cancelEdit()" title="Cerrar">✖️</span>
-            <h3 style="margin-top:0">✏️ Editar creador</h3>
+            <h3 style="margin-top:0">
+              ✏️ Editar
+              {{ editingUser?.role === 'ADMINISTRADOR' ? 'administrador'
+                : editingUser?.role === 'GESTOR_CONTENIDO' ? 'creador'
+                : 'usuario' }}
+            </h3>
 
             <form #editForm="ngForm" (ngSubmit)="saveEdit(editForm)">
               <div class="filter-section">
@@ -227,7 +232,6 @@
                 />
                 <div class="help error" *ngIf="aliasTaken">⚠️ Alias en uso</div>
               </div>
-
               <div class="filter-section">
                 <label for="nombre">Nombre</label>
                 <input
@@ -238,7 +242,6 @@
                   maxlength="100"
                 />
               </div>
-
               <div class="filter-section">
                 <label for="apellidos">Apellidos</label>
                 <input
@@ -247,8 +250,7 @@
                   maxlength="120"
                 />
               </div>
-
-              <div class="filter-section">
+              <div class="filter-section" *ngIf="editingUser?.role === 'GESTOR_CONTENIDO'">
                 <label for="descripcion">Descripción</label>
                 <textarea
                   name="descripcion"
@@ -258,8 +260,7 @@
                   style="resize: vertical;"
                 ></textarea>
               </div>
-
-              <div class="filter-section">
+              <div class="filter-section" *ngIf="editingUser?.role === 'GESTOR_CONTENIDO'">
                 <label for="especialidad">Especialidad</label>
                 <input
                   name="especialidad"
@@ -267,7 +268,15 @@
                   maxlength="120"
                 />
               </div>
-
+              <div class="filter-section" *ngIf="editingUser?.role === 'USUARIO'">
+                <label for="fechaNac">Fecha de nacimiento</label>
+                <input
+                  type="date"
+                  name="fechaNac"
+                  [(ngModel)]="editModel.fechaNac"
+                  required
+                />
+              </div>
               <div class="filter-section">
                 <label for="avatar">Avatar</label>
                 <div style="display:flex;align-items:center;gap:12px;flex-wrap:wrap">
@@ -280,11 +289,7 @@
               </div>
 
               <div class="modal-actions" style="margin-top:20px">
-                <button
-                  class="action-btn btn-edit"
-                  type="submit"
-                  [disabled]="editForm.invalid || aliasTaken"
-                >💾 Guardar</button>
+                <button class="action-btn btn-edit" type="submit" [disabled]="editForm.invalid || aliasTaken">💾 Guardar</button>
                 <button class="action-btn btn-consult" type="button" (click)="cancelEdit()">↩️ Cancelar</button>
               </div>
             </form>

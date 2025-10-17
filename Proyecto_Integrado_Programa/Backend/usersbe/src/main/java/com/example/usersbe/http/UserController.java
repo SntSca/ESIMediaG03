@@ -56,6 +56,7 @@ public class UserController {
     private static final String FIELD_TIPO_CONTENIDO = "tipoContenido";
     private static final String FIELD_DEPARTAMENTO   = "departamento";
 
+
     private static final int MAX_ATTEMPTS = 3;
     private static final long WINDOW_MS = 10L * 60 * 1000;
     private final File logFile = new File("logs/forgot-password.log");
@@ -508,4 +509,74 @@ public class UserController {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(Map.of("message", e.getMessage()));
         }
     }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PatchMapping("/admin/users/{id}")
+    public ResponseEntity<Object> actualizarUsuario(
+            @PathVariable String id,
+            @RequestBody Map<String, String> body) {
+        try {
+            String alias     = body.get(FIELD_ALIAS);
+            String nombre    = body.get(FIELD_NOMBRE);
+            String apellidos = body.get(FIELD_APELLIDOS);
+            String email     = body.get(FIELD_EMAIL);
+            String foto      = body.get(FIELD_FOTO);
+            String fechaNac  = body.get(FIELD_FECHA_NAC);
+
+            if (email != null && !email.isBlank()) {
+                validarEmail(email.trim().toLowerCase(Locale.ROOT));
+            }
+
+            User actualizado = userService.actualizarUsuario(
+                    id,
+                    alias == null ? null : alias.trim(),
+                    nombre == null ? null : nombre.trim(),
+                    apellidos == null ? null : apellidos.trim(),
+                    email == null ? null : email.trim().toLowerCase(Locale.ROOT),
+                    foto == null ? null : foto.trim(),
+                    fechaNac == null ? null : fechaNac.trim()
+            );
+
+            return ResponseEntity.ok(actualizado);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PostMapping("/admin/users/{id}/block")
+    public ResponseEntity<Object> bloquearUsuario(@PathVariable String id) {
+        try {
+            User u = userService.bloquearUsuario(id);
+            return ResponseEntity.ok(u);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @PostMapping("/admin/users/{id}/unblock")
+    public ResponseEntity<Object> desbloquearUsuario(@PathVariable String id) {
+        try {
+            User u = userService.desbloquearUsuario(id);
+            return ResponseEntity.ok(u);
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
+    }
+
+    @PreAuthorize("hasRole('ADMINISTRADOR')")
+    @DeleteMapping("/admin/users/{id}")
+    public ResponseEntity<Object> eliminarUsuario(@PathVariable String id) {
+        try {
+            userService.eliminarUsuario(id); // lanzará UserDeletionNotAllowedException
+            return ResponseEntity.noContent().build();
+        } catch (com.example.usersbe.exceptions.UserDeletionNotAllowedException e) {
+            // Respuesta clara para la prohibición de borrar usuarios
+            return ResponseEntity.status(HttpStatus.FORBIDDEN).body(Map.of("message", e.getMessage()));
+        } catch (Exception e) {
+            return ResponseEntity.status(HttpStatus.BAD_REQUEST).body(Map.of("message", e.getMessage()));
+        }
+    }
+
 }

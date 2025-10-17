@@ -354,6 +354,105 @@ public class UserService {
 
         userDao.deleteById(id);
     }
+    /* ================= USUARIOS =========== */
+    // --- USUARIOS (rol básico) ---
+    public User actualizarUsuario(String id,
+                                String alias,
+                                String nombre,
+                                String apellidos,
+                                String email,
+                                String foto) {
+        return actualizarUsuario(id, alias, nombre, apellidos, email, foto, null);
+    }
+    public User actualizarUsuario(String id,
+                                String alias,
+                                String nombre,
+                                String apellidos,
+                                String email,     // se ignora, pero NO se borra
+                                String foto,
+                                String fechaNac) {
+        User u = userDao.findById(id).orElse(null);
+        if (u == null) throw new UserNotFoundException("El usuario no fue encontrado");
+        if (u.getRole() != User.Role.USUARIO)
+            throw new InvalidRoleException("El usuario no tiene rol USUARIO");
+
+        // alias
+        if (alias != null && !alias.isBlank()) {
+            String aliasTrim = alias.trim();
+            User byAlias = userDao.findByAlias(aliasTrim);
+            if (byAlias != null && !byAlias.getId().equals(u.getId()))
+                throw new DuplicateAliasException("El alias ya está en uso");
+            u.setAlias(aliasTrim);
+        }
+
+        // nombre / apellidos
+        if (nombre != null)    u.setNombre(nombre.trim());
+        if (apellidos != null) u.setApellidos(apellidos.trim());
+
+        // email
+        if (email != null && !email.isBlank()) {
+            String emailN = normalizeEmail(email);
+            validateEmail(emailN);
+            User byMail = userDao.findByEmail(emailN);
+            if (byMail != null && !byMail.getId().equals(u.getId()))
+                throw new DuplicateEmailException("El email ya está en uso");
+            u.setEmail(emailN);
+        }
+
+        // foto (opcional)
+        if (foto != null) u.setFoto(foto);
+
+        if (fechaNac != null && !fechaNac.isBlank()) {
+            u.setFechaNac(java.time.LocalDate.parse(fechaNac.trim()));
+        }
+
+        return userDao.save(u);
+    }
+
+    public User bloquearUsuario(String id) {
+        User u = userDao.findById(id).orElse(null);
+        if (u == null) throw new UserNotFoundException("El usuario no fue encontrado");
+
+        // Ajusta el rol si vuestro enum no usa USUARIO
+        if (u.getRole() != User.Role.USUARIO)
+            throw new InvalidRoleException("El usuario no tiene rol USUARIO");
+
+        if (Boolean.TRUE.equals(u.isBlocked())) return u; // ya bloqueado
+
+        u.setBlocked(true);
+        return userDao.save(u);
+    }
+
+    public User desbloquearUsuario(String id) {
+        User u = userDao.findById(id).orElse(null);
+        if (u == null) throw new UserNotFoundException("El usuario no fue encontrado");
+
+        // Ajusta el rol si vuestro enum no usa USUARIO
+        if (u.getRole() != User.Role.USUARIO)
+            throw new InvalidRoleException("El usuario no tiene rol USUARIO");
+
+        if (!Boolean.TRUE.equals(u.isBlocked())) return u; // ya desbloqueado
+
+        u.setBlocked(false);
+        return userDao.save(u);
+    }
+
+    /**
+     * En vuestra app no se permite eliminar usuarios.
+     * Al invocarlo, lanzamos una excepción explícita para que el controller
+     * responda con el mensaje adecuado.
+     */
+    public void eliminarUsuario(String id) {
+        // (Opcional) verifica existencia para dar un error coherente si te interesa
+        User u = userDao.findById(id).orElse(null);
+        if (u == null) throw new UserNotFoundException("El usuario no fue encontrado");
+
+        // Si quisieras además proteger admins/creadores, podrías añadir checks aquí.
+
+        throw new UserDeletionNotAllowedException("No se puede eliminar a usuarios");
+    }
+
+
     private boolean isSuperAdmin(User u) {
         if (u == null) return false;
         if (u.getRole() != User.Role.ADMINISTRADOR) return false;
