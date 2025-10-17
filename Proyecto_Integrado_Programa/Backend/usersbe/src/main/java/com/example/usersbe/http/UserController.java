@@ -275,11 +275,7 @@ public class UserController {
         return userService.listarUsuarios();
     }
 
-    @GetMapping("/obtenerPerfilUsuario")
-    public ResponseEntity<User> getUserByEmail(@RequestParam String email) {
-        User u = userService.getUserByEmail(email);
-        return ResponseEntity.ok(u);
-    }
+
 
     @GetMapping("/obtenerPerfilUsuario")
     public ResponseEntity<User> getUserByEmail(@RequestParam String email) {
