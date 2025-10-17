@@ -1,25 +1,40 @@
 package com.example.usersbe.services;
 
+import java.security.SecureRandom;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.util.Base64;
+import java.util.List;
+import java.util.regex.Pattern;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 
 import com.example.usersbe.dao.UserDao;
 import com.example.usersbe.dto.AdminCreationRequest;
+import com.example.usersbe.exceptions.AdminNotFoundException;
+import com.example.usersbe.exceptions.AliasAlreadyUsedException;
+import com.example.usersbe.exceptions.DuplicateAliasException;
+import com.example.usersbe.exceptions.DuplicateEmailException;
+import com.example.usersbe.exceptions.EmailAlreadyUsedException;
+import com.example.usersbe.exceptions.EmailSendException;
+import com.example.usersbe.exceptions.ExpiredTokenException;
+import com.example.usersbe.exceptions.ForbiddenException;
+import com.example.usersbe.exceptions.InvalidEmailException;
+import com.example.usersbe.exceptions.InvalidFieldException;
+import com.example.usersbe.exceptions.InvalidPasswordException;
+import com.example.usersbe.exceptions.InvalidRoleException;
+import com.example.usersbe.exceptions.InvalidTokenException;
+import com.example.usersbe.exceptions.MissingSuperAdminEmailConfigException;
+import com.example.usersbe.exceptions.NotAnAdminException;
+import com.example.usersbe.exceptions.SuperAdminProtectionException;
+import com.example.usersbe.exceptions.UserAlreadyExistsException;
+import com.example.usersbe.exceptions.UserDeletionNotAllowedException;
+import com.example.usersbe.exceptions.UserNotFoundException;
+import com.example.usersbe.exceptions.ValidationException;
 import com.example.usersbe.model.User;
-import com.example.usersbe.exceptions.*;
 
 import jakarta.mail.MessagingException;
-
-import java.time.LocalDate;
-import java.time.LocalDateTime;
-import java.security.SecureRandom;
-import java.util.Base64;
-import java.util.List;
-import java.util.regex.Pattern;
-
-import com.example.usersbe.dto.AdminCreationRequest;
-import com.example.usersbe.model.User;
-import com.example.usersbe.services.UserService;
 
 @Service
 public class UserService {
