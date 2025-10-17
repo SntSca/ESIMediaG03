@@ -1,16 +1,18 @@
 package com.example.usersbe.config;
 
-import com.example.usersbe.dao.UserDao;
-import com.example.usersbe.model.User;
-import com.example.usersbe.services.EmailService;
-import com.example.usersbe.services.UserService;
-import jakarta.mail.MessagingException;
+import java.util.Locale;
+
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.ApplicationArguments;
 import org.springframework.boot.ApplicationRunner;
 import org.springframework.stereotype.Component;
 
-import java.util.Locale;
+import com.example.usersbe.dao.UserDao;
+import com.example.usersbe.model.User;
+import com.example.usersbe.services.EmailService;
+import com.example.usersbe.services.UserService;
+
+import jakarta.mail.MessagingException;
 
 @Component
 public class SuperAdminInitializer implements ApplicationRunner {

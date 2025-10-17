@@ -864,6 +864,7 @@ public class UserService {
 
         return userDao.save(u);
     }
+    
 
     public User updateProfile(
             String email,
@@ -920,9 +921,9 @@ public class UserService {
     }
 
     public void darDeBajaUsuario(String email) {
-        User user;
-        if ((user = userDao.findByEmail(email)) == null) {
-            throw new RuntimeException("Usuario no encontrado");
+        User user= userDao.findByEmail(email);
+        if (user == null) {
+            throw new UserNotFoundException("Usuario no encontrado");
         }
         userDao.deleteByEmail(email);
     }
