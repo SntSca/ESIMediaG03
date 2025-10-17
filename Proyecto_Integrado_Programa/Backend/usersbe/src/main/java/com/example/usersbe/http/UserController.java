@@ -56,6 +56,7 @@ public class UserController {
     private static final String FIELD_TIPO_CONTENIDO = "tipoContenido";
     private static final String FIELD_DEPARTAMENTO   = "departamento";
 
+
     private static final int MAX_ATTEMPTS = 3;
     private static final long WINDOW_MS = 10L * 60 * 1000;
     private final File logFile = new File("logs/forgot-password.log");
@@ -520,6 +521,7 @@ public class UserController {
             String apellidos = body.get(FIELD_APELLIDOS);
             String email     = body.get(FIELD_EMAIL);
             String foto      = body.get(FIELD_FOTO);
+            String fechaNac  = body.get(FIELD_FECHA_NAC);
 
             if (email != null && !email.isBlank()) {
                 validarEmail(email.trim().toLowerCase(Locale.ROOT));
@@ -531,7 +533,8 @@ public class UserController {
                     nombre == null ? null : nombre.trim(),
                     apellidos == null ? null : apellidos.trim(),
                     email == null ? null : email.trim().toLowerCase(Locale.ROOT),
-                    foto == null ? null : foto.trim()
+                    foto == null ? null : foto.trim(),
+                    fechaNac == null ? null : fechaNac.trim()
             );
 
             return ResponseEntity.ok(actualizado);

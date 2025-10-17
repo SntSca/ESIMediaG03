@@ -3,7 +3,7 @@ package com.example.usersbe;
 import com.example.usersbe.dao.UserDao;
 import com.example.usersbe.exceptions.*;
 import com.example.usersbe.model.User;
-import com.example.usersbe.services.UserService; // ajusta si tu clase se llama distinto
+import com.example.usersbe.services.UserService;
 
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
@@ -12,6 +12,7 @@ import org.junit.jupiter.api.extension.ExtendWith;
 import org.mockito.Mock;
 import org.mockito.junit.jupiter.MockitoExtension;
 
+import java.time.LocalDate;
 import java.util.Optional;
 
 import static org.junit.jupiter.api.Assertions.*;
@@ -22,7 +23,7 @@ class UserServiceUsuariosTest {
 
     @Mock private UserDao userDao;
 
-    private UserService userService; // la instanciamos a mano
+    private UserService userService;
 
     private User u; // usuario básico común
 
@@ -33,26 +34,39 @@ class UserServiceUsuariosTest {
 
         u = user("u1", "user1", "User", "One", "USER1@MAIL.COM", "foto.png",
                  User.Role.USUARIO, false);
+        u.setFechaNac(LocalDate.of(2000, 1, 1));
     }
 
     // ---------- actualizarUsuario ----------
     @Test
-    @DisplayName("actualizarUsuario: actualiza campos y normaliza email")
+    @DisplayName("actualizarUsuario: actualiza alias/nombre/apellidos/foto y fechaNac, sin tocar email")
     void actualizarUsuario_ok() {
         when(userDao.findById("u1")).thenReturn(Optional.of(u));
         when(userDao.findByAlias("nuevo")).thenReturn(null);
-        when(userDao.findByEmail("nuevo@mail.com")).thenReturn(null);
         when(userDao.save(any(User.class))).thenAnswer(i -> i.getArgument(0));
 
         User res = userService.actualizarUsuario(
-                "u1", "  nuevo ", "  Nombre ", " Apellidos ",
-                "  NUEVO@mail.com  ", " avatar.png ");
+                "u1",
+                "  nuevo ",        // alias (se trimea y valida duplicado)
+                "  Nombre ",       // nombre (se trimea)
+                " Apellidos ",     // apellidos (se trimea)
+                null,              // email (IGNORADO para usuarios)
+                " avatar.png ",    // foto (se mantiene tal cual en Service)
+                "2001-05-09"       // fecha de nacimiento (ISO yyyy-MM-dd)
+        );
 
         assertEquals("nuevo", res.getAlias());
         assertEquals("Nombre", res.getNombre());
         assertEquals("Apellidos", res.getApellidos());
-        assertEquals("nuevo@mail.com", res.getEmail());
-        assertEquals(" avatar.png ", res.getFoto()); // no trim en foto
+
+        // Email NO cambia
+        assertEquals("USER1@MAIL.COM", res.getEmail());
+
+        // La foto en UserService se asigna tal cual se recibe
+        assertEquals(" avatar.png ", res.getFoto());
+
+        // Fecha de nacimiento actualizada
+        assertEquals(LocalDate.of(2001, 5, 9), res.getFechaNac());
     }
 
     @Test
@@ -60,17 +74,17 @@ class UserServiceUsuariosTest {
     void actualizarUsuario_notFound() {
         when(userDao.findById("x")).thenReturn(Optional.empty());
         assertThrows(UserNotFoundException.class,
-                () -> userService.actualizarUsuario("x", null, null, null, null, null));
+                () -> userService.actualizarUsuario("x", null, null, null, null, null, null));
     }
 
     @Test
-    @DisplayName("actualizarUsuario: rol inválido")
+    @DisplayName("actualizarUsuario: rol inválido (no es USUARIO)")
     void actualizarUsuario_rolInvalido() {
         User otro = user("c1", "crea", "C", "R", "c@mail.com", "f.png",
                          User.Role.GESTOR_CONTENIDO, false);
         when(userDao.findById("c1")).thenReturn(Optional.of(otro));
         assertThrows(InvalidRoleException.class,
-                () -> userService.actualizarUsuario("c1", null, null, null, null, null));
+                () -> userService.actualizarUsuario("c1", null, null, null, null, null, null));
     }
 
     @Test
@@ -81,20 +95,11 @@ class UserServiceUsuariosTest {
                          User.Role.USUARIO, false);
         when(userDao.findByAlias("dup")).thenReturn(otro);
         assertThrows(DuplicateAliasException.class,
-                () -> userService.actualizarUsuario("u1", "dup", null, null, null, null));
+                () -> userService.actualizarUsuario("u1", "dup", null, null, null, null, null));
     }
 
-    @Test
-    @DisplayName("actualizarUsuario: email duplicado")
-    void actualizarUsuario_emailDuplicado() {
-        when(userDao.findById("u1")).thenReturn(Optional.of(u));
-        when(userDao.findByAlias(any())).thenReturn(null);
-        User otro = user("u2", "x", "X", "Y", "dup@mail.com", "f.png",
-                         User.Role.USUARIO, false);
-        when(userDao.findByEmail("dup@mail.com")).thenReturn(otro);
-        assertThrows(DuplicateEmailException.class,
-                () -> userService.actualizarUsuario("u1", "ok", null, null, "dup@mail.com", null));
-    }
+    // Nota: pruebas de email duplicado/el cambio de email se eliminan
+    // porque el email ya NO es editable para ningún rol.
 
     // ---------- bloquearUsuario ----------
     @Test

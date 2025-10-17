@@ -113,7 +113,6 @@ export class AuthService {
   updateUser(id: string, dto: any) {
     return this.http.patch<AppUser>(`${this.usersBase}/admin/users/${id}`, dto);
   }
-
   blockUser(id: string) {
     return this.http.post<AppUser>(`${this.usersBase}/admin/users/${id}/block`, {});
   }

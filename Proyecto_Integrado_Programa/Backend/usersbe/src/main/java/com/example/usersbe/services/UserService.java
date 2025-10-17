@@ -356,20 +356,23 @@ public class UserService {
     }
     /* ================= USUARIOS =========== */
     // --- USUARIOS (rol básico) ---
-
     public User actualizarUsuario(String id,
                                 String alias,
                                 String nombre,
                                 String apellidos,
                                 String email,
-                                String foto)
-            throws UserNotFoundException, InvalidRoleException,
-                DuplicateAliasException, DuplicateEmailException {
-
+                                String foto) {
+        return actualizarUsuario(id, alias, nombre, apellidos, email, foto, null);
+    }
+    public User actualizarUsuario(String id,
+                                String alias,
+                                String nombre,
+                                String apellidos,
+                                String email,     // se ignora, pero NO se borra
+                                String foto,
+                                String fechaNac) {
         User u = userDao.findById(id).orElse(null);
         if (u == null) throw new UserNotFoundException("El usuario no fue encontrado");
-
-        // Ajusta el rol si vuestro enum no usa USUARIO
         if (u.getRole() != User.Role.USUARIO)
             throw new InvalidRoleException("El usuario no tiene rol USUARIO");
 
@@ -398,6 +401,10 @@ public class UserService {
 
         // foto (opcional)
         if (foto != null) u.setFoto(foto);
+
+        if (fechaNac != null && !fechaNac.isBlank()) {
+            u.setFechaNac(java.time.LocalDate.parse(fechaNac.trim()));
+        }
 
         return userDao.save(u);
     }

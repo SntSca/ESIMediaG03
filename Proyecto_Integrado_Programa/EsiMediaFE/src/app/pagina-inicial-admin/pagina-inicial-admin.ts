@@ -230,6 +230,7 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
     descripcion: '',
     especialidad: '',
     email: '',
+    fechaNac: '',                       // ← NUEVO
     foto: null as string | null,
     fotoPreviewUrl: null as string | null
   };
@@ -250,6 +251,13 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
   openEditModal(u: AppUser) {
     // if (u.role !== 'GESTOR_CONTENIDO') return;
     this.editingUser = u;
+    const toDateInput = (iso?: string | null): string => {
+      if (!iso) return '';
+      return iso.length > 10 ? iso.slice(0, 10) : iso;
+    };
+
+    const fn = (u as any).fechaNac || (u as any).fechaNacimiento || null;
+
     this.editModel = {
       alias: u.alias ?? '',
       nombre: u.nombre ?? '',
@@ -257,6 +265,7 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
       descripcion: (u as any).descripcion ?? '',
       especialidad: (u as any).especialidad ?? '',
       email: u.email ?? '',
+      fechaNac: u.role === 'USUARIO' ? toDateInput(fn) : '',
       foto: u.fotoUrl ?? null,
       fotoPreviewUrl: u.fotoUrl ?? null
     };
@@ -302,6 +311,7 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
     const descripcion  = (this.editModel.descripcion || '').trim();
     const especialidad = (this.editModel.especialidad || '').trim();
     const email        = this.editModel.email.trim();
+    const fechaNac     = (this.editModel.fechaNac || '').trim();
     const foto         = this.editModel.foto;
 
     if (alias && alias !== u.alias) dto.alias = alias;
@@ -314,7 +324,9 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
       if (descripcion !== (u as any).descripcion) dto.descripcion = descripcion;
       if (especialidad !== (u as any).especialidad) dto.especialidad = especialidad;
     }
-
+    if (u.role === 'USUARIO') {
+      if (fechaNac) dto.fechaNac = fechaNac;  // ← añadir fechaNac
+    }
     if (Object.keys(dto).length === 0) { this.cancelEdit(); return; }
 
     this.loading = true;
