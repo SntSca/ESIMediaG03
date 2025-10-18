@@ -12,13 +12,19 @@
           </ng-template>
         </div>
         <div class="user-info">
-          <div class="user-name">{{ userName }}</div>
+          <div class="user-name-row">
+            <div class="user-name">{{ userName }}</div>
+            <button class="edit-inline" type="button" (click)="toggleEditar()" title="Editar perfil">✏️</button>
+          </div>
           <div class="user-email">{{ userEmail }}</div>
-          <div class="user-role">{{ userRole }} | Tipo: {{nuevo.tipo}}</div>
+          <div class="user-role">{{ userRole }}</div>
         </div>
+
         <button class="logout-btn" (click)="cerrarSesion()">Cerrar Sesión</button>
       </div>
     </nav>
+
+
 
     <div class="main-container">
       <aside class="filter-panel">
@@ -125,6 +131,138 @@
           <p>El listado de contenidos se mostrará aquí próximamente.</p>
         </div>
       </main>
+    </div>
+  </div>
+
+  
+  <div class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></div>
+
+
+  <div class="edit-panel modal" [class.open]="editOpen" (click)="$event.stopPropagation()">
+
+ 
+    <button type="button" class="modal-close" (click)="cancelarEditar()" aria-label="Cerrar">×</button>
+
+    <div class="edit-body">
+      <h3>Editar perfil</h3>
+
+      <form (ngSubmit)="guardarCambios()">
+        <div class="row">
+          <label class="label-lock">
+            Email
+            <span class="lock" title="Campo bloqueado">🔒</span>
+            <span class="badge-ro">bloqueado</span>
+          </label>
+          <input type="text" [ngModel]="userEmail" name="email_ro" class="ro" readonly disabled />
+        </div>
+
+        <div class="row">
+          <label class="label-lock">
+            Tipo Contenido
+            <span class="lock" title="Campo bloqueado">🔒</span>
+            <span class="badge-ro">bloqueado</span>
+          </label>
+          <input type="text" [ngModel]="model.tipoContenido" name="TipoContenido" class="ro" readonly disabled />
+        </div>
+
+        <div class="row">
+          <label>Nombre</label>
+          <input type="text" [(ngModel)]="model.nombre" name="nombre" />
+        </div>
+
+        <div class="row">
+          <label>Apellidos</label>
+          <input type="text" [(ngModel)]="model.apellidos" name="apellidos" />
+        </div>
+
+        <div class="row">
+          <label>Alias</label>
+          <input type="text" [(ngModel)]="model.alias" name="alias" />
+        </div>
+
+        <div class="row">
+          <label>Descripcion</label>
+          <input type="text" [(ngModel)]="model.descripcion" name="descripcion" />
+        </div>
+
+        <div class="row">
+          <label>Especialidad</label>
+          <input type="text" [(ngModel)]="model.especialidad" name="especialidad" />
+        </div>
+
+        <div class="Avatar">
+          <button type="button" class="btn" (click)="openAvatarModal()">Elegir Avatar</button>
+          <div *ngIf="selectedAvatar" class="selected-avatar-card">
+            <img [src]="selectedAvatar" alt="avatar" class="selected-avatar-card__img">
+            <div class="selected-avatar-card__text">
+              <b>Avatar seleccionado</b>
+              <small>Puedes cambiarlo cuando quieras</small>
+            </div>
+          </div>
+        </div>
+
+        <p class="ok" *ngIf="okMsg">{{ okMsg }}</p>
+        <p class="err" *ngIf="errorMsg">{{ errorMsg }}</p>
+
+        <div class="actions">
+          <button class="btn-darseBaja" type="button" (click)="DarDeBaja(); $event.stopPropagation()">Eliminar Cuenta</button>
+          <button type="button" class="btn-out" (click)="cancelarEditar(); $event.stopPropagation()">Cancelar</button>
+          <button type="submit" class="btn-primario" [disabled]="saving" (click)="$event.stopPropagation()">
+            {{ saving ? 'Guardando…' : 'Guardar' }}
+          </button>
+        </div>
+      </form>
+    </div>
+  </div>
+
+
+  
+  <div class="ro-overlay" *ngIf="readOnly" aria-hidden="true"></div>
+  
+  <div
+    *ngIf="showAvatarModal"
+    class="avatar-modal"
+    tabindex="0"
+    (click)="closeAvatarModal()"
+    (keydown.enter)="closeAvatarModal()"
+    (keydown.space)="closeAvatarModal()"
+    (keydown.escape)="closeAvatarModal()">
+
+    <div
+      class="avatar-modal-content"
+      role="dialog"
+      aria-modal="true"
+      aria-labelledby="avatarTitle"
+      (click)="$event.stopPropagation()">
+
+      <div class="avatar-preview" *ngIf="selectedAvatar; else noPreview">
+        <img [src]="selectedAvatar" alt="avatar seleccionado">
+        <div class="avatar-preview__caption">Seleccionado</div>
+      </div>
+      <ng-template #noPreview>
+        <div class="avatar-preview avatar-preview--placeholder">
+          <span>Selecciona uno de la galería</span>
+        </div>
+      </ng-template>
+
+      <ul class="avatar-grid">
+        <li *ngFor="let avatar of avatars"
+            class="avatar-option"
+            [class.selected]="selectedAvatar === avatar">
+          <button type="button"
+                  (click)="selectAvatar(avatar)"
+                  (keydown.enter)="selectAvatar(avatar)"
+                  [attr.aria-pressed]="selectedAvatar === avatar"
+                  [attr.aria-label]="'Elegir avatar ' + avatar">
+            <img [src]="avatar" alt="avatar">
+            <span class="avatar-check">✓</span>
+          </button>
+        </li>
+      </ul>
+
+      <div class="avatar-modal-actions">
+        <button class="btn btn--ghost" type="button" (click)="closeAvatarModal()">Cancelar</button>
+      </div>
     </div>
   </div>
 </div>

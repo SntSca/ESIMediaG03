@@ -1,11 +1,12 @@
-import { Component, OnInit, inject } from '@angular/core';
+import { Component, OnInit, inject,ChangeDetectorRef } from '@angular/core';
 import { FormsModule, NgForm } from '@angular/forms';
 import { CommonModule } from '@angular/common';
 import { Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
-import { UserDto } from '../auth/models';
+import { AppUser,UserDto } from '../auth/models';
 import { Contenidos } from '../contenidos';
 import Swal from 'sweetalert2';
+import { HttpErrorResponse } from '@angular/common/http';
 
 type TipoContenido = 'AUDIO' | 'VIDEO';
 type Role = UserDto['role'];
@@ -30,9 +31,12 @@ interface ContenidoCreate {
   standalone: true,
   imports: [CommonModule, FormsModule],
   templateUrl: './pagina-inicial-gestor.html',
-  styleUrls: ['./pagina-inicial-gestor.css']
+  styleUrls: ['./pagina-inicial-gestor.css'],
+
 })
 export class PaginaInicialGestor implements OnInit {
+
+  constructor(private readonly cdr: ChangeDetectorRef) {}
 
   userName = 'Gestor de Contenido';
   userEmail = 'gestor@esimedia.com';
@@ -79,19 +83,47 @@ export class PaginaInicialGestor implements OnInit {
   private setLoggedUser(user: UserDto | null) {
     this.loggedUser = user;
     if (!user) return;
-
     const nombre = user.nombre?.trim() || user.email.split('@')[0];
     this.userName = nombre;
     this.userEmail = user.email;
-    this.userRole = this.mapRoleToLabel(user.role);
-    this.userInitials = this.getInitials(this.userName);
-    const foto = (user as any)?.foto?.toString()?.trim() || '';
-    this.userAvatarUrl = foto || null;
-    if (user.tipoContenido === 'AUDIO' || user.tipoContenido === 'VIDEO') {
-      this.nuevo.tipo = user.tipoContenido;
-    } else {
-      this.nuevo.tipo = 'VIDEO';
+
+    this.auth.getPerfil(this.userEmail).subscribe({
+      next: (u: any) => {
+        this.paintFromProfile(u);
+
+      const foto = (user as any)?.foto?.toString()?.trim() || '';
+      this.userAvatarUrl = foto || null;
+
+
+      const avatar = this.normalizeAvatarUrl(this.userAvatarUrl);
+      if (avatar) {
+        this.userAvatar = avatar;
+      } else {
+        this.userAvatar = null;
+        this.userInitials = this.getInitials(u?.alias || u?.nombre || this.userName);
+      }
+
+      this.cdr.markForCheck();
+    },
+      error: (_e: HttpErrorResponse) => {
+        this.errorMsg = 'No se pudo cargar tu perfil';
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+  private normalizeAvatarUrl(raw: unknown): string {
+    const s: string = String(raw ?? '').trim();
+    if (!s) return '';
+
+    if (/^https?:\/\//i.test(s) || s.startsWith('data:') || s.startsWith('assets/')) {
+      return s;
     }
+
+    const API_BASE: string | null = null;
+    return API_BASE
+      ? s.replace(/^\/+/g, '')
+      : s;
   }
 
   private mapRoleToLabel(role?: Role | null): string {
@@ -282,4 +314,211 @@ export class PaginaInicialGestor implements OnInit {
       this.router.navigateByUrl('/auth/login', { replaceUrl: true });
     }
   }
+
+  private userAliasActual = '';
+  
+  model: {
+    nombre?: string;
+    apellidos?: string;
+    alias?: string;
+    foto?: string;
+    descripcion?: string;
+    tipoContenido?: string;
+    especialidad?:string;
+
+  } = {};
+
+  foto: string | null = null;
+  selectedAvatar: string | null = null;
+  showAvatarModal = false;
+
+  okMsg: string | null = null;
+  saving = false;
+  editOpen = false;
+  userAvatar: string | null = null;
+  readOnly=false;
+
+  toggleEditar() {
+    console.log('Toggle editar called, readOnly:', this.readOnly);
+    if (this.readOnly) return;
+    requestAnimationFrame(() => {
+      this.editOpen = !this.editOpen;
+      this.cdr.markForCheck();
+    });
+  }
+
+  cancelarEditar() {
+    console.log('Cancelar editar called');
+    this.editOpen = false;
+    this.cdr.markForCheck();
+  }
+
+  guardarCambios() {
+    this.errorMsg = '';
+
+    const norm = (s?: string | null): string | null => {
+      const v = (s ?? '').trim();
+      if (!v) return null;
+      if (/^https?:\/\//i.test(v) || v.startsWith('data:')) return v;
+      if (v.startsWith('assets/')) return `/${v}`;
+      return v.startsWith('/') ? v : `/${v}`;
+    };
+    const bust = (u: string | null): string | null => {
+      if (!u) return null;
+      const sep = u.includes('?') ? '&' : '?';
+      return `${u}${sep}v=${Date.now()}`;
+    };
+
+    const aliasNuevo = (this.model?.alias ?? '').trim();
+    const aliasAEnviar =
+      this.userAliasActual &&
+      aliasNuevo &&
+      aliasNuevo.localeCompare(this.userAliasActual, undefined, { sensitivity: 'accent' }) === 0
+        ? undefined
+        : (aliasNuevo || undefined);
+
+    const fotoSeleccionada = (this.selectedAvatar || this.foto || this.model?.foto || '').trim() || undefined;
+
+    const raw: Partial<AppUser> & { foto?: string; fotoUrl?: string } = {
+      email: this.userEmail,
+      alias: aliasAEnviar,
+      nombre: (this.model?.nombre ?? '').trim() || undefined,
+      apellidos: (this.model?.apellidos ?? '').trim() || undefined,
+      descripcion: (this.model?.descripcion ?? '').trim() || undefined,
+      tipoContenido: (this.model?.tipoContenido ?? '').trim() || undefined,
+      especialidad: (this.model?.especialidad ?? '').trim() || undefined,
+      fotoUrl: fotoSeleccionada,
+      foto: fotoSeleccionada
+    };
+
+    const payload = this.cleanPayload(raw);
+    console.log('Payload to send:', payload);
+
+    this.auth.putPerfilCreadorContenido(payload).subscribe({
+      next: (perfil: any) => {
+        console.log('Profile updated successfully:', perfil);
+
+        
+        this.paintFromProfile(perfil);
+
+  
+        const apiAvatar = norm(perfil?.fotoUrl ?? perfil?.foto);
+        const localAvatar = norm(fotoSeleccionada ?? this.foto ?? this.model?.foto ?? null);
+        const finalAvatar = bust(apiAvatar || localAvatar);
+
+      
+        this.userAvatarUrl = finalAvatar;
+
+        
+        this.selectedAvatar = null;
+        this.foto = apiAvatar || localAvatar || null;
+
+        this.editOpen = false;
+        this.okMsg = 'Perfil actualizado correctamente en esta sesión actual';
+        this.errorMsg = '';
+        this.saving = false;
+        this.cdr.markForCheck();
+      },
+      error: (err: any) => {
+        console.error('Error updating profile:', err);
+        this.errorMsg = err?.error?.message || err?.message || 'Error al actualizar el perfil';
+        this.saving = false;
+        this.cdr.markForCheck();
+      }
+    });
+  }
+
+
+    DarDeBaja(): void {
+      if (confirm('¿Seguro que deseas darte de baja de la plataforma? Esta acción no se puede deshacer.')) {
+        this.auth.darseBaja(this.userEmail).subscribe({
+          next: (msg: string) => {
+            alert(msg || 'Usuario eliminado correctamente');
+            
+            this.auth.logout?.();
+            localStorage.removeItem('user');
+            sessionStorage.clear();
+            this.router.navigateByUrl('/auth/login', { replaceUrl: true });
+          },
+          error: (err: any) => {
+            console.error('Error al dar de baja:', err);
+            const errorMsg = err?.error || err?.message || 'Error al eliminar usuario';
+            alert(errorMsg);
+          }
+        });
+      }
+    }
+
+    selectAvatar(avatar: string) {
+      console.log('Avatar selected:', avatar);
+      this.selectedAvatar = avatar;
+      this.foto = avatar;
+      this.closeAvatarModal();
+    }
+
+    avatars: string[] = [
+      'assets/avatars/avatar1.png',
+      'assets/avatars/avatar2.png',
+      'assets/avatars/avatar3.png',
+      'assets/avatars/avatar4.png',
+      'assets/avatars/avatar5.png',
+      'assets/avatars/avatar6.png'
+    ];
+
+    closeAvatarModal() { 
+      console.log('Closing avatar modal');
+      this.showAvatarModal = false; 
+    }
+
+    openAvatarModal() { 
+      console.log('Opening avatar modal');
+      this.showAvatarModal = true; 
+    }
+  
+  
+    private cleanPayload<T extends Record<string, any>>(obj: T): T {
+      const out: any = {};
+      for (const k of Object.keys(obj)) {
+        const v = (obj as any)[k];
+        if (v === undefined) continue;
+        if (typeof v === 'string' && v.trim() === '') continue;
+        out[k] = v;
+      }
+      return out as T;
+    }
+  
+    private paintFromProfile(u: any) {
+      this.userEmail = u?.email ?? this.userEmail;
+  
+      const nombre = (u?.nombre ?? '').trim();
+      const apellidos = (u?.apellidos ?? '').trim();
+      const fullName = `${nombre} ${apellidos}`.trim();
+  
+      this.userName = (u?.alias && u.alias.trim())
+        ? u.alias.trim()
+        : (fullName || u?.email || this.userName);
+  
+      const base = (u?.alias && u.alias.trim()) ? u.alias.trim() : (fullName || u?.email || '');
+      this.userInitials = this.computeInitials(base);
+  
+      this.userAliasActual = (u?.alias ?? '').trim();
+      
+      this.model = {
+        nombre: u?.nombre ?? '',
+        apellidos: u?.apellidos ?? '',
+        alias: u?.alias ?? '',
+        foto: u?.foto ?? u?.fotoUrl ?? '',
+        descripcion: u?.descripcion ?? '',
+        tipoContenido: u?.tipoContenido ?? '',
+        especialidad: u?.especialidad ?? '',
+      };
+  
+      this.cdr.markForCheck();
+    }
+
+    private computeInitials(text: string): string {
+      if (!text) return 'U';
+      return text.split(/\s+/).slice(0, 2).map(p => (p[0]?.toUpperCase() ?? '')).join('') || 'U';
+    }
+
 }

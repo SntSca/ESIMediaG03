@@ -51,6 +51,7 @@ export interface AppUser {
   vip?: boolean;
   createdAt?: string;
   descripcion?: string;
+  tipoContenido?:string;
   especialidad?: string;
   fotoUrl?: string | null;
   foto?: string | null;

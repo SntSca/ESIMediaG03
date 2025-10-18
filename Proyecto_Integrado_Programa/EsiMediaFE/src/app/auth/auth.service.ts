@@ -153,6 +153,10 @@ export class AuthService {
     return this.http.put<any>(`${this.usersBase}/modificarPerfilUsuario`, payload);
   }
 
+  putPerfilCreadorContenido(payload:any): Observable<any>{
+    return this.http.put<any>(`${this.usersBase}/modificarPerfilCreadorContenido`, payload);
+  }
+
   darseBaja(email: string): Observable<string> {
     return this.http.delete<string>(`${this.usersBase}/darDeBajaUsuario`, {
       params: { email },
