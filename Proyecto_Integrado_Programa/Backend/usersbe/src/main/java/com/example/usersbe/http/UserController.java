@@ -280,6 +280,42 @@ public class UserController {
         return ResponseEntity.ok(u);
     }
 
+    @PutMapping("/modificarPerfilCreadorContenido")
+    public User updateCreador(@RequestBody Map<String, Object> body){
+        try{
+            String email = (String) body.get("email");
+            if (email == null || email.trim().isEmpty()){
+                throw new IllegalArgumentException("El email es obligatorio");
+            }
+
+            String nombre = (String) body.get("nombre");
+            String apellidos = (String) body.get("apellidos");
+            String alias = (String) body.get("alias");
+            String descripcion = (String) body.get("descripcion");
+            String especialidad = (String) body.get("especialidad");
+            String tipoContenido = (String) body.get("tipoContenido");
+            String foto = (String) body.get("foto");
+
+            return userService.updateCreadorContenido(
+                email,
+                nombre,
+                apellidos,
+                alias,
+                descripcion,
+                especialidad,
+                tipoContenido,
+                foto
+            );
+
+        } catch (IllegalArgumentException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (ValidationException | ForbiddenException e) {
+            throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
+        } catch (Exception e) { 
+            throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
+        }
+    }
+
     @PutMapping("/modificarPerfilUsuario")
     public User updateUser(@RequestBody Map<String, Object> body) {
         try {
@@ -307,7 +343,7 @@ public class UserController {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
         } catch (ValidationException | ForbiddenException e) {
             throw new ResponseStatusException(HttpStatus.BAD_REQUEST, e.getMessage());
-        } catch (Exception e) { // captura cualquier otra excepción checked
+        } catch (Exception e) { 
             throw new ResponseStatusException(HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage());
         }
     }

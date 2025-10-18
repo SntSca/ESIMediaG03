@@ -5,6 +5,7 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.Base64;
 import java.util.List;
+import java.util.Locale;
 import java.util.regex.Pattern;
 
 import org.springframework.beans.factory.annotation.Value;
@@ -863,6 +864,83 @@ public class UserService {
         u.setBlocked(true);
 
         return userDao.save(u);
+    }
+
+    public User updateCreadorContenido(
+            String email,
+            String nombre,
+            String apellidos,
+            String alias,
+            String descripcion,
+            String especialidad,
+            String tipoContenido,
+            String foto
+        ){
+
+            User u = getUserByEmail(email);
+            if (u.isBlocked()) {
+            throw new ForbiddenException("Usuario bloqueado");
+        }
+
+        if (nombre != null) {
+            String n = nombre.trim();
+            if (n.isEmpty())
+                throw new ValidationException("El nombre no puede estar vacío");
+            if (n.length() > 100)
+                throw new ValidationException("Nombre demasiado largo");
+            u.setNombre(n);
+        }
+
+        if (apellidos != null) {
+            String a = apellidos.trim();
+            if (a.isEmpty())
+                throw new ValidationException("Los apellidos no pueden estar vacíos");
+            if (a.length() > 100)
+                throw new ValidationException("Apellidos demasiado largos");
+            u.setApellidos(a);
+        }
+
+        if (descripcion != null){
+            String d = descripcion.trim();
+            if(d.length()>90){
+                throw new ValidationException("Apellidos demasiado largos");
+            }
+            u.setDescripcion(descripcion);
+        }
+
+        if (especialidad != null){
+            String e = especialidad.trim();
+            if(e.isEmpty()){
+                throw new ValidationException("La especialidad no puede estar vacía");
+            }
+            u.setEspecialidad(especialidad);
+
+        }
+
+        if (tipoContenido != null){
+            String raw=tipoContenido;
+            User.TipoContenido tipo = User.TipoContenido.valueOf(raw.toUpperCase(Locale.ROOT));
+            u.setTipoContenido(tipo);
+        }
+
+        if (alias != null) {
+            String a = alias.trim();
+            if (a.length() < 3 || a.length() > 12) {
+                throw new ValidationException("El alias debe tener entre 3 y 12 caracteres");
+            }
+            if (!isAliasAvailable(alias)) {
+                throw new InvalidFieldException("El alias ya está en uso");
+            }
+            u.setAlias(a);
+        }
+
+        if (foto != null) {
+            u.setFoto(foto);
+        }
+
+
+        return userDao.save(u);
+
     }
     
 
