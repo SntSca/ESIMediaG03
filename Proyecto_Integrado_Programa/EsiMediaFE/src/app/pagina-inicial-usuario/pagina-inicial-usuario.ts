@@ -242,78 +242,87 @@ private resolveAvatarRaw(u: any): string {
   }
 
   async guardarCambios() {
-    const vmsg = this.validateProfileFields();
-    if (vmsg) {
-      this.saving = false;
-      this.errorMsg = vmsg;
-      this.cdr.markForCheck();
-      return;
-    }
     if (this.readOnly) return;
+    const vmsg = this.validateProfileFields();
+    if (vmsg) return this.handleGuardarError(vmsg);
 
     this.okMsg = null;
     this.errorMsg = '';
     this.saving = true;
 
+    try {
+      const aliasAEnviar = await this.getAliasAEnviar();
+
+      const fotoSeleccionada = this.getFotoSeleccionada();
+
+      const raw: Partial<AppUser> & { foto?: string; fotoUrl?: string } = {
+        email: this.userEmail,
+        alias: aliasAEnviar,
+        nombre: (this.model?.nombre ?? '').trim() || undefined,
+        apellidos: (this.model?.apellidos ?? '').trim() || undefined,
+        fechaNac: this.model?.fechaNac ? String(this.model.fechaNac).slice(0, 10) : undefined,
+        vip: typeof this.model?.vip === 'boolean' ? this.model.vip : undefined,
+        fotoUrl: fotoSeleccionada,
+        foto: fotoSeleccionada
+      };
+
+      const payload = this.cleanPayload(raw);
+      this.auth.putPerfil(payload).subscribe({
+        next: (perfil: any) => this.handleGuardarSuccess(perfil),
+        error: (err: any) => this.handleGuardarError(err?.error?.message || err?.message || 'Error al actualizar el perfil')
+      });
+    } catch (err: any) {
+      this.handleGuardarError(err?.message || 'Error al procesar los cambios');
+    }
+  }
+  private handleGuardarError(msg: string) {
+    this.saving = false;
+    this.errorMsg = msg;
+    this.cdr.markForCheck();
+  }
+
+  private handleGuardarSuccess(perfil: any) {
+    this.paintFromProfile(perfil);
+    this.editOpen = false;
+    this.okMsg = 'Se ha editado correctamente';
+    this.errorMsg = '';
+    this.saving = false;
+
+    if (this.selectedAvatar) {
+      this.userAvatar = this.selectedAvatar;
+    }
+
+    void Swal.fire({
+      icon: 'success',
+      title: 'Se ha editado correctamente',
+      timer: 1500,
+      showConfirmButton: false
+    });
+
+    this.cdr.markForCheck();
+  }
+
+  private async getAliasAEnviar(): Promise<string | undefined> {
     const aliasNuevo = (this.model?.alias ?? '').trim();
-    const aliasAEnviar =
+    const igualActual =
       this.userAliasActual &&
       aliasNuevo &&
-      aliasNuevo.localeCompare(this.userAliasActual, undefined, { sensitivity: 'accent' }) === 0
-        ? undefined
-        : (aliasNuevo || undefined);
+      aliasNuevo.localeCompare(this.userAliasActual, undefined, { sensitivity: 'accent' }) === 0;
+
+    const aliasAEnviar = igualActual ? undefined : aliasNuevo || undefined;
 
     if (aliasAEnviar) {
       const disponible = await this.ensureAliasDisponible(aliasAEnviar);
-      if (!disponible) {
-        this.saving = false;
-        this.errorMsg = 'El alias ya existe. Elige otro.';
-        this.cdr.markForCheck();
-        return;
-      }
+      if (!disponible) throw new Error('El alias ya existe. Elige otro.');
     }
 
-    const fotoSeleccionada = (this.selectedAvatar || this.foto || this.model?.foto || '').trim() || undefined;
-
-    const raw: Partial<AppUser> & { foto?: string; fotoUrl?: string } = {
-      email: this.userEmail,
-      alias: aliasAEnviar,
-      nombre: (this.model?.nombre ?? '').trim() || undefined,
-      apellidos: (this.model?.apellidos ?? '').trim() || undefined,
-      fechaNac: this.model?.fechaNac ? String(this.model.fechaNac).slice(0, 10) : undefined,
-      vip: typeof this.model?.vip === 'boolean' ? this.model.vip : undefined,
-      fotoUrl: fotoSeleccionada,
-      foto: fotoSeleccionada
-    };
-
-    const payload = this.cleanPayload(raw);
-
-    this.auth.putPerfil(payload).subscribe({
-      next: (perfil: any) => {
-        this.paintFromProfile(perfil);
-        this.editOpen = false;
-        this.errorMsg = '';
-        this.saving = false;
-        this.okMsg = 'Se ha editado correctamente';
-        void Swal.fire({
-          icon: 'success',
-          title: 'Se ha editado correctamente',
-          timer: 1500,
-          showConfirmButton: false
-        });
-
-        if (this.selectedAvatar) {
-          this.userAvatar = this.selectedAvatar;
-        }
-        this.cdr.markForCheck();
-      },
-      error: (err: any) => {
-        this.errorMsg = err?.error?.message || err?.message || 'Error al actualizar el perfil';
-        this.saving = false;
-        this.cdr.markForCheck();
-      }
-    });
+    return aliasAEnviar;
   }
+
+  private getFotoSeleccionada(): string | undefined {
+    return (this.selectedAvatar || this.foto || this.model?.foto || '').trim() || undefined;
+  }
+
   private readonly MAX = { nombre: 100, apellidos: 100, alias: 12 };
   private readonly ALIAS_MIN = 3;
 
@@ -354,32 +363,12 @@ private resolveAvatarRaw(u: any): string {
 
   private paintFromProfile(u: any) {
     this.userEmail = u?.email ?? this.userEmail;
-
-    const nombre = (u?.nombre ?? '').trim();
-    const apellidos = (u?.apellidos ?? '').trim();
-    const fullName = `${nombre} ${apellidos}`.trim();
-
-    this.userName = u?.alias?.trim()
-      ? u.alias.trim()
-      : (fullName || u?.email || this.userName);
-
-    const base = u?.alias?.trim() || fullName || u?.email || '';
-    this.userInitials = this.computeInitials(base);
-
     this.userAliasActual = (u?.alias ?? '').trim();
 
-    let fechaNac = '';
-    if (u?.fechaNac) {
-      const raw = String(u.fechaNac);
-      if (/^\d{4}-\d{2}-\d{2}$/.test(raw)) {
-        fechaNac = raw;
-      } else if (/^\d{2}\/\d{2}\/\d{4}$/.test(raw)) {
-        const [d, m, y] = raw.split('/');
-        fechaNac = `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
-      } else {
-        fechaNac = raw.slice(0, 10);
-      }
-    }
+    this.userName = this.getDisplayName(u);
+    this.userInitials = this.computeInitials(this.getInitialsBase(u));
+
+    const fechaNac = this.formatFechaNac(u?.fechaNac);
     this.model = {
       nombre: u?.nombre ?? '',
       apellidos: u?.apellidos ?? '',
@@ -390,6 +379,30 @@ private resolveAvatarRaw(u: any): string {
     };
 
     this.cdr.markForCheck();
+  }
+  private getDisplayName(u: any): string {
+    const nombre = (u?.nombre ?? '').trim();
+    const apellidos = (u?.apellidos ?? '').trim();
+    const fullName = `${nombre} ${apellidos}`.trim();
+    return u?.alias?.trim() ? u.alias.trim() : (fullName || u?.email || this.userName);
+  }
+
+  private getInitialsBase(u: any): string {
+    const nombre = (u?.nombre ?? '').trim();
+    const apellidos = (u?.apellidos ?? '').trim();
+    const fullName = `${nombre} ${apellidos}`.trim();
+    return u?.alias?.trim() || fullName || u?.email || '';
+  }
+  private formatFechaNac(raw?: string | null): string {
+    if (!raw) return '';
+    const str = String(raw);
+
+    if (/^\d{4}-\d{2}-\d{2}$/.test(str)) return str;
+    if (/^\d{2}\/\d{2}\/\d{4}$/.test(str)) {
+      const [d, m, y] = str.split('/');
+      return `${y}-${m.padStart(2, '0')}-${d.padStart(2, '0')}`;
+    }
+    return str.slice(0, 10);
   }
 
   private computeInitials(text: string): string {

@@ -461,30 +461,36 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
     const MAX = { nombre: 100, apellidos: 100, alias: 12, departamento: 120 };
     const ALIAS_MIN = 3;
 
-    const al = (this.adminEditModel.alias ?? '').trim();
-    const n  = (this.adminEditModel.nombre ?? '').trim();
-    const ap = (this.adminEditModel.apellidos ?? '').trim();
-    const em = (this.adminEditModel.email ?? '').trim();
-    const de = (this.adminEditModel.departamento ?? '').trim();
+    const fields = {
+      alias: (this.adminEditModel.alias ?? '').trim(),
+      nombre: (this.adminEditModel.nombre ?? '').trim(),
+      apellidos: (this.adminEditModel.apellidos ?? '').trim(),
+      email: (this.adminEditModel.email ?? '').trim(),
+      departamento: (this.adminEditModel.departamento ?? '').trim()
+    };
 
-    if (al) {
-      if (al.length < ALIAS_MIN || al.length > MAX.alias) errors['alias'] = `El alias debe tener entre ${ALIAS_MIN} y ${MAX.alias} caracteres.`;
-      else if (this.adminAliasTaken) errors['alias'] = 'El alias ya está en uso.';
+    const checkLength = (field: string, value: string, min: number, max: number, msg: string) => {
+      if (value.length < min || value.length > max) errors[field] = msg;
+    };
+
+    const checkMaxLength = (field: string, value: string, max: number, msg: string) => {
+      if (value && value.length > max) errors[field] = msg;
+    };
+    if (fields.alias) {
+      checkLength('alias', fields.alias, ALIAS_MIN, MAX.alias, `El alias debe tener entre ${ALIAS_MIN} y ${MAX.alias} caracteres.`);
+      if (!errors['alias'] && this.adminAliasTaken) errors['alias'] = 'El alias ya está en uso.';
     }
-
-    if (!n) errors['nombre'] = 'El nombre es obligatorio.';
-    else if (n.length > MAX.nombre) errors['nombre'] = `El nombre supera ${MAX.nombre} caracteres.`;
-
-    if (ap && ap.length > MAX.apellidos) errors['apellidos'] = `Los apellidos superan ${MAX.apellidos} caracteres.`;
-
-    if (!em) errors['email'] = 'El email es obligatorio.';
-    else if (!this.EMAIL_RE.test(em)) errors['email'] = 'Email no válido.';
-
-    if (de && de.length > MAX.departamento) errors['departamento'] = `El departamento supera ${MAX.departamento} caracteres.`;
-
+    if (!fields.nombre) errors['nombre'] = 'El nombre es obligatorio.';
+    else checkMaxLength('nombre', fields.nombre, MAX.nombre, `El nombre supera ${MAX.nombre} caracteres.`);
+    checkMaxLength('apellidos', fields.apellidos, MAX.apellidos, `Los apellidos superan ${MAX.apellidos} caracteres.`);
+    if (!fields.email) errors['email'] = 'El email es obligatorio.';
+    else if (!this.EMAIL_RE.test(fields.email)) errors['email'] = 'Email no válido.';
+  
+    checkMaxLength('departamento', fields.departamento, MAX.departamento, `El departamento supera ${MAX.departamento} caracteres.`);
     this.adminFieldErrors = errors;
     this.isAdminFormValid = Object.keys(errors).length === 0;
   }
+
 
   onAdminApellidosInput(v: string) {
     this.adminEditModel.apellidos = v;
@@ -639,25 +645,38 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
   private readonly ALIAS_MIN = 3;
 
   private validateEditModel(u: AppUser): string | null {
-    const al = (this.editModel.alias ?? '').trim();
-    const n  = (this.editModel.nombre ?? '').trim();
-    const ap = (this.editModel.apellidos ?? '').trim();
-    const de = (this.editModel.descripcion ?? '').trim();
-    const es = (this.editModel.especialidad ?? '').trim();
+    const fields: Record<string, { value: string, max: number, msg: string }> = {
+      alias: { value: (this.editModel.alias ?? '').trim(), max: this.MAX.alias, msg: `El alias debe tener entre ${this.ALIAS_MIN} y ${this.MAX.alias} caracteres.` },
+      nombre: { value: (this.editModel.nombre ?? '').trim(), max: this.MAX.nombre, msg: `El nombre supera ${this.MAX.nombre} caracteres.` },
+      apellidos: { value: (this.editModel.apellidos ?? '').trim(), max: this.MAX.apellidos, msg: `Los apellidos superan ${this.MAX.apellidos} caracteres.` },
+    };
 
-    if (al) {
-      if (al.length < this.ALIAS_MIN || al.length > this.MAX.alias)
-        return `El alias debe tener entre ${this.ALIAS_MIN} y ${this.MAX.alias} caracteres.`;
+    const checkLength = (field: string, min: number = 0) => {
+      const { value, max, msg } = fields[field];
+      if (!value) return null;
+      if (value.length < min || value.length > max) return msg;
+      return null;
+    };
+    const aliasError = checkLength('alias', this.ALIAS_MIN);
+    if (aliasError) return aliasError;
+    for (const field of ['nombre', 'apellidos']) {
+      const err = checkLength(field);
+      if (err) return err;
     }
-    if (n && n.length > this.MAX.nombre) return `El nombre supera ${this.MAX.nombre} caracteres.`;
-    if (ap && ap.length > this.MAX.apellidos) return `Los apellidos superan ${this.MAX.apellidos} caracteres.`;
-
     if (u.role === 'GESTOR_CONTENIDO') {
-      if (de && de.length > this.MAX.descripcion) return `La descripción supera ${this.MAX.descripcion} caracteres.`;
-      if (es && es.length > this.MAX.especialidad) return `La especialidad supera ${this.MAX.especialidad} caracteres.`;
+      const extraFields: Record<string, { value: string, max: number, msg: string }> = {
+        descripcion: { value: (this.editModel.descripcion ?? '').trim(), max: this.MAX.descripcion, msg: `La descripción supera ${this.MAX.descripcion} caracteres.` },
+        especialidad: { value: (this.editModel.especialidad ?? '').trim(), max: this.MAX.especialidad, msg: `La especialidad supera ${this.MAX.especialidad} caracteres.` },
+      };
+      for (const key of Object.keys(extraFields)) {
+        const { value, max, msg } = extraFields[key];
+        if (value && value.length > max) return msg;
+      }
     }
+
     return null;
   }
+
 
   private resolveAction(u: AppUser, kind: ConfirmKind) {
     const actions: Record<AppUser['role'], Record<ConfirmKind, () => any>> = {

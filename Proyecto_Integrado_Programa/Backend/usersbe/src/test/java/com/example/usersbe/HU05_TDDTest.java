@@ -20,6 +20,7 @@ class HU05_TDDTest {
 
     @Mock UserDao userDao;
     @InjectMocks UserService userService;
+    private static final String EMAIL = "user@example.com";
 
     @Test
     void estandar_a_vip_poneVipSinceAhora() {
@@ -28,12 +29,12 @@ class HU05_TDDTest {
         u.setVip(false);
         u.setVipSince(null);
 
-        when(userDao.findByEmail("user@example.com")).thenReturn(u);
+        when(userDao.findByEmail(EMAIL)).thenReturn(u);
         when(userDao.save(any())).thenAnswer(i -> i.getArgument(0));
 
     
         User updated = userService.updateProfile(
-                "user@example.com",
+                EMAIL,
                 "marina", 
                 "sobrino blanco", 
                 "marinita", 
@@ -53,11 +54,11 @@ class HU05_TDDTest {
         u.setVip(true);
         u.setVipSince(LocalDateTime.parse("2024-01-01T00:00:00"));
 
-        when(userDao.findByEmail("user@example.com")).thenReturn(u);
+        when(userDao.findByEmail(EMAIL)).thenReturn(u);
         when(userDao.save(any())).thenAnswer(i -> i.getArgument(0));
 
         User updated = userService.updateProfile(
-                "user@example.com",
+                EMAIL,
                 "marina", 
                 "sobrino blanco", 
                 "marinita", 
