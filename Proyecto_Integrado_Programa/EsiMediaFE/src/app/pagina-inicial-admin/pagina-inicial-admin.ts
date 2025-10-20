@@ -333,6 +333,9 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
   confirmAction() {
     const u=this.targetUser, k=this.confirmKind;
     if (!u || !k || this.isSuperAdmin(u)) return this.cancelConfirm();
+    if (this.userEmail === u.email && (k === 'block' || k === 'delete')) {
+      return this.cancelConfirm();
+    }
     const actions:Record<AppUser['role'],Record<ConfirmKind,()=>any>>={
       GESTOR_CONTENIDO:{ block:()=>this.api.blockCreator(u.id),  unblock:()=>this.api.unblockCreator(u.id),  delete:()=>this.api.deleteCreator(u.id) },
       ADMINISTRADOR:   { block:()=>this.api.blockAdmin(u.id),    unblock:()=>this.api.unblockAdmin(u.id),    delete:()=>this.api.deleteAdmin(u.id) },

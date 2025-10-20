@@ -105,9 +105,9 @@ public class UserController {
                 break;
 
             case GESTOR_CONTENIDO:
-                validarCamposObligatorios(info, FIELD_ALIAS, FIELD_DESCRIPCION, FIELD_ESPECIALIDAD, FIELD_TIPO_CONTENIDO);
+                validarCamposObligatorios(info, FIELD_ALIAS, FIELD_ESPECIALIDAD, FIELD_TIPO_CONTENIDO);
                 alias = trim(info.get(FIELD_ALIAS));
-                descripcion = trim(info.get(FIELD_DESCRIPCION));
+                descripcion = trimOrNull(info.get(FIELD_DESCRIPCION));
                 especialidad = trim(info.get(FIELD_ESPECIALIDAD));
                 tipoContenido = parseTipoContenido(trim(info.get(FIELD_TIPO_CONTENIDO)));
                 break;
