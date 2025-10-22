@@ -16,4 +16,10 @@ Este directorio contiene toda la documentación generada a lo largo del proyecto
 - **04_Manual_de_usuario/**  
   Incluye manuales de usuario y de instalación/despliegue de la aplicación.
 
+- **05_Sprint_1/**  
+Incluye toda la Documentación Sobre el Sprint 1
+
+- **06_Sprint_2/**  
+Incluye toda la Documentación Sobre el Sprint 2
+
 ---

@@ -227,7 +227,7 @@ export class PaginaInicialGestor implements OnInit {
 
   private buildContenidoPayload(): ContenidoCreate {
     const { nuevo } = this;
-    const tipo = (nuevo.tipo || '').toString() as TipoContenido;
+    const tipo = (this.userTipoContenido || '').toString() as TipoContenido;
     const isA = tipo === 'AUDIO', isV = tipo === 'VIDEO';
 
     return {
