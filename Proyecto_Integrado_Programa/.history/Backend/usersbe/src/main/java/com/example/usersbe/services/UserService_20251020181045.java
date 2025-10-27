@@ -205,7 +205,6 @@ public class UserService {
                             <p>Hola, <strong>%s</strong>,</p>
                             <p>Haz clic en el botón de abajo para restablecer tu contraseña:</p>
                             <a href="%s" class="btn">Restablecer contraseña</a>
-                            <p>Este enlace es válido por 1 hora.</p>
                             <p class="footer">Si no solicitaste este correo, puedes ignorarlo.</p>
                         </div>
                     </body>
