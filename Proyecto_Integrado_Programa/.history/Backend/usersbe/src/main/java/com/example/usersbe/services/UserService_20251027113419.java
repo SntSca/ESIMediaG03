@@ -155,90 +155,79 @@ public class UserService {
         }
     }
 
-    private String generateRecoveryHtml(String nombre, String link) {
-        return """
-                <!DOCTYPE html>
-                <html lang="es">
-                    <head>
-                        <meta charset="UTF-8">
-                        <title>Recuperación de contraseña - EsiMedia</title>
-                        <style>
-                            body {
-                                font-family: 'Segoe UI', Arial, sans-serif;
-                                background-color: #f0f2f5;
-                                color: #2c2c2c;
-                                padding: 40px 0;
-                                margin: 0;
-                            }
-                            .container {
-                                max-width: 600px;
-                                margin: 0 auto;
-                                background-color: #ffffff;
-                                border-radius: 12px;
-                                padding: 40px 30px;
-                                box-shadow: 0 6px 20px rgba(0, 0, 0, 0.08);
-                                text-align: center;
-                            }
-                            h1 {
-                                font-size: 24px;
-                                color: #1a1a1a;
-                                margin-bottom: 20px;
-                            }
-                            p {
-                                font-size: 16px;
-                                line-height: 1.6;
-                                color: #333333;
-                                margin: 10px 0;
-                            }
-                            .btn {
-                                display: inline-block;
-                                padding: 14px 32px;
-                                margin-top: 25px;
-                                font-size: 16px;
-                                color: #ffffff;
-                                text-decoration: none;
-                                border-radius: 50px;
-                                font-weight: 600;
-                                background: linear-gradient(135deg, #007BFF, #00A2FF);
-                                box-shadow: 0 4px 12px rgba(0, 123, 255, 0.4);
-                                transition: all 0.3s ease;
-                            }
-                            .btn:hover {
-                                background: linear-gradient(135deg, #0066d1, #0091e6);
-                                box-shadow: 0 6px 18px rgba(0, 123, 255, 0.55);
-                                transform: translateY(-2px);
-                            }
-                            .alert {
-                                color: #D32F2F;
-                                font-weight: bold;
-                                margin-top: 30px;
-                            }
-                            .footer {
-                                margin-top: 40px;
-                                font-size: 13px;
-                                color: #666;
-                                border-top: 1px solid #eee;
-                                padding-top: 20px;
-                            }
-                        </style>
-                    </head>
-                    <body>
-                        <div class="container">
-                            <h1>Recuperación de contraseña</h1>
-                            <p>Hola, <strong>%s</strong>,</p>
-                            <p>Hemos recibido una solicitud para restablecer tu contraseña.</p>
-                            <p>Haz clic en el siguiente botón para continuar:</p>
-                            <a href="%s" class="btn">🔐 Restablecer contraseña</a>
-                            <p>Este enlace será válido por <strong>1 hora</strong>.</p>
-                            <p class="alert">⚠ Si no solicitaste este correo, puedes ignorarlo.</p>
-                            <div class="footer">
-                                © 2025 EsiMedia. Todos los derechos reservados.
-                            </div>
-                        </div>
-                    </body>
-                </html>
-                """.formatted(nombre != null ? nombre : "usuario", link);
-    }
+private String generateRecoveryHtml(String nombre, String link) {
+    return """
+            <!DOCTYPE html>
+            <html>
+                <head>
+                    <meta charset="UTF-8">
+                    <title>Recuperación de contraseña - EsiMedia</title>
+                    <style>
+                        body {
+                            font-family: 'Segoe UI', Arial, sans-serif;
+                            background-color: #e6e9ef;
+                            color: #222;
+                            padding: 20px;
+                        }
+                        .container {
+                            max-width: 600px;
+                            margin: 40px auto;
+                            background-color: #ffffff;
+                            padding: 40px 30px;
+                            border-radius: 10px;
+                            box-shadow: 0 6px 18px rgba(0,0,0,0.12);
+                            text-align: center;
+                        }
+                        h1 {
+                            color: #1a1a1a;
+                            font-size: 24px;
+                            margin-bottom: 20px;
+                        }
+                        p {
+                            font-size: 16px;
+                            line-height: 1.6;
+                            color: #333333;
+                        }
+                        .btn {
+                            display: inline-block;
+                            padding: 14px 28px;
+                            margin-top: 25px;
+                            font-size: 16px;
+                            color: #ffffff;
+                            background-color: #0056D2;
+                            text-decoration: none;
+                            border-radius: 6px;
+                            font-weight: bold;
+                            transition: all 0.3s ease;
+                        }
+                        .btn:hover {
+                            background-color: #003f9e;
+                        }
+                        .footer {
+                            margin-top: 35px;
+                            font-size: 13px;
+                            color: #666;
+                        }
+                        /* 🔴 Nuevo estilo para texto en rojo */
+                        .alert {
+                            color: #D32F2F;
+                            font-weight: bold;
+                        }
+                    </style>
+                </head>
+                <body>
+                    <div class="container">
+                        <h1>Recuperación de contraseña</h1>
+                        <p>Hola, <strong>%s</strong>,</p>
+                        <p>Haz clic en el siguiente botón para restablecer tu contraseña:</p>
+                        <a href="%s" class="btn">Restablecer contraseña</a>
+                        <p>Este enlace será válido por <strong>1 hora</strong>.</p>
+                        <p class="alert">⚠ Si no solicitaste este correo, puedes ignorarlo.</p>
+                    </div>
+                </body>
+            </html>
+            """.formatted(nombre != null ? nombre : "usuario", link);
+}
 
 
     public void resetPassword(String token, String newPassword) {

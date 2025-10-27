@@ -190,6 +190,7 @@ public class UserService {
                                 color: #333333;
                                 margin: 10px 0;
                             }
+                            /* 🌈 BOTÓN REDISEÑADO */
                             .btn {
                                 display: inline-block;
                                 padding: 14px 32px;

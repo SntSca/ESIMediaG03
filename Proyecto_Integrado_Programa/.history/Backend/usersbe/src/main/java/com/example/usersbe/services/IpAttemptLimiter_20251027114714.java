@@ -26,7 +26,7 @@ public class IpAttemptLimiter {
             @Value("${security.login.logFile:logs/login-fail.log}") String logPath,
             @Value("${security.login.maxAttempts:5}") int maxAttempts,
             @Value("${security.login.windowSeconds:300}") long windowSeconds) {
-        this.logFile = new File(System.getProperty("java.io.tmpdir"), logPath);
+      this.logFile = new File(System.getProperty("java.io.tmpdir"), logFileName);
         this.maxAttempts = maxAttempts;
         this.windowMs = windowSeconds * 1000L;
     }

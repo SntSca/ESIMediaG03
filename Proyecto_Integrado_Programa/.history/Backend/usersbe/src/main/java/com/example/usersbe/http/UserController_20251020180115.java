@@ -64,7 +64,7 @@ public class UserController {
 
     private static final int MAX_ATTEMPTS = 3;
     private static final long WINDOW_MS = 10L * 60 * 1000;
-    private final File logFile = new File(System.getProperty("java.io.tmpdir"), "forgot-password.log");
+    private final File logFile = new File("logs/forgot-password.log");
     private static final String SPECIAL_CHARS = "!@#$%^&*(),.?\":{}|<>_-";
 
     private static final java.util.regex.Pattern EMAIL_RX = java.util.regex.Pattern
