@@ -89,28 +89,43 @@
                   </p>
                 </div>
               </div>
-              <label for="tags">Tags <span class="req">*</span></label>
+              <div class="form-row">
+                <label for="tags">Tags <span class="req">*</span></label>
 
-              <div class="tags-dropdown">
-                <button class="dropdown-btn" type="button" (click)="toggleDropdown()" [class.active]="dropdownOpen">
-                  {{ tagsArray.length ? tagsArray.join(', ') : 'Selecciona tags' }}
-                  <span class="arrow">▼</span>
-                </button>
-
-                <div class="dropdown-content" *ngIf="dropdownOpen">
-                  <div class="tag-category">
-                    <strong>Video</strong>
-                    <label *ngFor="let tag of availableTags.video" class="tag-option">
-                      <input type="checkbox" [checked]="isSelected(tag)" (change)="toggleTag(tag)" /> {{ tag }}
-                    </label>
-                  </div>
+                <div class="tags-select">
+                  <label class="tag-option">
+                    <input type="checkbox" (change)="toggleTag('Drama', $event.target.checked)" [checked]="tagsArray.includes('Drama')" /> Drama
+                  </label>
+                  <label class="tag-option">
+                    <input type="checkbox" (change)="toggleTag('Comedia', $event.target.checked)" [checked]="tagsArray.includes('Comedia')" /> Comedia
+                  </label>
+                  <label class="tag-option">
+                    <input type="checkbox" (change)="toggleTag('Misterio', $event.target.checked)" [checked]="tagsArray.includes('Misterio')" /> Misterio
+                  </label>
+                  <label class="tag-option">
+                    <input type="checkbox" (change)="toggleTag('Suspenso', $event.target.checked)" [checked]="tagsArray.includes('Suspenso')" /> Suspenso
+                  </label>
+                  <label class="tag-option">
+                    <input type="checkbox" (change)="toggleTag('Romance', $event.target.checked)" [checked]="tagsArray.includes('Romance')" /> Romance
+                  </label>
+                  <label class="tag-option">
+                    <input type="checkbox" (change)="toggleTag('Aventura', $event.target.checked)" [checked]="tagsArray.includes('Aventura')" /> Aventura
+                  </label>
+                  <label class="tag-option">
+                    <input type="checkbox" (change)="toggleTag('Animación', $event.target.checked)" [checked]="tagsArray.includes('Animación')" /> Animación
+                  </label>
+                  <label class="tag-option">
+                    <input type="checkbox" (change)="toggleTag('Documental', $event.target.checked)" [checked]="tagsArray.includes('Documental')" /> Documental
+                  </label>
                 </div>
+
+                <input
+                  type="text"
+                  [value]="tagsArray.join(', ')"
+                  readonly
+                  placeholder="Selecciona los tags"
+                />
               </div>
-
-              <p class="err" *ngIf="tagsInvalid && formSubmitted">
-                Debes seleccionar al menos un tag.
-              </p>
-
 
               <div class="form-row">
                 <label for="duracionMinutos">Duración (minutos) <span class="req">*</span></label>

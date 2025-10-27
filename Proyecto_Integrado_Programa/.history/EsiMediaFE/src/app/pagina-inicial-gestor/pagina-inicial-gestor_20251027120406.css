@@ -140,39 +140,6 @@
 .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 8px; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
 
-.upload-form select,
-.edit-panel select {
-  width: 100%;
-  padding: 12px;
-  font-size: 0.95rem;
-  color: #fff;
-  background-color: #333; 
-  border: 1px solid #444;
-  border-radius: 10px;
-  box-sizing: border-box;
-  appearance: none;
-  outline: none;
-  transition: border-color 0.2s ease, background-color 0.2s ease, box-shadow 0.2s ease;
-}
-
-.upload-form select:hover,
-.upload-form select:focus,
-.edit-panel select:hover,
-.edit-panel select:focus {
-  border-color: #e50914;
-  background-color: #202020;
-  box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.18);
-}
-
-.upload-form select {
-  background-image: url("data:image/svg+xml;charset=US-ASCII,%3Csvg width='12' height='8' viewBox='0 0 12 8' xmlns='http://www.w3.org/2000/svg'%3E%3Cpath d='M1 1l5 5 5-5' stroke='%23fff' stroke-width='2' fill='none' fill-rule='evenodd'/%3E%3C/svg%3E");
-  background-repeat: no-repeat;
-  background-position: right 12px center;
-  background-size: 12px 8px;
-  padding-right: 32px; 
-}
-
-
 .form-row label { font-weight: 600; color: #fff; }
 .req { color: #f87171; margin-left: 4px; }
 
@@ -260,73 +227,6 @@
   display: flex; align-items: center; gap: 8px;
   margin: 0 0 12px; font-size: 1.05rem; font-weight: 700;
 }
-.tags-dropdown {
-  position: relative;
-  width: 100%;
-}
-
-.dropdown-btn {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background-color: #1d1d1d;
-  color: #fff;
-  text-align: left;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.dropdown-btn .arrow {
-  font-size: 0.8em;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  top: 110%;
-  left: 0;
-  width: 100%;
-  max-height: 200px;
-  overflow-y: auto;
-  background-color: #222;
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 8px;
-  z-index: 10;
-}
-
-.dropdown-btn.active + .dropdown-content {
-  display: block;
-}
-
-.tag-category {
-  margin-bottom: 8px;
-}
-
-.tag-category strong {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 0.85em;
-  color: #ccc;
-}
-
-.tag-option {
-  display: flex;
-  align-items: center;
-  margin-bottom: 4px;
-  cursor: pointer;
-  font-size: 0.85em;
-  color: #fff;
-}
-
-.tag-option input[type="checkbox"] {
-  margin-right: 6px;
-  accent-color: #e50914;
-}
-
 
 .tag-construccion {
   font-size: .75rem; font-weight: 700; letter-spacing: .2px;

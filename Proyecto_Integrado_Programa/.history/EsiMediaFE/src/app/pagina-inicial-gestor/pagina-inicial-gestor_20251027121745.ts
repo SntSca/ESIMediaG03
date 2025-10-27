@@ -87,7 +87,6 @@ export class PaginaInicialGestor implements OnInit {
   crearAbierto = false;
   lastSubmitAt = 0;
   imgError = false;
-  formSubmitted = false;
 
   
   aliasChecking = false;
@@ -212,7 +211,6 @@ export class PaginaInicialGestor implements OnInit {
   }
 
   get tagsArray(): string[] { return (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean); }
-  set tagsArray(val: string[]) {this.nuevo.tagsStr = val.join(', ');}
   get tagsInvalid(): boolean { return this.tagsArray.length === 0; }
   get vipNoAnd4k(): boolean { return this.nuevo.tipo === 'VIDEO' && this.nuevo.resolucion === '4K' && this.nuevo.vip === 'no'; }
   get audioHasVideoFields(): boolean { return this.nuevo.tipo === 'AUDIO' && (!!trim(this.nuevo.urlVideo) || !!trim(this.nuevo.resolucion)); }
@@ -222,6 +220,7 @@ export class PaginaInicialGestor implements OnInit {
   private validateBeforeSubmit(form: NgForm): string | null {
     if (Date.now() - this.lastSubmitAt < 5000) return 'Espera unos segundos antes de volver a intentarlo.';
     if (this.crossErrorsPresent) return this.vipNoAnd4k ? 'No puedes seleccionar 4K si no es VIP.' : 'Campos cruzados incorrectos (Audio/Video).';
+    if (this.tagsInvalid) return 'Debes indicar al menos un tag.';
     if (form.invalid) return 'Hay campos con errores. Corrígelos y vuelve a intentarlo.';
     return null;
   }
@@ -252,7 +251,6 @@ export class PaginaInicialGestor implements OnInit {
   cerrarCrear()  { if (!this.loading) this.crearAbierto = false; }
 
   onSubmit(form: NgForm): void {
-    this.formSubmitted = true;
     const msg = this.validateBeforeSubmit(form);
     if (msg) {
       Object.values(form.controls).forEach(c => c.markAsTouched());
@@ -369,16 +367,13 @@ export class PaginaInicialGestor implements OnInit {
   };
 
   toggleTag(tag: string) {
-    const tags = (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean);
-    const index = tags.indexOf(tag);
+    const index = this.tagsArray.indexOf(tag);
     if (index >= 0) {
-      tags.splice(index, 1);
+      this.tagsArray.splice(index, 1);
     } else {
-      tags.push(tag);
+      this.tagsArray.push(tag);
     }
-    this.nuevo.tagsStr = tags.join(', ');
   }
-
   isSelected(tag: string): boolean {
     return this.tagsArray.includes(tag);
   }
@@ -387,10 +382,6 @@ export class PaginaInicialGestor implements OnInit {
   toggleDropdown() {
     this.dropdownOpen = !this.dropdownOpen;
   }
-  private syncTagsStr() {
-  this.nuevo.tagsStr = this.tagsArray.join(', ');
-}
-
 
 
 

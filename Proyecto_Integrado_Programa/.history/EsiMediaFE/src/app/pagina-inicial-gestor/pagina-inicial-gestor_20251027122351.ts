@@ -87,7 +87,6 @@ export class PaginaInicialGestor implements OnInit {
   crearAbierto = false;
   lastSubmitAt = 0;
   imgError = false;
-  formSubmitted = false;
 
   
   aliasChecking = false;
@@ -212,7 +211,6 @@ export class PaginaInicialGestor implements OnInit {
   }
 
   get tagsArray(): string[] { return (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean); }
-  set tagsArray(val: string[]) {this.nuevo.tagsStr = val.join(', ');}
   get tagsInvalid(): boolean { return this.tagsArray.length === 0; }
   get vipNoAnd4k(): boolean { return this.nuevo.tipo === 'VIDEO' && this.nuevo.resolucion === '4K' && this.nuevo.vip === 'no'; }
   get audioHasVideoFields(): boolean { return this.nuevo.tipo === 'AUDIO' && (!!trim(this.nuevo.urlVideo) || !!trim(this.nuevo.resolucion)); }
@@ -252,7 +250,6 @@ export class PaginaInicialGestor implements OnInit {
   cerrarCrear()  { if (!this.loading) this.crearAbierto = false; }
 
   onSubmit(form: NgForm): void {
-    this.formSubmitted = true;
     const msg = this.validateBeforeSubmit(form);
     if (msg) {
       Object.values(form.controls).forEach(c => c.markAsTouched());
@@ -368,16 +365,15 @@ export class PaginaInicialGestor implements OnInit {
     video: ['Edición', 'Postproducción', 'Animación', 'Dirección de Fotografía', 'Efectos Visuales','Grabación', 'Mezcla', 'Mastering', 'Edición de Sonido', 'Colorización de Audio'],
   };
 
-  toggleTag(tag: string) {
-    const tags = (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean);
-    const index = tags.indexOf(tag);
-    if (index >= 0) {
-      tags.splice(index, 1);
-    } else {
-      tags.push(tag);
-    }
-    this.nuevo.tagsStr = tags.join(', ');
+toggleTag(tag: string) {
+  const index = this.tagsArray.indexOf(tag);
+  if (index >= 0) {
+    this.tagsArray.splice(index, 1);
+  } else {
+    this.tagsArray.push(tag);
   }
+  this.syncTagsStr();  // sincronizamos el string para ngModel
+}
 
   isSelected(tag: string): boolean {
     return this.tagsArray.includes(tag);

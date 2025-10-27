@@ -104,6 +104,12 @@
                       <input type="checkbox" [checked]="isSelected(tag)" (change)="toggleTag(tag)" /> {{ tag }}
                     </label>
                   </div>
+                  <div class="tag-category">
+                    <strong>Audio</strong>
+                    <label *ngFor="let tag of availableTags.audio" class="tag-option">
+                      <input type="checkbox" [checked]="isSelected(tag)" (change)="toggleTag(tag)" /> {{ tag }}
+                    </label>
+                  </div>
                 </div>
               </div>
 

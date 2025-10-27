@@ -87,7 +87,6 @@ export class PaginaInicialGestor implements OnInit {
   crearAbierto = false;
   lastSubmitAt = 0;
   imgError = false;
-  formSubmitted = false;
 
   
   aliasChecking = false;
@@ -211,7 +210,7 @@ export class PaginaInicialGestor implements OnInit {
     }, 500);
   }
 
-  get tagsArray(): string[] { return (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean); }
+  get tagsArray(): string[] {return (this.nuevo.tagsStr ?? '').split(',').map(t => t.trim()).filter(Boolean);}
   set tagsArray(val: string[]) {this.nuevo.tagsStr = val.join(', ');}
   get tagsInvalid(): boolean { return this.tagsArray.length === 0; }
   get vipNoAnd4k(): boolean { return this.nuevo.tipo === 'VIDEO' && this.nuevo.resolucion === '4K' && this.nuevo.vip === 'no'; }
@@ -252,7 +251,7 @@ export class PaginaInicialGestor implements OnInit {
   cerrarCrear()  { if (!this.loading) this.crearAbierto = false; }
 
   onSubmit(form: NgForm): void {
-    this.formSubmitted = true;
+    formSubmitted
     const msg = this.validateBeforeSubmit(form);
     if (msg) {
       Object.values(form.controls).forEach(c => c.markAsTouched());
@@ -369,14 +368,13 @@ export class PaginaInicialGestor implements OnInit {
   };
 
   toggleTag(tag: string) {
-    const tags = (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean);
-    const index = tags.indexOf(tag);
+    const index = this.tagsArray.indexOf(tag);
     if (index >= 0) {
-      tags.splice(index, 1);
+      this.tagsArray.splice(index, 1);
     } else {
-      tags.push(tag);
+      this.tagsArray.push(tag);
     }
-    this.nuevo.tagsStr = tags.join(', ');
+    this.syncTagsStr();
   }
 
   isSelected(tag: string): boolean {

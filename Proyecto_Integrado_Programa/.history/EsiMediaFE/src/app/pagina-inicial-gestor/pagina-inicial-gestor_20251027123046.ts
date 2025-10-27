@@ -211,7 +211,8 @@ export class PaginaInicialGestor implements OnInit {
     }, 500);
   }
 
-  get tagsArray(): string[] { return (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean); }
+get tagsArray(): string[] { 
+  return (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean); }
   set tagsArray(val: string[]) {this.nuevo.tagsStr = val.join(', ');}
   get tagsInvalid(): boolean { return this.tagsArray.length === 0; }
   get vipNoAnd4k(): boolean { return this.nuevo.tipo === 'VIDEO' && this.nuevo.resolucion === '4K' && this.nuevo.vip === 'no'; }

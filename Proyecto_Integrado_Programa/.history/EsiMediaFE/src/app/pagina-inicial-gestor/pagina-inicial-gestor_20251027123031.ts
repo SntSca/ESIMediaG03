@@ -211,7 +211,7 @@ export class PaginaInicialGestor implements OnInit {
     }, 500);
   }
 
-  get tagsArray(): string[] { return (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean); }
+  get tagsArray(): string[] {return (this.nuevo.tagsStr ?? '').split(',').map(t => t.trim()).filter(Boolean);}
   set tagsArray(val: string[]) {this.nuevo.tagsStr = val.join(', ');}
   get tagsInvalid(): boolean { return this.tagsArray.length === 0; }
   get vipNoAnd4k(): boolean { return this.nuevo.tipo === 'VIDEO' && this.nuevo.resolucion === '4K' && this.nuevo.vip === 'no'; }
@@ -368,16 +368,16 @@ export class PaginaInicialGestor implements OnInit {
     video: ['Edición', 'Postproducción', 'Animación', 'Dirección de Fotografía', 'Efectos Visuales','Grabación', 'Mezcla', 'Mastering', 'Edición de Sonido', 'Colorización de Audio'],
   };
 
-  toggleTag(tag: string) {
-    const tags = (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean);
-    const index = tags.indexOf(tag);
-    if (index >= 0) {
-      tags.splice(index, 1);
-    } else {
-      tags.push(tag);
-    }
-    this.nuevo.tagsStr = tags.join(', ');
+toggleTag(tag: string) {
+  const tags = (this.nuevo.tagsStr ?? '').split(',').map(t => trim(t)).filter(Boolean);
+  const index = tags.indexOf(tag);
+  if (index >= 0) {
+    tags.splice(index, 1);
+  } else {
+    tags.push(tag);
   }
+  this.nuevo.tagsStr = tags.join(', ');
+}
 
   isSelected(tag: string): boolean {
     return this.tagsArray.includes(tag);

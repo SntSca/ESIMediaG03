@@ -140,6 +140,7 @@
 .form-grid { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14px; margin-top: 8px; }
 .form-actions { display: flex; gap: 10px; justify-content: flex-end; margin-top: 6px; }
 
+/* Estilo unificado para selects */
 .upload-form select,
 .edit-panel select {
   width: 100%;
@@ -260,73 +261,6 @@
   display: flex; align-items: center; gap: 8px;
   margin: 0 0 12px; font-size: 1.05rem; font-weight: 700;
 }
-.tags-dropdown {
-  position: relative;
-  width: 100%;
-}
-
-.dropdown-btn {
-  width: 100%;
-  padding: 10px 12px;
-  border: 1px solid #333;
-  border-radius: 8px;
-  background-color: #1d1d1d;
-  color: #fff;
-  text-align: left;
-  cursor: pointer;
-  display: flex;
-  justify-content: space-between;
-  align-items: center;
-}
-
-.dropdown-btn .arrow {
-  font-size: 0.8em;
-}
-
-.dropdown-content {
-  display: none;
-  position: absolute;
-  top: 110%;
-  left: 0;
-  width: 100%;
-  max-height: 200px;
-  overflow-y: auto;
-  background-color: #222;
-  border: 1px solid #333;
-  border-radius: 8px;
-  padding: 8px;
-  z-index: 10;
-}
-
-.dropdown-btn.active + .dropdown-content {
-  display: block;
-}
-
-.tag-category {
-  margin-bottom: 8px;
-}
-
-.tag-category strong {
-  display: block;
-  margin-bottom: 4px;
-  font-size: 0.85em;
-  color: #ccc;
-}
-
-.tag-option {
-  display: flex;
-  align-items: center;
-  margin-bottom: 4px;
-  cursor: pointer;
-  font-size: 0.85em;
-  color: #fff;
-}
-
-.tag-option input[type="checkbox"] {
-  margin-right: 6px;
-  accent-color: #e50914;
-}
-
 
 .tag-construccion {
   font-size: .75rem; font-weight: 700; letter-spacing: .2px;

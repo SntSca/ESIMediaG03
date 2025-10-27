@@ -89,28 +89,11 @@
                   </p>
                 </div>
               </div>
-              <label for="tags">Tags <span class="req">*</span></label>
 
-              <div class="tags-dropdown">
-                <button class="dropdown-btn" type="button" (click)="toggleDropdown()" [class.active]="dropdownOpen">
-                  {{ tagsArray.length ? tagsArray.join(', ') : 'Selecciona tags' }}
-                  <span class="arrow">▼</span>
-                </button>
-
-                <div class="dropdown-content" *ngIf="dropdownOpen">
-                  <div class="tag-category">
-                    <strong>Video</strong>
-                    <label *ngFor="let tag of availableTags.video" class="tag-option">
-                      <input type="checkbox" [checked]="isSelected(tag)" (change)="toggleTag(tag)" /> {{ tag }}
-                    </label>
-                  </div>
-                </div>
+              <div class="form-row">
+                <label for="tags">Tags (separados por coma) <span class="req">*</span></label>
+                <input id="tags" type="text" name="tags" [(ngModel)]="nuevo.tagsStr" required placeholder="ejemplo: drama, misterio" />
               </div>
-
-              <p class="err" *ngIf="tagsInvalid && formSubmitted">
-                Debes seleccionar al menos un tag.
-              </p>
-
 
               <div class="form-row">
                 <label for="duracionMinutos">Duración (minutos) <span class="req">*</span></label>
@@ -218,28 +201,7 @@
 
         <div class="row">
           <label for="especialidad">Especialidad</label>
-
-          <select
-            class="input"
-            id="especialidad"
-            name="especialidad"
-            [(ngModel)]="model.especialidad"
-            (change)="checkEspecialidad()"
-            required
-          >
-            <option value="" disabled selected>Selecciona una especialidad *</option>
-            <option value="edicion-video">Edición de video</option>
-            <option value="postproduccion">Postproducción</option>
-            <option value="animacion">Animación y motion graphics</option>
-            <option value="produccion-audiovisual">Producción audiovisual</option>
-            <option value="grabacion-sonido">Grabación de sonido</option>
-            <option value="mezcla-mastering">Mezcla y mastering de audio</option>
-            <option value="direccion-fotografia">Dirección de fotografía</option>
-            <option value="efectos-visuales">Efectos visuales (VFX)</option>
-            <option value="edicion-sonido">Edición de sonido</option>
-            <option value="colorizacion">Colorización y corrección de color</option>
-          </select>
-
+          <input type="text" [(ngModel)]="model.especialidad" name="especialidad" (ngModelChange)="checkEspecialidad()" />
           <p class="err" *ngIf="especialidadInvalid">La especialidad no puede estar vacía.</p>
         </div>
 
