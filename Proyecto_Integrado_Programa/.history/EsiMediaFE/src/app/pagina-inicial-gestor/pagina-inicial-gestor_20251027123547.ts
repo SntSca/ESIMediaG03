@@ -12,7 +12,6 @@ type TipoContenido = 'AUDIO' | 'VIDEO';
 type Role = UserDto['role'];
 
 interface ContenidoCreate {
-  userEmail: string;
   titulo: string;
   descripcion?: string;
   tipo: TipoContenido;
@@ -23,7 +22,7 @@ interface ContenidoCreate {
   duracionMinutos: number;
   vip: boolean;
   visible: boolean;
-  restringidoEdad: number;
+  restringidoEdad: boolean;
   imagen?: string | null;
 }
 
@@ -89,10 +88,11 @@ export class PaginaInicialGestor implements OnInit {
   lastSubmitAt = 0;
   imgError = false;
   formSubmitted = false;
-  listasDisponibles = ['Favoritos', 'Para ver luego', 'Música', 'Películas'];
-  listaSeleccionada: string | null = null;
-  edadesDisponibles = [0, 6, 12, 16, 18];
+  // listas disponibles (simuladas aquí, idealmente las traes de un servicio)
+listasDisponibles = ['Favoritos', 'Para ver luego', 'Música', 'Películas'];
 
+// lista seleccionada por el usuario
+listaSeleccionada: string | null = null;
 
 
   
@@ -113,7 +113,7 @@ export class PaginaInicialGestor implements OnInit {
     duracionMinutos: null as number | null,
     vip: 'no' as 'si' | 'no',
     visible: 'no' as 'si' | 'no',
-    restringidoEdad: null as number | null,
+    restringidoEdad: 'no' as 'si' | 'no',
     imagen: ''
   };
 
@@ -232,13 +232,12 @@ export class PaginaInicialGestor implements OnInit {
     return null;
   }
 
-  private buildContenidoPayload(): ContenidoCreate & { lista?: string } {
+  private buildContenidoPayload(): ContenidoCreate {
     const { nuevo } = this;
     const tipo = (this.userTipoContenido || '').toString() as TipoContenido;
     const isA = tipo === 'AUDIO', isV = tipo === 'VIDEO';
 
-    const payload: ContenidoCreate & { lista?: string } = {
-      userEmail: this.userEmail,
+    return {
       titulo: trim(nuevo.titulo),
       descripcion: trim(nuevo.descripcion) || undefined,
       tipo,
@@ -249,16 +248,10 @@ export class PaginaInicialGestor implements OnInit {
       duracionMinutos: Number(nuevo.duracionMinutos),
       vip: yes(nuevo.vip),
       visible: yes(nuevo.visible),
-      restringidoEdad: nuevo.restringidoEdad ?? 0,
+      restringidoEdad: yes(nuevo.restringidoEdad),
       imagen: trim(nuevo.imagen) || null
     };
-    if (this.listaSeleccionada) {
-      payload.lista = this.listaSeleccionada;
-    }
-
-    return payload;
   }
-
 
   onFormChange() { this.errorMsg = ''; this.successMsg = ''; }
   abrirCrear()   { this.errorMsg = ''; this.successMsg = ''; this.crearAbierto = true; }

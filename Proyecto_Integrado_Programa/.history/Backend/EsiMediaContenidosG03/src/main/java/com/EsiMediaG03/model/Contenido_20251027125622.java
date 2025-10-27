@@ -10,7 +10,7 @@ public class Contenido {
 
     @Id
     private String id;
-    private String userEmail;
+    private String UserEmail;
     private String titulo;
     private String descripcion;
     private String ficheroAudio;
@@ -140,9 +140,9 @@ public class Contenido {
         this.imagen = imagen;
     }
     public String getUserEmail() {
-        return userEmail;
+        return creadorID;
     }
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+    public void setCreadorID(String creadorID) {
+        this.creadorID = creadorID;
     }
 }

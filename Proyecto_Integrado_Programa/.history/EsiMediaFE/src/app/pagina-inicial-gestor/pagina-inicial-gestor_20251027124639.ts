@@ -12,7 +12,6 @@ type TipoContenido = 'AUDIO' | 'VIDEO';
 type Role = UserDto['role'];
 
 interface ContenidoCreate {
-  userEmail: string;
   titulo: string;
   descripcion?: string;
   tipo: TipoContenido;
@@ -113,7 +112,7 @@ export class PaginaInicialGestor implements OnInit {
     duracionMinutos: null as number | null,
     vip: 'no' as 'si' | 'no',
     visible: 'no' as 'si' | 'no',
-    restringidoEdad: null as number | null,
+    restringidoEdad: 'no' as 'si' | 'no',
     imagen: ''
   };
 
@@ -238,7 +237,6 @@ export class PaginaInicialGestor implements OnInit {
     const isA = tipo === 'AUDIO', isV = tipo === 'VIDEO';
 
     const payload: ContenidoCreate & { lista?: string } = {
-      userEmail: this.userEmail,
       titulo: trim(nuevo.titulo),
       descripcion: trim(nuevo.descripcion) || undefined,
       tipo,
@@ -249,7 +247,7 @@ export class PaginaInicialGestor implements OnInit {
       duracionMinutos: Number(nuevo.duracionMinutos),
       vip: yes(nuevo.vip),
       visible: yes(nuevo.visible),
-      restringidoEdad: nuevo.restringidoEdad ?? 0,
+      restringidoEdad: yes(nuevo.restringidoEdad),
       imagen: trim(nuevo.imagen) || null
     };
     if (this.listaSeleccionada) {

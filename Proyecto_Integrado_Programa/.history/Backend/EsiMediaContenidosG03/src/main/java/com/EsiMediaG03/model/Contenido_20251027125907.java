@@ -143,6 +143,6 @@ public class Contenido {
         return userEmail;
     }
     public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+        UserEmail = userEmail;
     }
 }

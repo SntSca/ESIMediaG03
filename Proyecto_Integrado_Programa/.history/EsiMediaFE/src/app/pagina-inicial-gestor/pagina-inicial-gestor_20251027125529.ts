@@ -12,7 +12,6 @@ type TipoContenido = 'AUDIO' | 'VIDEO';
 type Role = UserDto['role'];
 
 interface ContenidoCreate {
-  userEmail: string;
   titulo: string;
   descripcion?: string;
   tipo: TipoContenido;
@@ -238,7 +237,7 @@ export class PaginaInicialGestor implements OnInit {
     const isA = tipo === 'AUDIO', isV = tipo === 'VIDEO';
 
     const payload: ContenidoCreate & { lista?: string } = {
-      userEmail: this.userEmail,
+      creadorID: this.userEmail,
       titulo: trim(nuevo.titulo),
       descripcion: trim(nuevo.descripcion) || undefined,
       tipo,

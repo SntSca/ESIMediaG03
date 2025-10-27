@@ -25,5 +25,4 @@ public class ContenidoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(resultado);
     }
 
-    
 }

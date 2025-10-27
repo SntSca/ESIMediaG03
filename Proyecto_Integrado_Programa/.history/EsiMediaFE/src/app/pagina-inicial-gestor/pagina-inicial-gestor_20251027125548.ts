@@ -12,7 +12,7 @@ type TipoContenido = 'AUDIO' | 'VIDEO';
 type Role = UserDto['role'];
 
 interface ContenidoCreate {
-  userEmail: string;
+  
   titulo: string;
   descripcion?: string;
   tipo: TipoContenido;

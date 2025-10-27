@@ -422,7 +422,7 @@
   cursor: pointer;
 }
 .horizontal-selects {
-  display: flex;
+  display: f;
   gap: 10px;
   flex-wrap: wrap;
   margin-bottom: 1px;
@@ -430,18 +430,18 @@
 
 .toggle-group {
   display: flex;
-  align-items: flex-start;
+  align-items: center;
   gap: 6px;
 }
 
 .toggle-group span {
-  font-weight: 400;
+  font-weight: 600;
   color: #fff;
-  min-width: 50px;
+  min-width: 80px;
 }
 
 .toggle-group button {
-  padding: 6px 8.6px;
+  padding: 6px 14px;
   border-radius: 8px;
   border: 1px solid #333;
   background-color: #1d1d1d;
@@ -450,7 +450,6 @@
   font-weight: 600;
   transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
-
 
 .toggle-group button.active {
   background-color: #e50914;

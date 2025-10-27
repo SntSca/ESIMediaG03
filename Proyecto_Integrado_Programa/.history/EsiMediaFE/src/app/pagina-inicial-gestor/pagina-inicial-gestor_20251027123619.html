@@ -139,11 +139,9 @@
                 </div>
 
                 <div class="toggle-group">
-                  <label for="restringidoEdad">Restricción de edad:</label>
-                  <select id="restringidoEdad" [(ngModel)]="nuevo.restringidoEdad" name="restringidoEdad" required>
-                    <option value="" disabled>Selecciona edad mínima</option>
-                    <option *ngFor="let edad of edadesDisponibles" [value]="edad">{{ edad }}+</option>
-                  </select>
+                  <span>Restr. edad:</span>
+                  <button type="button" [class.active]="nuevo.restringidoEdad === 'si'" (click)="nuevo.restringidoEdad = 'si'">Sí</button>
+                  <button type="button" [class.active]="nuevo.restringidoEdad === 'no'" (click)="nuevo.restringidoEdad = 'no'">No</button>
                 </div>
               </div>
 

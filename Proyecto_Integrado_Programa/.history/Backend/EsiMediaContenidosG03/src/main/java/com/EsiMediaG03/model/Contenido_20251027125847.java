@@ -140,9 +140,9 @@ public class Contenido {
         this.imagen = imagen;
     }
     public String getUserEmail() {
-        return userEmail;
+        return UserEmail;
     }
     public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
+        UserEmail = userEmail;
     }
 }

@@ -10,7 +10,7 @@ public class Contenido {
 
     @Id
     private String id;
-    private String userEmail;
+    private String
     private String titulo;
     private String descripcion;
     private String ficheroAudio;
@@ -138,11 +138,5 @@ public class Contenido {
     }
     public void setImagen(String imagen) {
         this.imagen = imagen;
-    }
-    public String getUserEmail() {
-        return userEmail;
-    }
-    public void setUserEmail(String userEmail) {
-        this.userEmail = userEmail;
     }
 }

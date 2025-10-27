@@ -441,7 +441,7 @@
 }
 
 .toggle-group button {
-  padding: 6px 8.6px;
+  padding: 6px 14px;
   border-radius: 8px;
   border: 1px solid #333;
   background-color: #1d1d1d;
@@ -450,7 +450,7 @@
   font-weight: 600;
   transition: background-color 0.2s, color 0.2s, border-color 0.2s;
 }
-
+.toggle-group restringidoEdad
 
 .toggle-group button.active {
   background-color: #e50914;
