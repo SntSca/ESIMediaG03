@@ -51,6 +51,10 @@
              (ngModelChange)="onEmailChange()"
             [ngClass]="{ 'input-error': (emailModel.invalid && (emailModel.dirty || emailModel.touched)) || emailPatternError || emailUnique === false,'input-valid': emailModel.valid && (emailModel.dirty || emailModel.touched) && emailUnique !== false}"
              placeholder="Email *">
+      <div class="alias-status">
+        <span class="spinner" *ngIf="isCheckingEmail"></span>
+        
+      </div>
     </div>
     <div class="row-hints">
       <small class="error-msg" *ngIf="!isCheckingEmail && email && emailUnique === false">Pruebe Otro correo electrónico</small>
