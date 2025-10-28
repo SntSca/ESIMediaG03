@@ -6,6 +6,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 
+import org.springframework.data.mongodb.core.MongoTemplate;
+import static org.springframework.data.mongodb.core.query.Criteria.where;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.stereotype.Service;
 
 import com.EsiMediaG03.dao.ContenidoDAO;
@@ -13,13 +17,16 @@ import com.EsiMediaG03.dto.StreamingTarget;
 import com.EsiMediaG03.exceptions.ContenidoException;
 import com.EsiMediaG03.model.Contenido;
 
+
 @Service
 public class ContenidoService {
 
     private final ContenidoDAO contenidoDAO;
+    private final MongoTemplate mongoTemplate;
 
-    public ContenidoService(ContenidoDAO contenidoDAO) {
+    public ContenidoService(ContenidoDAO contenidoDAO, MongoTemplate mongoTemplate) {
         this.contenidoDAO = contenidoDAO;
+        this.mongoTemplate = mongoTemplate;
     }
 
     public Contenido anadirContenido(Contenido contenido) throws Throwable {
@@ -115,6 +122,13 @@ public class ContenidoService {
         if (l.endsWith(".webm")) return "video/webm";
         if (l.endsWith(".mkv")) return "video/x-matroska";
         return fallback;
+    }
+
+    public void registrarReproduccionSiUsuario(String contenidoId, String userRole) {
+        if (userRole == null || !userRole.equalsIgnoreCase("USUARIO")) return;
+        Query q = new Query(where("_id").is(contenidoId));
+        Update u = new Update().inc("reproducciones", 1L);
+        mongoTemplate.updateFirst(q, u, Contenido.class);
     }
 
     private void validarcontenido(Contenido contenido) throws Throwable {

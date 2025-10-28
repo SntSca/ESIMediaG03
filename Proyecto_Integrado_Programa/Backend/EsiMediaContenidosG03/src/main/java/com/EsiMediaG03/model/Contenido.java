@@ -1,9 +1,10 @@
 package com.EsiMediaG03.model;
 
-import org.springframework.data.annotation.Id;
-import org.springframework.data.mongodb.core.mapping.Document;
 import java.time.LocalDateTime;
 import java.util.List;
+
+import org.springframework.data.annotation.Id;
+import org.springframework.data.mongodb.core.mapping.Document;
 
 @Document(collection = "contenidos")
 public class Contenido {
@@ -28,6 +29,7 @@ public class Contenido {
     public enum Tipo {
         AUDIO, VIDEO
     }
+    private long numReproducciones;
 
     public String getId() {
         return id;
@@ -144,5 +146,12 @@ public class Contenido {
     }
     public void setUserEmail(String userEmail) {
         this.userEmail = userEmail;
+    }
+    
+    public long getNumReproducciones() {
+        return numReproducciones;
+    }
+    public void setNumReproducciones(long numReproducciones) {
+        this.numReproducciones = numReproducciones;
     }
 }

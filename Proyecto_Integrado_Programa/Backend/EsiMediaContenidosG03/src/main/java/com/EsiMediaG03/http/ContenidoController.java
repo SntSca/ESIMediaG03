@@ -51,15 +51,21 @@ public class ContenidoController {
         return ResponseEntity.ok(lista);
     }
 
+
     @GetMapping("/ReproducirContenido/{id}")
     public ResponseEntity<?> stream(@PathVariable String id,
-                                @RequestHeader HttpHeaders headers,
-                                @RequestHeader(value = "X-User-Vip", required = false) Boolean userVip,
-                                @RequestHeader(value = "X-User-Birthdate", required = false) String userBirthdateIso,
-                                @RequestHeader(value = "X-User-Age", required = false) Integer userAge) throws Exception {
-
+                                    @RequestHeader HttpHeaders headers,
+                                    @RequestHeader(value="X-User-Role", required=false) String userRole,
+                                    @RequestHeader(value="X-User-Email", required=false) String userEmail,
+                                    @RequestHeader(value="X-User-Vip", required=false) Boolean userVip,
+                                    @RequestHeader(value="X-User-Birthdate", required=false) String userBirthdateIso,
+                                    @RequestHeader(value="X-User-Age", required=false) Integer userAge
+                                    ) throws Exception {
         Integer age = resolveAge(userBirthdateIso, userAge);
+
         StreamingTarget target = contenidoService.resolveStreamingTarget(id, userVip, age);
+
+        contenidoService.registrarReproduccionSiUsuario(id, userRole);
 
         if (target.isExternalRedirect()) {
             return ResponseEntity.status(HttpStatus.FOUND)
