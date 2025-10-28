@@ -7,4 +7,6 @@ import com.EsiMediaG03.model.Contenido;
 
 public interface ContenidoDAO extends MongoRepository<Contenido, String> {
 
+    
+
 }

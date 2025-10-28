@@ -27,7 +27,6 @@ import com.EsiMediaG03.dto.StreamingTarget;
 import com.EsiMediaG03.model.Contenido;
 import com.EsiMediaG03.services.ContenidoService;
 
-
 @RestController
 @RequestMapping("Contenidos")
 @CrossOrigin(origins = "*")
@@ -46,11 +45,21 @@ public class ContenidoController {
         return ResponseEntity.status(HttpStatus.CREATED).body(resultado);
     }
 
+    @GetMapping("/ListarContenidos")
+    public ResponseEntity<List<Contenido>> listarContenidos() {
+        List<Contenido> lista = contenidoService.listarContenidos();
+        return ResponseEntity.ok(lista);
+    }
+
     @GetMapping("/ReproducirContenido/{id}")
     public ResponseEntity<?> stream(@PathVariable String id,
-                                    @RequestHeader HttpHeaders headers) throws Exception {
+                                @RequestHeader HttpHeaders headers,
+                                @RequestHeader(value = "X-User-Vip", required = false) Boolean userVip,
+                                @RequestHeader(value = "X-User-Birthdate", required = false) String userBirthdateIso,
+                                @RequestHeader(value = "X-User-Age", required = false) Integer userAge) throws Exception {
 
-        StreamingTarget target = contenidoService.resolveStreamingTarget(id);
+        Integer age = resolveAge(userBirthdateIso, userAge);
+        StreamingTarget target = contenidoService.resolveStreamingTarget(id, userVip, age);
 
         if (target.isExternalRedirect()) {
             return ResponseEntity.status(HttpStatus.FOUND)
@@ -95,8 +104,12 @@ public class ContenidoController {
     }
 
     @RequestMapping(value = "/ReproducirContenido/{id}", method = RequestMethod.HEAD)
-    public ResponseEntity<Void> head(@PathVariable String id) throws Exception { 
-        StreamingTarget target = contenidoService.resolveStreamingTarget(id);
+    public ResponseEntity<Void> head(@PathVariable String id,
+                                 @RequestHeader(value = "X-User-Vip", required = false) Boolean userVip,
+                                 @RequestHeader(value = "X-User-Birthdate", required = false) String userBirthdateIso,
+                                 @RequestHeader(value = "X-User-Age", required = false) Integer userAge) throws Exception {
+        Integer age = resolveAge(userBirthdateIso, userAge);
+        StreamingTarget target = contenidoService.resolveStreamingTarget(id, userVip, age);
         HttpHeaders h = new HttpHeaders();
         if (target.isExternalRedirect()) {
             h.setContentType(resolveMediaType(target.mimeType(), null));
@@ -108,7 +121,6 @@ public class ContenidoController {
         return new ResponseEntity<>(h, HttpStatus.OK);
     }
 
-    // ---------- helpers ----------
     private HttpHeaders commonHeaders(MediaType mediaType) {
         HttpHeaders h = new HttpHeaders();
         h.setContentType(mediaType);
@@ -148,5 +160,14 @@ public class ContenidoController {
         }
     }
 
+    private Integer resolveAge(String birthIso, Integer ageDirect) {
+        if (ageDirect != null && ageDirect > 0) return ageDirect;
+        if (birthIso == null || birthIso.isBlank()) return null;
+        try {
+            return com.EsiMediaG03.services.ContenidoService.calcularEdad(java.time.LocalDate.parse(birthIso));
+        } catch (Exception e) {
+            return null;
+        }
+    }
     
 }

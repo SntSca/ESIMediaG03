@@ -2,11 +2,15 @@ package com.EsiMediaG03.services;
 
 import java.nio.file.Files;
 import java.nio.file.Path;
+import java.time.LocalDate;
+import java.time.LocalDateTime;
+import java.time.Period;
 
 import org.springframework.stereotype.Service;
 
 import com.EsiMediaG03.dao.ContenidoDAO;
 import com.EsiMediaG03.dto.StreamingTarget;
+import com.EsiMediaG03.exceptions.ContenidoException;
 import com.EsiMediaG03.model.Contenido;
 
 @Service
@@ -23,13 +27,15 @@ public class ContenidoService {
         return contenidoDAO.save(contenido);
     }
 
-    public StreamingTarget resolveStreamingTarget(String id) throws Exception {
+    public java.util.List<Contenido> listarContenidos() {
+        return contenidoDAO.findAll();
+    }
+
+    public StreamingTarget resolveStreamingTarget(String id, Boolean isVip, Integer ageYears) throws Exception {
         Contenido c = contenidoDAO.findById(id)
                 .orElseThrow(() -> new IllegalArgumentException("Contenido no encontrado: " + id));
 
-        // Reglas mínimas para esta HU: solo reproducible (visible true opcional)
-        // Si quieres, descomenta esta validación de visibilidad:
-        // if (!c.isVisible()) throw new IllegalStateException("Contenido no visible.");
+        validarAccesoAContenido(c, isVip, ageYears, LocalDateTime.now());
 
         if (c.getTipo() == null) throw new IllegalArgumentException("Tipo de contenido no definido.");
 
@@ -53,10 +59,8 @@ public class ContenidoService {
                     throw new IllegalArgumentException("VIDEO sin urlVideo o ruta local.");
                 }
                 if (isHttp(urlOrPath)) {
-                    // Vídeo externo → redirección
                     return StreamingTarget.external(urlOrPath, "video/mp4");
                 } else {
-                    // Vídeo local (ruta en disco)
                     Path path = Path.of(urlOrPath);
                     if (!Files.exists(path) || !Files.isReadable(path)) {
                         throw new IllegalStateException("Fichero de vídeo no accesible: " + path);
@@ -68,6 +72,32 @@ public class ContenidoService {
             }
             default -> throw new IllegalArgumentException("Tipo no soportado.");
         }
+    }
+
+    private void validarAccesoAContenido(Contenido c, Boolean isVip, Integer ageYears, LocalDateTime now) {
+        if (!c.isVisible()) {
+            throw new ContenidoException("Este contenido no está disponible en este momento.");
+        }
+        if (c.getDisponibleHasta() != null && !c.getDisponibleHasta().isAfter(now)) {
+            throw new ContenidoException("Este contenido ha dejado de estar disponible.");
+        }
+        if (c.isVip() && !Boolean.TRUE.equals(isVip)) {
+            throw new ContenidoException("Contenido VIP — necesitas una suscripción VIP para reproducirlo.");
+        }
+        int minAge = c.getRestringidoEdad();
+        if (minAge > 0) {
+            if (ageYears == null) {
+                throw new ContenidoException("Contenido restringido — no se pudo verificar tu edad.");
+            }
+            if (ageYears < minAge) {
+                throw new ContenidoException("Contenido restringido a mayores de " + minAge + " años.");
+            }
+        }
+    }
+
+    public static Integer calcularEdad(LocalDate birthdate) {
+        if (birthdate == null) return null;
+        return Period.between(birthdate, LocalDate.now()).getYears();
     }
 
     private boolean isHttp(String s) {
