@@ -3,21 +3,29 @@ import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
-import { AppUser, UserDto } from '../auth/models';
-import { HttpErrorResponse } from '@angular/common/http';
+import { AppUser, UserDto, Contenido } from '../auth/models';
+import { HttpClient, HttpErrorResponse, HttpClientModule } from '@angular/common/http';
+
 import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 
 @Component({
   selector: 'app-pagina-inicial-usuario',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, HttpClientModule],
   templateUrl: './pagina-inicial-usuario.html',
   styleUrls: ['./pagina-inicial-usuario.css'],
 })
 export class PaginaInicialUsuario implements OnInit {
   readOnly = false;
   fromAdmin = false;
+
+  contenidos: Contenido[] = [];
+  contenidosLoading = false;
+  contenidosError: string | null = null;
+  private readonly CONTENIDOS_BASE = 'http://localhost:8082/Contenidos';
+
+
 
   avatars: string[] = [
     'assets/avatars/avatar1.png','assets/avatars/avatar2.png','assets/avatars/avatar3.png',
@@ -91,12 +99,14 @@ export class PaginaInicialUsuario implements OnInit {
     private readonly router: Router,
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
-    private readonly auth: AuthService
+    private readonly auth: AuthService,
+    private readonly http: HttpClient
   ) {}
 
   ngOnInit(): void {
     this.computeReadOnlyFlags();
     this.bootstrapUser();
+    this.cargarContenidos();
   }
 
   private computeReadOnlyFlags(): void {
@@ -337,4 +347,51 @@ export class PaginaInicialUsuario implements OnInit {
     const safe = this.t(nombre);
     return safe ? safe.split(/\s+/).map(p => p[0]).join('').toUpperCase() : 'U';
   }
+
+  public cargarContenidos(): void {
+    this.contenidosLoading = true;
+    this.contenidosError = null;
+
+    this.http.get<any[]>(`${this.CONTENIDOS_BASE}/ListarContenidos`).subscribe({
+      next: (raw) => {
+        const items: Contenido[] = (raw || []).map((c: any) => ({
+          // mapea _id -> id si viniera así del BE
+          id: c.id ?? c._id ?? '',
+          userEmail: c.userEmail,
+          titulo: c.titulo,
+          descripcion: c.descripcion,
+          ficheroAudio: c.ficheroAudio,
+          urlVideo: c.urlVideo,
+          tags: c.tags ?? [],
+          duracionMinutos: c.duracionMinutos,
+          resolucion: c.resolucion,
+          vip: !!c.vip,
+          visible: !!c.visible,
+          disponibleHasta: c.disponibleHasta,
+          restringidoEdad: Number(c.restringidoEdad ?? 0),
+          tipo: c.tipo,
+          imagen: c.imagen,
+          reproducciones: c.reproducciones ?? 0,
+          fechaEstado: c.fechaEstado,
+        }))
+        // opcional: ordenar por fechaEstado desc
+        .sort((a, b) => {
+          const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
+          const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
+          return tb - ta;
+        });
+
+        this.contenidos = items;
+        this.contenidosLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error(err);
+        this.contenidosError = 'No se pudieron cargar los contenidos.';
+        this.contenidosLoading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
+
 }

@@ -70,3 +70,24 @@ export interface CreateCreatorRequest {
   foto?: string | null;
   fechaNac?: string;
 }
+
+export type tipoContenido = 'VIDEO' | 'AUDIO';
+export interface Contenido{
+  id: string;
+  userEmail: string;
+  titulo: string;
+  descripcion?: string;
+  ficheroAudio?: string;
+  urlVideo?: string;
+  tags: string[];
+  duracionMinutos: number;
+  resolucion: string;
+  vip: boolean;
+  visible: boolean;
+  fechaEstado: string;
+  disponibleHasta?: string;
+  restringidoEdad: number;
+  tipo: tipoContenido;
+  imagen?: string;
+  reproducciones:number;
+}

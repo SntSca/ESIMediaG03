@@ -30,13 +30,58 @@
       <button class="btn-cerrar" (click)="CerrarSesion()">Cerrar sesión</button>
     </div>
   </div>
-  <div class="promo-banner" aria-label="Contenido próximamente">
-    <div class="promo-track">
-      <span class="promo-text">Contenido Multimedia Próximamente... EsiMeida </span>
-      <span class="promo-text">Contenido Multimedia Próximamente... EsiMeida </span>
-      <span class="promo-text">Contenido Multimedia Próximamente... EsiMeida </span>
+  <section class="contenidos-section" aria-label="Catálogo de contenidos">
+    <!-- Estado de carga -->
+    <div *ngIf="contenidosLoading" class="state loading">
+      <div class="spinner"></div>
+      <span>Cargando contenidos…</span>
     </div>
-  </div>
+
+    <!-- Error -->
+    <div *ngIf="!contenidosLoading && contenidosError" class="state error">
+      <span>⚠ {{ contenidosError }}</span>
+      <button class="btn btn--ghost" type="button" (click)="cargarContenidos()">Reintentar</button>
+    </div>
+
+    <!-- Vacío -->
+    <div *ngIf="!contenidosLoading && !contenidosError && contenidos.length === 0" class="state empty">
+      <span>No hay contenidos disponibles.</span>
+    </div>
+
+    <!-- Grid -->
+    <div *ngIf="!contenidosLoading && !contenidosError && contenidos.length > 0" class="grid">
+      <article *ngFor="let c of contenidos" class="card">
+        <div class="thumb">
+          <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimg">
+            <img [src]="c.imagen!" [alt]="c.titulo" loading="lazy" />
+          </ng-container>
+          <ng-template #noimg>
+            <div class="noimg" aria-hidden="true">Sin imagen</div>
+          </ng-template>
+
+          <div class="badges">
+            <span class="badge info">{{ c.tipo }}</span>
+            <span *ngIf="c.vip" class="badge vip">VIP</span>
+            <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
+          </div>
+        </div>
+
+        <div class="body">
+          <h3 class="card-title" [title]="c.titulo">{{ c.titulo }}</h3>
+          <p class="desc" *ngIf="c.descripcion">{{ c.descripcion }}</p>
+
+          <div class="meta">
+            <span>{{ c.resolucion || '—' }}</span>
+            <span>·</span>
+            <span>{{ c.duracionMinutos || '—' }} min</span>
+            <span *ngIf="c.reproducciones !== undefined" class="plays" title="Reproducciones">
+              · ▶ {{ c.reproducciones }}
+            </span>
+          </div>
+        </div>
+      </article>
+    </div>
+  </section>
   <button class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></button>
   <div class="edit-panel modal" [class.open]="editOpen" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
     <h3>Editar perfil</h3>
