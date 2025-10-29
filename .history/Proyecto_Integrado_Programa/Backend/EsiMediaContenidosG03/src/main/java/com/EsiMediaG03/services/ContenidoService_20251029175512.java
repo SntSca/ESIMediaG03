@@ -21,7 +21,6 @@ import com.EsiMediaG03.exceptions.ContenidoException;
 import com.EsiMediaG03.exceptions.ContenidoModificationException;
 import com.EsiMediaG03.exceptions.ContenidoValidationException;
 import com.EsiMediaG03.exceptions.StreamingTargetException;
-import com.EsiMediaG03.exceptions.StreamingTargetResolutionException;
 import com.EsiMediaG03.model.Contenido;
 
 @Service
@@ -86,9 +85,9 @@ public class ContenidoService {
         setIfText(actual::setImagen, c.imagen);
     }
 
-    public StreamingTarget resolveStreamingTarget(String id, Boolean isVip, Integer ageYears) throws StreamingTargetResolutionException, StreamingTargetException {
+    public StreamingTarget resolveStreamingTarget(String id, Boolean isVip, Integer ageYears) throws Exception {
         Contenido c = contenidoDAO.findById(id)
-                .orElseThrow(() -> new StreamingTargetResolutionException(CONTENIDO_NO_ENCONTRADO + id));
+                .orElseThrow(() -> new IllegalArgumentException(CONTENIDO_NO_ENCONTRADO + id));
 
         validarAccesoAContenido(c, isVip, ageYears, LocalDateTime.now());
         return opsFor(c.getTipo()).buildTarget(c);

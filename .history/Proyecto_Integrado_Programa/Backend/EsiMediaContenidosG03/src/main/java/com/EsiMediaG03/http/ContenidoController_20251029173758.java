@@ -1,5 +1,6 @@
 package com.EsiMediaG03.http;
 
+
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,7 +31,7 @@ import com.EsiMediaG03.services.ContenidoService;
 
 @RestController
 @RequestMapping("Contenidos")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*")
 public class ContenidoController {
  
     private static final long DEFAULT_CHUNK_SIZE = 1024L * 1024L;
@@ -54,7 +55,7 @@ public class ContenidoController {
 
 
     @GetMapping("/ReproducirContenido/{id}")
-    public ResponseEntity<Object> stream(@PathVariable String id,
+    public ResponseEntity<?> stream(@PathVariable String id,
                                     @RequestHeader HttpHeaders headers,
                                     @RequestHeader(value="X-User-Role", required=false) String userRole,
                                     @RequestHeader(value="X-User-Email", required=false) String userEmail,
@@ -79,7 +80,7 @@ public class ContenidoController {
         MediaType mediaType = resolveMediaType(target.mimeType(), file);
 
         List<HttpRange> ranges = headers.getRange();
-        if (ranges.isEmpty()) {
+        if (ranges == null || ranges.isEmpty()) {
             HttpHeaders h = commonHeaders(mediaType);
             h.setContentLength(fileSize);
             InputStreamResource body = new InputStreamResource(Files.newInputStream(file));
@@ -99,24 +100,15 @@ public class ContenidoController {
         long rangeLength = end - start + 1;
         long chunk = Math.min(rangeLength, DEFAULT_CHUNK_SIZE);
 
-        try (InputStream is = Files.newInputStream(file)) {
-            long skipped = is.skip(start);
-            while (skipped < start) {
-                long remaining = start - skipped;
-                long additionalSkipped = is.skip(remaining);
-                if (additionalSkipped <= 0) {
-                    throw new java.io.IOException("Unable to skip to the desired position in the stream.");
-                }
-                skipped += additionalSkipped;
-            }
-            InputStreamResource body = new InputStreamResource(new LimitedInputStream(is, chunk));
+        InputStream is = Files.newInputStream(file);
+        is.skip(start);
+        InputStreamResource body = new InputStreamResource(new LimitedInputStream(is, chunk));
 
-            HttpHeaders h = commonHeaders(mediaType);
-            h.set(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, start + chunk - 1, fileSize));
-            h.setContentLength(chunk);
+        HttpHeaders h = commonHeaders(mediaType);
+        h.set(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, start + chunk - 1, fileSize));
+        h.setContentLength(chunk);
 
-            return new ResponseEntity<>(body, h, HttpStatus.PARTIAL_CONTENT);
-        }
+        return new ResponseEntity<>(body, h, HttpStatus.PARTIAL_CONTENT);
     }
 
     @RequestMapping(value = "/ReproducirContenido/{id}", method = RequestMethod.HEAD)
@@ -152,7 +144,7 @@ public class ContenidoController {
     ) throws Throwable {
         Contenido.Tipo requesterTipo = Contenido.Tipo.valueOf(creatorTipo.toUpperCase());
         Contenido actualizado = contenidoService.modificarContenido(
-                id, cambios, requesterTipo
+                id, cambios, null, null, requesterTipo
         );
         return ResponseEntity.ok(actualizado);
     }
@@ -164,7 +156,7 @@ public class ContenidoController {
             @RequestHeader("X-Creator-Tipo") String creatorTipo
     ) {
         Contenido.Tipo requesterTipo = Contenido.Tipo.valueOf(creatorTipo.toUpperCase());
-        contenidoService.eliminarContenido(id, requesterTipo);
+        contenidoService.eliminarContenido(id requesterTipo);
         return ResponseEntity.noContent().build();
     }
 

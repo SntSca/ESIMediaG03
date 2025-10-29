@@ -86,7 +86,7 @@ public class ContenidoService {
         setIfText(actual::setImagen, c.imagen);
     }
 
-    public StreamingTarget resolveStreamingTarget(String id, Boolean isVip, Integer ageYears) throws StreamingTargetResolutionException, StreamingTargetException {
+    public StreamingTarget resolveStreamingTarget(String id, Boolean isVip, Integer ageYears) throws StreamingTargetResolutionException {
         Contenido c = contenidoDAO.findById(id)
                 .orElseThrow(() -> new StreamingTargetResolutionException(CONTENIDO_NO_ENCONTRADO + id));
 

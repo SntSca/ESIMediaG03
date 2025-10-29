@@ -1,6 +1,5 @@
 package com.EsiMediaG03.services;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -21,7 +20,6 @@ import com.EsiMediaG03.exceptions.ContenidoException;
 import com.EsiMediaG03.exceptions.ContenidoModificationException;
 import com.EsiMediaG03.exceptions.ContenidoValidationException;
 import com.EsiMediaG03.exceptions.StreamingTargetException;
-import com.EsiMediaG03.exceptions.StreamingTargetResolutionException;
 import com.EsiMediaG03.model.Contenido;
 
 @Service
@@ -86,9 +84,9 @@ public class ContenidoService {
         setIfText(actual::setImagen, c.imagen);
     }
 
-    public StreamingTarget resolveStreamingTarget(String id, Boolean isVip, Integer ageYears) throws StreamingTargetResolutionException, StreamingTargetException {
+    public StreamingTarget resolveStreamingTarget(String id, Boolean isVip, Integer ageYears) throws Exception {
         Contenido c = contenidoDAO.findById(id)
-                .orElseThrow(() -> new StreamingTargetResolutionException(CONTENIDO_NO_ENCONTRADO + id));
+                .orElseThrow(() -> new IllegalArgumentException(CONTENIDO_NO_ENCONTRADO + id));
 
         validarAccesoAContenido(c, isVip, ageYears, LocalDateTime.now());
         return opsFor(c.getTipo()).buildTarget(c);
@@ -107,15 +105,10 @@ public class ContenidoService {
         }
         @Override public StreamingTarget buildTarget(Contenido c) throws StreamingTargetException {
             String pathStr = c.getFicheroAudio();
-            if (isBlank(pathStr)) throw new StreamingTargetException("AUDIO sin ficheroAudio.");
+            if (isBlank(pathStr)) throw new IllegalArgumentException("AUDIO sin ficheroAudio.");
             Path path = Path.of(pathStr);
             ensureReadableFile(path, "Fichero de audio no accesible");
-            long length;
-            try {
-                length = Files.size(path);
-            } catch (IOException e) {
-                throw new StreamingTargetException("Error al obtener el tamaño del archivo: " + e.getMessage());
-            }
+            long length = Files.size(path);
             String mime = guessMimeFromExt(pathStr, "audio/mpeg");
             return StreamingTarget.local(path, length, mime);
         }
@@ -127,7 +120,7 @@ public class ContenidoService {
             setIfText(actual::setResolucion, c.resolucion);
             assertBlank(c.ficheroAudio, "No puedes establecer campos de AUDIO en un contenido VIDEO.");
         }
-        @Override public StreamingTarget buildTarget(Contenido c) throws StreamingTargetException {
+        @Override public StreamingTarget buildTarget(Contenido c) throws Exception {
             String urlOrPath = c.getUrlVideo();
             if (isBlank(urlOrPath)) throw new IllegalArgumentException("VIDEO sin urlVideo o ruta local.");
             if (isHttp(urlOrPath)) {
@@ -135,12 +128,7 @@ public class ContenidoService {
             }
             Path path = Path.of(urlOrPath);
             ensureReadableFile(path, "Fichero de vídeo no accesible");
-            long length;
-            try {
-                length = Files.size(path);
-            } catch (IOException e) {
-                throw new StreamingTargetException("Error al obtener el tamaño del archivo: " + e.getMessage());
-            }
+            long length = Files.size(path);
             String mime = guessMimeFromExt(urlOrPath, VIDEO_MP4);
             return StreamingTarget.local(path, length, mime);
         }

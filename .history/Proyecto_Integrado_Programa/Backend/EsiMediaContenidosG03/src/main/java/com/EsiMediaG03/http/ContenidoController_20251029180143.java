@@ -1,5 +1,6 @@
 package com.EsiMediaG03.http;
 
+
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -79,7 +80,7 @@ public class ContenidoController {
         MediaType mediaType = resolveMediaType(target.mimeType(), file);
 
         List<HttpRange> ranges = headers.getRange();
-        if (ranges.isEmpty()) {
+        if (ranges == null || ranges.isEmpty()) {
             HttpHeaders h = commonHeaders(mediaType);
             h.setContentLength(fileSize);
             InputStreamResource body = new InputStreamResource(Files.newInputStream(file));

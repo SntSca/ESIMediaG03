@@ -1,6 +1,5 @@
 package com.EsiMediaG03.services;
 
-import java.io.IOException;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.time.LocalDate;
@@ -16,12 +15,7 @@ import org.springframework.stereotype.Service;
 import com.EsiMediaG03.dao.ContenidoDAO;
 import com.EsiMediaG03.dto.ModificarContenidoRequest;
 import com.EsiMediaG03.dto.StreamingTarget;
-import com.EsiMediaG03.exceptions.ContenidoAddException;
 import com.EsiMediaG03.exceptions.ContenidoException;
-import com.EsiMediaG03.exceptions.ContenidoModificationException;
-import com.EsiMediaG03.exceptions.ContenidoValidationException;
-import com.EsiMediaG03.exceptions.StreamingTargetException;
-import com.EsiMediaG03.exceptions.StreamingTargetResolutionException;
 import com.EsiMediaG03.model.Contenido;
 
 @Service
@@ -29,8 +23,7 @@ public class ContenidoService {
 
     private final ContenidoDAO contenidoDAO;
     private final MongoTemplate mongoTemplate;
-    private static final String VIDEO_MP4 = "video/mp4";
-    private static final String CONTENIDO_NO_ENCONTRADO = "Contenido no encontrado: ";
+    private final String videoMp4 = "video/mp4";
 
     public ContenidoService(ContenidoDAO contenidoDAO, MongoTemplate mongoTemplate) {
         this.contenidoDAO = contenidoDAO;
@@ -38,12 +31,8 @@ public class ContenidoService {
     }
 
 
-    public Contenido anadirContenido(Contenido contenido) throws ContenidoAddException {
-        try {
-            validarcontenido(contenido);
-        } catch (Exception e) {
-            throw new ContenidoAddException("Error al añadir contenido: " + e.getMessage());
-        }
+    public Contenido anadirContenido(Contenido contenido) throws Throwable {
+        validarcontenido(contenido);
         return contenidoDAO.save(contenido);
     }
 
@@ -53,9 +42,9 @@ public class ContenidoService {
 
     public Contenido modificarContenido(String id,
                                         ModificarContenidoRequest cambios,
-                                        Contenido.Tipo requesterTipo) throws ContenidoModificationException {
+                                        Contenido.Tipo requesterTipo) throws Throwable {
         Contenido actual = contenidoDAO.findById(id)
-                .orElseThrow(() -> new ContenidoModificationException(CONTENIDO_NO_ENCONTRADO + id));
+                .orElseThrow(() -> new IllegalArgumentException("Contenido no encontrado: " + id));
 
         checkPermisosPorTipo(actual, requesterTipo, "modificar");
 
@@ -68,7 +57,7 @@ public class ContenidoService {
 
     public void eliminarContenido(String id, Contenido.Tipo requesterTipo) {
         Contenido actual = contenidoDAO.findById(id)
-                .orElseThrow(() -> new IllegalArgumentException(CONTENIDO_NO_ENCONTRADO + id));
+                .orElseThrow(() -> new IllegalArgumentException("Contenido no encontrado: " + id));
 
         checkPermisosPorTipo(actual, requesterTipo, "eliminar");
         contenidoDAO.deleteById(id);
@@ -86,9 +75,9 @@ public class ContenidoService {
         setIfText(actual::setImagen, c.imagen);
     }
 
-    public StreamingTarget resolveStreamingTarget(String id, Boolean isVip, Integer ageYears) throws StreamingTargetResolutionException, StreamingTargetException {
+    public StreamingTarget resolveStreamingTarget(String id, Boolean isVip, Integer ageYears) throws Exception {
         Contenido c = contenidoDAO.findById(id)
-                .orElseThrow(() -> new StreamingTargetResolutionException(CONTENIDO_NO_ENCONTRADO + id));
+                .orElseThrow(() -> new IllegalArgumentException("Contenido no encontrado: " + id));
 
         validarAccesoAContenido(c, isVip, ageYears, LocalDateTime.now());
         return opsFor(c.getTipo()).buildTarget(c);
@@ -96,7 +85,7 @@ public class ContenidoService {
 
     private interface TipoOps {
         void patch(Contenido actual, ModificarContenidoRequest c);
-        StreamingTarget buildTarget(Contenido c) throws StreamingTargetException;
+        StreamingTarget buildTarget(Contenido c) throws Exception;
     }
 
     private final TipoOps audioOps = new TipoOps() {
@@ -105,17 +94,12 @@ public class ContenidoService {
             assertBlank(c.urlVideo, "No puedes establecer campos de VIDEO en un contenido AUDIO.");
             assertBlank(nonBlankOrNull(c.resolucion), "No puedes establecer campos de VIDEO en un contenido AUDIO.");
         }
-        @Override public StreamingTarget buildTarget(Contenido c) throws StreamingTargetException {
+        @Override public StreamingTarget buildTarget(Contenido c) throws Exception {
             String pathStr = c.getFicheroAudio();
-            if (isBlank(pathStr)) throw new StreamingTargetException("AUDIO sin ficheroAudio.");
+            if (isBlank(pathStr)) throw new IllegalArgumentException("AUDIO sin ficheroAudio.");
             Path path = Path.of(pathStr);
             ensureReadableFile(path, "Fichero de audio no accesible");
-            long length;
-            try {
-                length = Files.size(path);
-            } catch (IOException e) {
-                throw new StreamingTargetException("Error al obtener el tamaño del archivo: " + e.getMessage());
-            }
+            long length = Files.size(path);
             String mime = guessMimeFromExt(pathStr, "audio/mpeg");
             return StreamingTarget.local(path, length, mime);
         }
@@ -127,21 +111,16 @@ public class ContenidoService {
             setIfText(actual::setResolucion, c.resolucion);
             assertBlank(c.ficheroAudio, "No puedes establecer campos de AUDIO en un contenido VIDEO.");
         }
-        @Override public StreamingTarget buildTarget(Contenido c) throws StreamingTargetException {
+        @Override public StreamingTarget buildTarget(Contenido c) throws Exception {
             String urlOrPath = c.getUrlVideo();
             if (isBlank(urlOrPath)) throw new IllegalArgumentException("VIDEO sin urlVideo o ruta local.");
             if (isHttp(urlOrPath)) {
-                return StreamingTarget.external(urlOrPath, VIDEO_MP4);
+                return StreamingTarget.external(urlOrPath, videoMp4);
             }
             Path path = Path.of(urlOrPath);
             ensureReadableFile(path, "Fichero de vídeo no accesible");
-            long length;
-            try {
-                length = Files.size(path);
-            } catch (IOException e) {
-                throw new StreamingTargetException("Error al obtener el tamaño del archivo: " + e.getMessage());
-            }
-            String mime = guessMimeFromExt(urlOrPath, VIDEO_MP4);
+            long length = Files.size(path);
+            String mime = guessMimeFromExt(urlOrPath, "video/mp4");
             return StreamingTarget.local(path, length, mime);
         }
     };
@@ -180,7 +159,7 @@ public class ContenidoService {
         if (l.endsWith(".wav")) return "audio/wav";
         if (l.endsWith(".m4a")) return "audio/mp4";
         if (l.endsWith(".flac")) return "audio/flac";
-        if (l.endsWith(".mp4")) return VIDEO_MP4;
+        if (l.endsWith(".mp4")) return "video/mp4";
         if (l.endsWith(".webm")) return "video/webm";
         if (l.endsWith(".mkv")) return "video/x-matroska";
         return fallback;
@@ -220,7 +199,7 @@ public class ContenidoService {
         mongoTemplate.updateFirst(q, u, Contenido.class);
     }
 
-    private void validarcontenido(Contenido contenido) throws ContenidoValidationException {
+    private void validarcontenido(Contenido contenido) throws Throwable {
         validarTipoContenido(contenido);
         validarTituloYTags(contenido);
         validarDuracion(contenido);
@@ -228,7 +207,7 @@ public class ContenidoService {
 
     private void validarTipoContenido(Contenido contenido) {
         if (contenido.getTipo() == null) {
-            throw new ContenidoValidationException("El tipo de contenido debe ser AUDIO o VIDEO.");
+            throw new IllegalArgumentException("El tipo de contenido debe ser AUDIO o VIDEO.");
         }
         if (contenido.getTipo() == Contenido.Tipo.AUDIO) {
             validarFicheroAudio(contenido);
@@ -239,31 +218,31 @@ public class ContenidoService {
 
     private void validarFicheroAudio(Contenido contenido) {
         if (contenido.getFicheroAudio() == null || contenido.getFicheroAudio().isBlank()) {
-            throw new ContenidoValidationException("Debe indicar la ruta del fichero de audio.");
+            throw new IllegalArgumentException("Debe indicar la ruta del fichero de audio.");
         }
     }
 
     private void validarVideo(Contenido contenido) {
         if (contenido.getUrlVideo() == null || contenido.getUrlVideo().isBlank()) {
-            throw new ContenidoValidationException("Debe especificar una URL de vídeo.");
+            throw new IllegalArgumentException("Debe especificar una URL de vídeo.");
         }
         if (contenido.getResolucion() != null && !contenido.getResolucion().matches("(?i)^(720p|1080p|4k)$")) {
-            throw new ContenidoValidationException("Resolución de vídeo no válida (solo 720p, 1080p, 4K).");
+            throw new IllegalArgumentException("Resolución de vídeo no válida (solo 720p, 1080p, 4K).");
         }
     }
 
     private void validarTituloYTags(Contenido contenido) {
         if (contenido.getTitulo() == null || contenido.getTitulo().isBlank()) {
-            throw new ContenidoValidationException("El título es obligatorio.");
+            throw new IllegalArgumentException("El título es obligatorio.");
         }
         if (contenido.getTags() == null || contenido.getTags().isEmpty()) {
-            throw new ContenidoValidationException("Debe indicar al menos un tag.");
+            throw new IllegalArgumentException("Debe indicar al menos un tag.");
         }
     }
 
     private void validarDuracion(Contenido contenido) {
         if (contenido.getDuracionMinutos() <= 0) {
-            throw new ContenidoValidationException("La duración debe ser mayor a 0 minutos.");
+            throw new IllegalArgumentException("La duración debe ser mayor a 0 minutos.");
         }
     }
 

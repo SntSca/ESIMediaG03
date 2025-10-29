@@ -1,5 +1,6 @@
 package com.EsiMediaG03.http;
 
+
 import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
@@ -30,7 +31,7 @@ import com.EsiMediaG03.services.ContenidoService;
 
 @RestController
 @RequestMapping("Contenidos")
-@CrossOrigin(origins = "http://localhost:4200")
+@CrossOrigin(origins = "*")
 public class ContenidoController {
  
     private static final long DEFAULT_CHUNK_SIZE = 1024L * 1024L;
@@ -54,7 +55,7 @@ public class ContenidoController {
 
 
     @GetMapping("/ReproducirContenido/{id}")
-    public ResponseEntity<Object> stream(@PathVariable String id,
+    public ResponseEntity<?> stream(@PathVariable String id,
                                     @RequestHeader HttpHeaders headers,
                                     @RequestHeader(value="X-User-Role", required=false) String userRole,
                                     @RequestHeader(value="X-User-Email", required=false) String userEmail,
@@ -79,7 +80,7 @@ public class ContenidoController {
         MediaType mediaType = resolveMediaType(target.mimeType(), file);
 
         List<HttpRange> ranges = headers.getRange();
-        if (ranges.isEmpty()) {
+        if (ranges == null || ranges.isEmpty()) {
             HttpHeaders h = commonHeaders(mediaType);
             h.setContentLength(fileSize);
             InputStreamResource body = new InputStreamResource(Files.newInputStream(file));
