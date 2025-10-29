@@ -1,6 +1,6 @@
 trigger:
   branches:
-    include: [ main, develop, feature/* ]
+    include: [ main, development, feature/* ]
   paths:
     include:
       - Backend/*
