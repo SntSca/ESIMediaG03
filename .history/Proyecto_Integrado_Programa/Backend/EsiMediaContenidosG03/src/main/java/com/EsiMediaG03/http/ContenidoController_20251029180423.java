@@ -27,7 +27,7 @@ import com.EsiMediaG03.dto.ModificarContenidoRequest;
 import com.EsiMediaG03.dto.StreamingTarget;
 import com.EsiMediaG03.model.Contenido;
 import com.EsiMediaG03.services.ContenidoService;
-   
+ 
 @RestController
 @RequestMapping("Contenidos")
 @CrossOrigin(origins = "http://localhost:4200")
