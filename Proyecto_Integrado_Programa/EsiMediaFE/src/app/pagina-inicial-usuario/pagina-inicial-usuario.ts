@@ -5,6 +5,7 @@ import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { AppUser, UserDto, Contenido } from '../auth/models';
 import { HttpClient, HttpErrorResponse, HttpClientModule } from '@angular/common/http';
+import { ContenidosService, ResolveResult } from '../contenidos.service';
 
 import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -24,6 +25,11 @@ export class PaginaInicialUsuario implements OnInit {
   contenidosLoading = false;
   contenidosError: string | null = null;
   private readonly CONTENIDOS_BASE = 'http://localhost:8082/Contenidos';
+  playerOpen = false;
+  playerSrc: string | null = null;
+  playerKind: 'AUDIO' | 'VIDEO' = 'VIDEO';
+  playingId: string | null = null;
+  playingTitle: string | null = null;
 
 
 
@@ -100,7 +106,8 @@ export class PaginaInicialUsuario implements OnInit {
     private readonly route: ActivatedRoute,
     private readonly cdr: ChangeDetectorRef,
     private readonly auth: AuthService,
-    private readonly http: HttpClient
+    private readonly http: HttpClient,
+    private contenidosSvc: ContenidosService
   ) {}
 
   ngOnInit(): void {
@@ -355,7 +362,7 @@ export class PaginaInicialUsuario implements OnInit {
     this.http.get<any[]>(`${this.CONTENIDOS_BASE}/ListarContenidos`).subscribe({
       next: (raw) => {
         const items: Contenido[] = (raw || []).map((c: any) => ({
-          // mapea _id -> id si viniera así del BE
+          
           id: c.id ?? c._id ?? '',
           userEmail: c.userEmail,
           titulo: c.titulo,
@@ -374,7 +381,7 @@ export class PaginaInicialUsuario implements OnInit {
           reproducciones: c.reproducciones ?? 0,
           fechaEstado: c.fechaEstado,
         }))
-        // opcional: ordenar por fechaEstado desc
+        
         .sort((a, b) => {
           const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
           const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
@@ -392,6 +399,127 @@ export class PaginaInicialUsuario implements OnInit {
         this.cdr.markForCheck();
       },
     });
+  }
+
+  private isHttpUrl(u: unknown): u is string {
+    if (typeof u !== 'string') return false;
+    const s = u.trim().toLowerCase();
+    return s.startsWith('http://') || s.startsWith('https://');
+  }
+  private toNum(v: unknown): number {
+    const n = typeof v === 'number' ? v : Number(v);
+    return Number.isFinite(n) ? n : 0;
+  }
+  private calcAgeFromISO(iso?: string | null): number | null {
+    if (!iso) return null;
+    const d = new Date(iso); if (isNaN(+d)) return null;
+    const now = new Date();
+    let age = now.getFullYear() - d.getFullYear();
+    const m = now.getMonth() - d.getMonth();
+    if (m < 0 || (m === 0 && now.getDate() < d.getDate())) age--;
+    return age >= 0 ? age : null;
+  }
+
+  private playingBusy = false;
+  private openedExternally = false;
+  private openedInternally = false;
+
+  private showError(msg: string) {
+    
+    if (this.openedExternally || this.openedInternally) return;
+    Swal.fire({ icon: 'error', title: 'Reproducción no disponible', text: msg });
+    this.closePlayer();
+  }
+
+  async play(c: any) {
+    if (this.playingBusy) return;     
+    this.playingBusy = true;
+    this.openedExternally = false;
+    this.openedInternally = false;
+
+    try {
+      const role  = this.loggedUser?.role ?? 'USUARIO';
+      const email = this.userEmail;
+      const vip   = !!this.model?.vip;
+      const fecha = this.model?.fechaNac || undefined;
+      const age   = this.calcAgeFromISO(fecha) ?? undefined;
+
+      
+      await this.contenidosSvc.canStream({ id: c.id, role, email, vip, fechaNacISO: fecha, ageYears: age });
+
+      let result: ResolveResult | null = null;
+      try {
+        result = await this.contenidosSvc.resolveAndCount({ id: c.id, role, email, vip, fechaNacISO: fecha, ageYears: age });
+      } catch (e: any) {
+      
+        if (e?.message === 'HTTP0_OPAQUE' && this.isHttpUrl(c?.urlVideo)) {
+          this.openExternalStrict(c.urlVideo);
+          this.openedExternally = true;
+
+          if (String(role).toUpperCase() === 'USUARIO') c.reproducciones = this.toNum(c.reproducciones) + 1;
+          this.cdr.markForCheck();
+          return;
+        }
+        throw e;
+      }
+      if (!result) throw new Error('No se obtuvo resultado de reproducción.');
+
+      if (result.kind === 'external') {
+        this.openExternalStrict(result.url);
+        this.openedExternally = true;
+
+        if (String(role).toUpperCase() === 'USUARIO') {
+          c.reproducciones = this.toNum(c.reproducciones) + 1;
+          this.cdr.markForCheck();
+        }
+        return; 
+      }
+
+      
+      this.playerKind   = (String(c.tipo).toUpperCase() === 'AUDIO') ? 'AUDIO' : 'VIDEO';
+      this.playerSrc    = result.blobUrl;
+      this.playingId    = c.id;
+      this.playingTitle = c.titulo || null;
+      this.playerOpen   = true;
+      this.openedInternally = true;
+
+      if (String(role).toUpperCase() === 'USUARIO') {
+        c.reproducciones = this.toNum(c.reproducciones) + 1;
+      }
+      this.cdr.markForCheck();
+
+    } catch (e: any) {
+      const msg = (e && e.message) ? e.message : 'No se pudo reproducir este contenido.';
+      this.showError(msg);
+    } finally {
+      this.playingBusy = false;
+    }
+  }
+
+  private openExternalStrict(url: string): boolean {
+    try {
+      const w = window.open(url, '_blank', 'noopener,noreferrer');
+      if (w) return true;
+    } catch {  }
+
+    try {
+      const a = document.createElement('a');
+      a.href = url;
+      a.target = '_blank';
+      a.rel = 'noopener noreferrer';
+      a.style.display = 'none';
+      document.body.appendChild(a);
+      a.click();
+      document.body.removeChild(a);
+      return true; 
+    } catch {  }
+
+    return false; 
+  }
+
+  closePlayer() {
+    try { if (this.playerSrc && this.playerSrc.startsWith('blob:')) URL.revokeObjectURL(this.playerSrc); } catch {}
+    this.playerOpen = false; this.playerSrc = null; this.playingId = null; this.playingTitle = null;
   }
 
 }

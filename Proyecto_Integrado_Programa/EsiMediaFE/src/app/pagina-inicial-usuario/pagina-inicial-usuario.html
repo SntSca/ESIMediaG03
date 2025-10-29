@@ -30,25 +30,22 @@
       <button class="btn-cerrar" (click)="CerrarSesion()">Cerrar sesión</button>
     </div>
   </div>
+
   <section class="contenidos-section" aria-label="Catálogo de contenidos">
-    <!-- Estado de carga -->
     <div *ngIf="contenidosLoading" class="state loading">
       <div class="spinner"></div>
       <span>Cargando contenidos…</span>
     </div>
 
-    <!-- Error -->
     <div *ngIf="!contenidosLoading && contenidosError" class="state error">
       <span>⚠ {{ contenidosError }}</span>
       <button class="btn btn--ghost" type="button" (click)="cargarContenidos()">Reintentar</button>
     </div>
 
-    <!-- Vacío -->
     <div *ngIf="!contenidosLoading && !contenidosError && contenidos.length === 0" class="state empty">
       <span>No hay contenidos disponibles.</span>
     </div>
 
-    <!-- Grid -->
     <div *ngIf="!contenidosLoading && !contenidosError && contenidos.length > 0" class="grid">
       <article *ngFor="let c of contenidos" class="card">
         <div class="thumb">
@@ -64,6 +61,13 @@
             <span *ngIf="c.vip" class="badge vip">VIP</span>
             <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
           </div>
+
+          <button type="button"
+                  class="play-btn"
+                  title="Reproducir"
+                  (click)="play(c)">
+            ▶
+          </button>
         </div>
 
         <div class="body">
@@ -82,6 +86,7 @@
       </article>
     </div>
   </section>
+
   <button class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></button>
   <div class="edit-panel modal" [class.open]="editOpen" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
     <h3>Editar perfil</h3>
@@ -196,4 +201,30 @@
     </dialog>
 
   </div>
+
+  <div class="overlay" *ngIf="playerOpen" (click)="closePlayer()"></div>
+  <div class="edit-panel modal" [class.open]="playerOpen" (click)="$event.stopPropagation()">
+    <h3 style="margin-bottom:8px;">{{ playingTitle || 'Reproduciendo' }}</h3>
+
+    <ng-container [ngSwitch]="playerKind">
+      <video *ngSwitchCase="'VIDEO'"
+            [src]="playerSrc || undefined"
+            controls
+            autoplay
+            style="width:100%; max-height:60vh; border-radius:10px;">
+      </video>
+
+      <audio *ngSwitchCase="'AUDIO'"
+            [src]="playerSrc || undefined"
+            controls
+            autoplay
+            style="width:100%;">
+      </audio>
+    </ng-container>
+
+    <div class="actions" style="margin-top:10px;">
+      <button type="button" class="btn-out" (click)="closePlayer()">Cerrar</button>
+    </div>
+  </div>
+
 </div>
