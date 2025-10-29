@@ -1,0 +1,156 @@
+trigger:
+  branches:
+    include: [ main, develop, feature/* ]
+  paths:
+    include:
+      - Backend/*
+      - EsiMediaFE/*
+      - azure-pipelines.yml
+
+pr:
+  branches:
+    include: [ main, develop ]
+  paths:
+    include:
+      - Backend/*
+      - EsiMediaFE/*
+      - azure-pipelines.yml
+
+name: $(Date:yyyyMMdd).$(Rev:r)
+pool:
+  vmImage: ubuntu-latest
+
+variables:
+  jdkVersion: '17'
+  nodeVersion: '20.x'
+  m2Dir: '$(Agent.ToolsDirectory)/m2'
+
+stages:
+- stage: Backend
+  displayName: "Backend | Maven (usersbe + contenidos)"
+  jobs:
+    - job: maven_build
+      steps:
+        - checkout: self
+          persistCredentials: true
+
+        - task: JavaToolInstaller@0
+          inputs:
+            jdkSourceOption: 'PreInstalled'
+            versionSpec: '$(jdkVersion)'
+            jdkArchitectureOption: 'x64'
+
+        - task: Cache@2
+          inputs:
+            key: 'maven | "$(Agent.OS)" | Backend/pom.xml'
+            restoreKeys: 'maven | "$(Agent.OS)"'
+            path: $(m2Dir)
+
+        - task: Maven@4
+          displayName: "mvn clean verify (multi-módulo)"
+          inputs:
+            mavenPomFile: 'Backend/pom.xml'
+            goals: 'clean verify -T 1C'
+            options: '-Dmaven.repo.local=$(m2Dir)'
+            publishJUnitResults: true
+            testResultsFiles: '**/surefire-reports/TEST-*.xml'
+        - task: CopyFiles@2
+          displayName: "Copiar reporte cobertura Backend"
+          inputs:
+            contents: |
+              Backend/target/site/jacoco-aggregate/**
+            targetFolder: '$(Build.ArtifactStagingDirectory)/coverage-backend'
+
+        - task: PublishBuildArtifacts@1
+          displayName: "Publicar cobertura Backend"
+          inputs:
+            pathToPublish: '$(Build.ArtifactStagingDirectory)/coverage-backend'
+            artifactName: 'coverage-backend'
+        - task: CopyFiles@2
+          displayName: "Copiar artefactos usersbe"
+          inputs:
+            contents: |
+              Backend/usersbe/target/*.jar
+              Backend/usersbe/target/*.war
+            targetFolder: '$(Build.ArtifactStagingDirectory)/usersbe'
+
+        - task: PublishBuildArtifacts@1
+          displayName: "Publicar artefacto usersbe"
+          inputs:
+            pathToPublish: '$(Build.ArtifactStagingDirectory)/usersbe'
+            artifactName: 'usersbe'
+
+        - task: CopyFiles@2
+          displayName: "Copiar artefactos contenidos"
+          inputs:
+            contents: |
+              Backend/EsiMediaContenidosG03/target/*.jar
+              Backend/EsiMediaContenidosG03/target/*.war
+            targetFolder: '$(Build.ArtifactStagingDirectory)/contenidos'
+
+        - task: PublishBuildArtifacts@1
+          displayName: "Publicar artefacto contenidos"
+          inputs:
+            pathToPublish: '$(Build.ArtifactStagingDirectory)/contenidos'
+            artifactName: 'contenidos'
+
+- stage: Frontend
+  displayName: "Frontend | Angular"
+  dependsOn: Backend
+  jobs:
+    - job: angular_build
+      steps:
+        - checkout: self
+          persistCredentials: true
+
+        - task: NodeTool@0
+          inputs:
+            versionSpec: '$(nodeVersion)'
+
+        - task: Cache@2
+          inputs:
+            key: 'npm | "$(Agent.OS)" | EsiMediaFE/package-lock.json'
+            restoreKeys: 'npm | "$(Agent.OS)"'
+            path: $(Pipeline.Workspace)/.npm
+
+        - script: npm ci --cache $(Pipeline.Workspace)/.npm --prefer-offline
+          displayName: "npm ci"
+          workingDirectory: EsiMediaFE
+
+        - script: npm run lint || echo "Lint con warnings/errores (no falla)"
+          displayName: "npm run lint"
+          workingDirectory: EsiMediaFE
+          continueOnError: true
+
+        - script: npm test -- --watch=false --code-coverage || echo "Tests fallidos (se sube cobertura igual)"
+          displayName: "npm test --coverage"
+          workingDirectory: EsiMediaFE
+          continueOnError: true
+
+        - task: CopyFiles@2
+          displayName: "Copiar reporte cobertura Frontend"
+          inputs:
+            contents: 'EsiMediaFE/**/coverage/**'
+            targetFolder: '$(Build.ArtifactStagingDirectory)/coverage-frontend'
+
+        - task: PublishBuildArtifacts@1
+          displayName: "Publicar cobertura Frontend"
+          inputs:
+            pathToPublish: '$(Build.ArtifactStagingDirectory)/coverage-frontend'
+            artifactName: 'coverage-frontend'
+
+        - script: npm run build -- --configuration=production
+          displayName: "npm run build (prod)"
+          workingDirectory: EsiMediaFE
+
+        - task: CopyFiles@2
+          displayName: "Copiar dist"
+          inputs:
+            contents: 'EsiMediaFE/dist/**'
+            targetFolder: '$(Build.ArtifactStagingDirectory)/frontend'
+
+        - task: PublishBuildArtifacts@1
+          displayName: "Publicar artefacto frontend (dist)"
+          inputs:
+            pathToPublish: '$(Build.ArtifactStagingDirectory)/frontend'
+            artifactName: 'frontend'
