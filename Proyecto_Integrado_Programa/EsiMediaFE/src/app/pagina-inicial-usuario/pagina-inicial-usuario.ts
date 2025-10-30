@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { AppUser, UserDto, Contenido } from '../auth/models';
-import { HttpClient, HttpErrorResponse, HttpClientModule } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ContenidosService, ResolveResult } from '../contenidos.service';
 
 import { firstValueFrom } from 'rxjs';
@@ -13,7 +13,7 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-pagina-inicial-usuario',
   standalone: true,
-  imports: [CommonModule, FormsModule, HttpClientModule],
+  imports: [CommonModule, FormsModule],
   templateUrl: './pagina-inicial-usuario.html',
   styleUrls: ['./pagina-inicial-usuario.css'],
 })
@@ -355,14 +355,14 @@ export class PaginaInicialUsuario implements OnInit {
     return safe ? safe.split(/\s+/).map(p => p[0]).join('').toUpperCase() : 'U';
   }
 
-  public cargarContenidos(): void {
-    this.contenidosLoading = true;
-    this.contenidosError = null;
+public cargarContenidos(): void {
+  this.contenidosLoading = true;
+  this.contenidosError = null;
 
-    this.http.get<any[]>(`${this.CONTENIDOS_BASE}/ListarContenidos`).subscribe({
-      next: (raw) => {
-        const items: Contenido[] = (raw || []).map((c: any) => ({
-          
+  this.http.get<any[]>(`${this.CONTENIDOS_BASE}/ListarContenidos`).subscribe({
+    next: (raw) => {
+      const items: Contenido[] = (raw || [])
+        .map((c: any) => ({
           id: c.id ?? c._id ?? '',
           userEmail: c.userEmail,
           titulo: c.titulo,
@@ -381,25 +381,28 @@ export class PaginaInicialUsuario implements OnInit {
           reproducciones: c.reproducciones ?? 0,
           fechaEstado: c.fechaEstado,
         }))
-        
+        .filter(item => item.visible)
+        .filter(item => this.model.vip || !item.vip)
         .sort((a, b) => {
           const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
           const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
           return tb - ta;
         });
 
-        this.contenidos = items;
-        this.contenidosLoading = false;
-        this.cdr.markForCheck();
-      },
-      error: (err: HttpErrorResponse) => {
-        console.error(err);
-        this.contenidosError = 'No se pudieron cargar los contenidos.';
-        this.contenidosLoading = false;
-        this.cdr.markForCheck();
-      },
-    });
-  }
+      this.contenidos = items;
+      this.contenidosLoading = false;
+      this.cdr.markForCheck();
+    },
+    error: (err: HttpErrorResponse) => {
+      console.error(err);
+      this.contenidosError = 'No se pudieron cargar los contenidos.';
+      this.contenidosLoading = false;
+      this.cdr.markForCheck();
+    },
+  });
+}
+
+
 
   private isHttpUrl(u: unknown): u is string {
     if (typeof u !== 'string') return false;
@@ -432,68 +435,77 @@ export class PaginaInicialUsuario implements OnInit {
   }
 
   async play(c: any) {
-    if (this.playingBusy) return;     
+    if (this.playingBusy) return;
+
     this.playingBusy = true;
     this.openedExternally = false;
     this.openedInternally = false;
 
+    const role = this.loggedUser?.role ?? 'USUARIO';
+    const email = this.userEmail;
+    const vip = !!this.model?.vip;
+    const fechaNacISO = this.model?.fechaNac || undefined;
+    const ageYears = this.calcAgeFromISO(fechaNacISO) ?? undefined;
+    const isUsuario = String(role).toUpperCase() === 'USUARIO';
+
+    const streamParams = { id: c.id, role, email, vip, fechaNacISO, ageYears };
+
     try {
-      const role  = this.loggedUser?.role ?? 'USUARIO';
-      const email = this.userEmail;
-      const vip   = !!this.model?.vip;
-      const fecha = this.model?.fechaNac || undefined;
-      const age   = this.calcAgeFromISO(fecha) ?? undefined;
+      await this.contenidosSvc.canStream(streamParams);
+      const result = await this.tryResolveContent(c, streamParams);
 
-      
-      await this.contenidosSvc.canStream({ id: c.id, role, email, vip, fechaNacISO: fecha, ageYears: age });
-
-      let result: ResolveResult | null = null;
-      try {
-        result = await this.contenidosSvc.resolveAndCount({ id: c.id, role, email, vip, fechaNacISO: fecha, ageYears: age });
-      } catch (e: any) {
-      
-        if (e?.message === 'HTTP0_OPAQUE' && this.isHttpUrl(c?.urlVideo)) {
-          this.openExternalStrict(c.urlVideo);
-          this.openedExternally = true;
-
-          if (String(role).toUpperCase() === 'USUARIO') c.reproducciones = this.toNum(c.reproducciones) + 1;
-          this.cdr.markForCheck();
-          return;
-        }
-        throw e;
-      }
       if (!result) throw new Error('No se obtuvo resultado de reproducción.');
 
       if (result.kind === 'external') {
-        this.openExternalStrict(result.url);
-        this.openedExternally = true;
-
-        if (String(role).toUpperCase() === 'USUARIO') {
-          c.reproducciones = this.toNum(c.reproducciones) + 1;
-          this.cdr.markForCheck();
-        }
-        return; 
+        this.handleExternalPlay(result.url, c, isUsuario);
+        return;
       }
 
-      
-      this.playerKind   = (String(c.tipo).toUpperCase() === 'AUDIO') ? 'AUDIO' : 'VIDEO';
-      this.playerSrc    = result.blobUrl;
-      this.playingId    = c.id;
-      this.playingTitle = c.titulo || null;
-      this.playerOpen   = true;
-      this.openedInternally = true;
-
-      if (String(role).toUpperCase() === 'USUARIO') {
-        c.reproducciones = this.toNum(c.reproducciones) + 1;
-      }
-      this.cdr.markForCheck();
+      this.handleInternalPlay(result.blobUrl, c, isUsuario);
 
     } catch (e: any) {
-      const msg = (e && e.message) ? e.message : 'No se pudo reproducir este contenido.';
+      const msg = e?.message ?? 'No se pudo reproducir este contenido.';
       this.showError(msg);
     } finally {
       this.playingBusy = false;
     }
+  }
+
+  private async tryResolveContent(c: any, params: any): Promise<ResolveResult | null> {
+    try {
+      return await this.contenidosSvc.resolveAndCount(params);
+    } catch (e: any) {
+      if (e?.message === 'HTTP0_OPAQUE' && this.isHttpUrl(c?.urlVideo)) {
+        this.handleExternalPlay(c.urlVideo, c, String(params.role).toUpperCase() === 'USUARIO');
+        throw new Error('Reproducción externa forzada');
+      }
+      throw e;
+    }
+  }
+ 
+  private handleExternalPlay(url: string, content: any, isUsuario: boolean): void {
+    this.openExternalStrict(url);
+    this.openedExternally = true;
+
+    if (isUsuario) this.incrementViews(content);
+    this.cdr.markForCheck();
+  }
+
+  private handleInternalPlay(blobUrl: string, content: any, isUsuario: boolean): void {
+    this.playerKind = String(content.tipo).toUpperCase() === 'AUDIO' ? 'AUDIO' : 'VIDEO';
+    this.playerSrc = blobUrl;
+    this.playingId = content.id;
+    this.playingTitle = content.titulo || null;
+    this.playerOpen = true;
+    this.openedInternally = true;
+
+    if (isUsuario) this.incrementViews(content);
+    this.cdr.markForCheck();
+  }
+
+
+  private incrementViews(content: any): void {
+    content.reproducciones = this.toNum(content.reproducciones) + 1;
   }
 
   private openExternalStrict(url: string): boolean {
@@ -518,7 +530,7 @@ export class PaginaInicialUsuario implements OnInit {
   }
 
   closePlayer() {
-    try { if (this.playerSrc && this.playerSrc.startsWith('blob:')) URL.revokeObjectURL(this.playerSrc); } catch {}
+    try { if (this.playerSrc?.startsWith('blob:')) URL.revokeObjectURL(this.playerSrc); } catch {}
     this.playerOpen = false; this.playerSrc = null; this.playingId = null; this.playingTitle = null;
   }
 
