@@ -202,8 +202,8 @@
 
   </div>
 
-  <div class="overlay" *ngIf="playerOpen" (click)="closePlayer()"></div>
-  <div class="edit-panel modal" [class.open]="playerOpen" (click)="$event.stopPropagation()">
+  <div class="overlay" *ngIf="playerOpen" (click)="closePlayer()" (keydown)="($event)"></div>
+  <div class="edit-panel modal" [class.open]="playerOpen" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
     <h3 style="margin-bottom:8px;">{{ playingTitle || 'Reproduciendo' }}</h3>
 
     <ng-container [ngSwitch]="playerKind">
@@ -212,6 +212,8 @@
             controls
             autoplay
             style="width:100%; max-height:60vh; border-radius:10px;">
+        <track src="subtitles.vtt" kind="subtitles" srclang="en" label="English">
+        <track src="descriptions.vtt" kind="descriptions" srclang="en" label="English Descriptions">
       </video>
 
       <audio *ngSwitchCase="'AUDIO'"

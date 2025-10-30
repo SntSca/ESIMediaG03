@@ -40,7 +40,7 @@ export class ContenidosService {
       }
       const t = await res.text();
       if (t) {
-        const plain = t.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim();
+        const plain = t.replace(/<[^>]{0,1000}>/g, ' ').replace(/\s+/g, ' ').trim();
         return plain.length > 200 ? plain.slice(0, 200) + '…' : plain;
       }
     } catch { /* ignore */ }
@@ -118,7 +118,7 @@ export class ContenidosService {
     const ct = res.headers.get('content-type') || '';
     if (!/(audio|video)\//i.test(ct)) {
       const text = await res.clone().text().catch(() => '');
-      const plain = text ? text.replace(/<[^>]*>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+      const plain = text ? text.replace(/<[^>]{0,1000}>/g, ' ').replace(/\s+/g, ' ').trim() : '';
       throw new Error(plain || 'El origen no devolvió un flujo multimedia reproducible.');
     }
 

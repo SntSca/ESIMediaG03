@@ -29,7 +29,6 @@ import static org.mockito.Mockito.*;
  * Pruebas integrales (controller con MockMvc) y unitarias (service con Mockito)
  * para: Streaming, control de acceso y almacenamiento de eventos (conteo).
  */
-public class ContenidoStreamingAccessTest {
 
 
     @Nested
@@ -138,4 +137,3 @@ public class ContenidoStreamingAccessTest {
             private void setObj(Object obj, String field, Object v) { try { var f=obj.getClass().getDeclaredField(field); f.setAccessible(true); f.set(obj, v); } catch (Exception ignored) {} }
         }
     }
-}

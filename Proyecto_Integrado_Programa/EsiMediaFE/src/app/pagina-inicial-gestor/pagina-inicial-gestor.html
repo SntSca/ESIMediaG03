@@ -275,7 +275,7 @@
         </div>
 
         <div *ngIf="editContentOpen" class="modal" aria-modal="true">
-          <div class="modal-backdrop" (click)="closeEdit()"></div>
+          <div class="modal-backdrop" (click)="closeEdit()" (keydown)="handleKeyDown($event)"></div>
           <div class="modal-content">
             <button class="modal-close" (click)="closeEdit()" aria-label="Cerrar">&times;</button>
             <h3>Editar contenido</h3>
@@ -368,7 +368,7 @@
           </div>
         </div>
         <div *ngIf="vistaAbierta" class="modal" aria-modal="true">
-          <div class="modal-backdrop" (click)="cerrarVista()"></div>
+          <div class="modal-backdrop" (click)="cerrarVista()" (keydown)="handleKeyDown($event)"></div>
           <div class="modal-content" style="max-width:900px;">
             <button class="modal-close" (click)="cerrarVista()" aria-label="Cerrar">&times;</button>
 
@@ -380,15 +380,6 @@
                 <ng-template #noPosterView>
                   <div class="viewer__poster viewer__poster--empty">Sin imagen</div>
                 </ng-template>
-                <div *ngIf="vistaContenido?.tipo==='AUDIO' && vistaContenido?.ficheroAudio" style="padding:12px;">
-                  <audio #audioEl controls style="width:100%;">
-                    <source [src]="vistaContenido?.ficheroAudio" />
-                    Tu navegador no soporta audio.
-                  </audio>
-                  <div style="display:flex;justify-content:center;margin-top:8px;">
-                    <button class="primary-btn" type="button" (click)="audioEl.play()" aria-label="Reproducir audio">▶️ Reproducir</button>
-                  </div>
-                </div>
               </div>
         <div class="viewer__meta">
           <h3 class="viewer__title">
