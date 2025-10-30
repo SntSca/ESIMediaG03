@@ -1,9 +1,9 @@
 package com.EsiMediaG03.EsiMediaContenidosG03;
 
 import com.EsiMediaG03.dao.ContenidoDAO;
-import com.EsiMediaG03.exceptions.ContenidoAddException;
 import com.EsiMediaG03.model.Contenido;
 import com.EsiMediaG03.services.ContenidoService;
+
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Nested;
 import org.junit.jupiter.api.Test;
@@ -52,6 +52,7 @@ class ContenidoServiceTest {
         c.setResolucion(resolucion);
         return c;
     }
+ 
 
     @Test
     @DisplayName("AUDIO válido -> guarda y devuelve contenido")
@@ -77,47 +78,46 @@ class ContenidoServiceTest {
         assertSame(c, out);
         verify(contenidoDAO).save(c);
     }
-
     @Test
-    @DisplayName("Tipo null -> ContenidoAddException")
+    @DisplayName("Tipo null -> IllegalArgumentException")
     void tipo_null_lanza() {
         Contenido c = baseAudio();
         c.setTipo(null);
 
-        ContenidoAddException ex = assertThrows(ContenidoAddException.class, () -> service.anadirContenido(c));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.anadirContenido(c));
         assertTrue(ex.getMessage().toLowerCase().contains("tipo"));
         verify(contenidoDAO, never()).save(any());
     }
 
     @Test
-    @DisplayName("AUDIO sin ficheroAudio -> ContenidoAddException")
+    @DisplayName("AUDIO sin ficheroAudio -> IllegalArgumentException")
     void audio_sin_fichero_lanza() {
         Contenido c = baseAudio();
         c.setFicheroAudio("   ");
 
-        ContenidoAddException ex = assertThrows(ContenidoAddException.class, () -> service.anadirContenido(c));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.anadirContenido(c));
         assertTrue(ex.getMessage().toLowerCase().contains("audio"));
         verify(contenidoDAO, never()).save(any());
     }
 
     @Test
-    @DisplayName("VIDEO sin urlVideo -> ContenidoAddException")
+    @DisplayName("VIDEO sin urlVideo -> IllegalArgumentException")
     void video_sin_url_lanza() {
         Contenido c = baseVideo("1080p");
         c.setUrlVideo("   ");
 
-        ContenidoAddException ex = assertThrows(ContenidoAddException.class, () -> service.anadirContenido(c));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.anadirContenido(c));
         assertTrue(ex.getMessage().toLowerCase().contains("url"));
         verify(contenidoDAO, never()).save(any());
     }
 
     @ParameterizedTest
-    @ValueSource(strings = {"144p", "360p", "8k", "ultra", "1080"})
-    @DisplayName("VIDEO con resolución inválida -> ContenidoAddException")
+    @ValueSource(strings = {"144p", "360p", "8k", "ultra", "1080"}) // formatos no admitidos por el regex
+    @DisplayName("VIDEO con resolución inválida -> IllegalArgumentException")
     void video_resolucion_invalida(String reso) {
         Contenido c = baseVideo(reso);
 
-        ContenidoAddException ex = assertThrows(ContenidoAddException.class, () -> service.anadirContenido(c));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.anadirContenido(c));
         assertTrue(ex.getMessage().toLowerCase().contains("resolución"));
         verify(contenidoDAO, never()).save(any());
     }
@@ -125,46 +125,46 @@ class ContenidoServiceTest {
     @ParameterizedTest
     @NullAndEmptySource
     @ValueSource(strings = {"   "})
-    @DisplayName("Título null/blank -> ContenidoAddException")
+    @DisplayName("Título null/blank -> IllegalArgumentException")
     void titulo_invalido_lanza(String titulo) {
         Contenido c = baseAudio();
         c.setTitulo(titulo);
 
-        ContenidoAddException ex = assertThrows(ContenidoAddException.class, () -> service.anadirContenido(c));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.anadirContenido(c));
         assertTrue(ex.getMessage().toLowerCase().contains("título"));
         verify(contenidoDAO, never()).save(any());
     }
 
     @Test
-    @DisplayName("Tags null -> ContenidoAddException")
+    @DisplayName("Tags null -> IllegalArgumentException")
     void tags_null_lanza() {
         Contenido c = baseAudio();
         c.setTags(null);
 
-        ContenidoAddException ex = assertThrows(ContenidoAddException.class, () -> service.anadirContenido(c));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.anadirContenido(c));
         assertTrue(ex.getMessage().toLowerCase().contains("tag"));
         verify(contenidoDAO, never()).save(any());
     }
 
     @Test
-    @DisplayName("Tags vacíos -> ContenidoAddException")
+    @DisplayName("Tags vacíos -> IllegalArgumentException")
     void tags_vacios_lanza() {
         Contenido c = baseAudio();
         c.setTags(Collections.emptyList());
 
-        ContenidoAddException ex = assertThrows(ContenidoAddException.class, () -> service.anadirContenido(c));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.anadirContenido(c));
         assertTrue(ex.getMessage().toLowerCase().contains("tag"));
         verify(contenidoDAO, never()).save(any());
     }
 
     @ParameterizedTest
     @ValueSource(ints = {0, -1, -30})
-    @DisplayName("Duración <= 0 -> ContenidoAddException")
+    @DisplayName("Duración <= 0 -> IllegalArgumentException")
     void duracion_no_positiva_lanza(int mins) {
         Contenido c = baseAudio();
         c.setDuracionMinutos(mins);
 
-        ContenidoAddException ex = assertThrows(ContenidoAddException.class, () -> service.anadirContenido(c));
+        IllegalArgumentException ex = assertThrows(IllegalArgumentException.class, () -> service.anadirContenido(c));
         assertTrue(ex.getMessage().toLowerCase().contains("duración"));
         verify(contenidoDAO, never()).save(any());
     }
@@ -187,4 +187,5 @@ class ContenidoServiceTest {
             assertTrue(!t1.isBefore(t0));
         }
     }
+    
 }
