@@ -17,10 +17,13 @@ import org.springframework.http.*;
 import java.util.*;
 
 import static org.junit.jupiter.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.Mockito.*;
+import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class TDDValoracionContenidoTest {
+
 
     @Mock ContenidoDAO contenidoDAO;
     @Mock MongoTemplate mongoTemplate;
@@ -33,7 +36,6 @@ class TDDValoracionContenidoTest {
 
     @BeforeEach
     void baseInit() {
-        
         contenido = new Contenido();
         try {
             var idField = Contenido.class.getDeclaredField("id");
@@ -41,64 +43,86 @@ class TDDValoracionContenidoTest {
             idField.set(contenido, "C1");
         } catch (Exception ignored) {}
 
+        
         contenido.setReproductores(new HashSet<>(List.of("user@esi.com")));
 
-        contenido.setRatings(new HashMap<>());
+    
+        contenido.setRatings(new HashMap<>()); 
         contenido.setRatingAvg(0.0);
         contenido.setRatingCount(0);
-
-        when(contenidoDAO.findById("C1")).thenReturn(Optional.of(contenido));
-        when(contenidoDAO.save(any())).thenAnswer(inv -> inv.getArgument(0));
     }
 
     @Nested
     @DisplayName("ContenidoService - Rating")
     class ServiceRatingTests {
 
+        @BeforeEach
+        void initServiceStubs() {
+        
+            lenient().when(contenidoDAO.findById("C1")).thenReturn(Optional.of(contenido));
+        }
+
         @Test
-        @DisplayName("Primera valoración -> count=1 y avg=score")
+        @DisplayName("Primera valoración (4.5) -> count=1 y avg=4.5")
         void primerVoto_ok() {
-            Map<String,Object> res = serviceUnderTest.rateContenido("C1", "user@esi.com", 5);
+            when(contenidoDAO.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            Map<String,Object> res = serviceUnderTest.rateContenido("C1", "user@esi.com", 4.5);
             assertEquals(1, res.get("count"));
-            assertEquals(5.0, (double)res.get("avg"));
-            assertEquals(5, ((Map<?,?>)res.get("ratings")).get("user@esi.com"));
+            assertEquals(4.5, (double)res.get("avg"), 1e-9);
+            assertEquals(4.5, (double)((Map<?,?>)res.get("ratings")).get("user@esi.com"), 1e-9);
             verify(contenidoDAO, times(1)).save(any());
         }
 
         @Test
-        @DisplayName("Actualizar voto del mismo usuario -> count no sube, avg recalculado")
-        void actualizaVoto_ok() {
-            serviceUnderTest.rateContenido("C1", "user@esi.com", 5);
-            Map<String,Object> res = serviceUnderTest.rateContenido("C1", "user@esi.com", 3);
-            assertEquals(1, res.get("count"));
-            assertEquals(3.0, (double)res.get("avg"));
-            assertEquals(3, ((Map<?,?>)res.get("ratings")).get("user@esi.com"));
-            verify(contenidoDAO, atLeast(2)).save(any());
+        @DisplayName("Duplicado: el mismo usuario no puede volver a valorar")
+        void votoDuplicado_noPermitido() {
+            when(contenidoDAO.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+        
+            serviceUnderTest.rateContenido("C1", "user@esi.com", 3.0);
+
+            
+            assertThrows(ContenidoException.class,
+                    () -> serviceUnderTest.rateContenido("C1", "user@esi.com", 5.0));
+
+    
+            verify(contenidoDAO, times(1)).save(any());
         }
 
         @Test
-        @DisplayName("Score inválido (fuera 1..5) -> ContenidoValidationException")
-        void scoreInvalido() {
+        @DisplayName("Score fuera de rango (0.5 y 5.5) -> ContenidoValidationException")
+        void scoreInvalido_rango() {
             assertThrows(ContenidoValidationException.class,
-                    () -> serviceUnderTest.rateContenido("C1", "user@esi.com", 0));
+                    () -> serviceUnderTest.rateContenido("C1", "user@esi.com", 0.5));
             assertThrows(ContenidoValidationException.class,
-                    () -> serviceUnderTest.rateContenido("C1", "user@esi.com", 6));
+                    () -> serviceUnderTest.rateContenido("C1", "user@esi.com", 5.5));
+        }
+
+        @Test
+        @DisplayName("Score no múltiplo de 0.5 (4.3) -> ContenidoValidationException")
+        void scoreInvalido_noMultiplo() {
+            assertThrows(ContenidoValidationException.class,
+                    () -> serviceUnderTest.rateContenido("C1", "user@esi.com", 4.3));
         }
 
         @Test
         @DisplayName("Usuario no reprodujo -> ContenidoException")
         void noReprodujo_forbidden() {
             assertThrows(ContenidoException.class,
-                    () -> serviceUnderTest.rateContenido("C1", "otro@esi.com", 4));
+                    () -> serviceUnderTest.rateContenido("C1", "otro@esi.com", 4.0));
+            verify(contenidoDAO, never()).save(any());
         }
 
         @Test
         @DisplayName("Resumen -> devuelve count y avg")
         void resumen_ok() {
-            serviceUnderTest.rateContenido("C1", "user@esi.com", 4);
+            when(contenidoDAO.save(any())).thenAnswer(inv -> inv.getArgument(0));
+
+            serviceUnderTest.rateContenido("C1", "user@esi.com", 4.0);
             Map<String,Object> res = serviceUnderTest.ratingResumen("C1");
             assertEquals(1, res.get("count"));
-            assertEquals(4.0, (double)res.get("avg"));
+            assertEquals(4.0, (double)res.get("avg"), 1e-9);
         }
     }
 
@@ -107,20 +131,20 @@ class TDDValoracionContenidoTest {
     class ControllerRatingTests {
 
         @Test
-        @DisplayName("POST /ValorarContenido/{id}/{score} -> 200 con avg y count")
+        @DisplayName("POST /ValorarContenido/{id}/{score} (4.5) -> 200 con avg y count")
         void postValorar_ok() {
             Map<String, Object> mockRes = new HashMap<>();
             mockRes.put("avg", 4.5);
             mockRes.put("count", 2);
-            mockRes.put("ratings", Map.of("user@esi.com", 5, "otro@esi.com", 4));
+            mockRes.put("ratings", Map.of("user@esi.com", 4.5, "otro@esi.com", 4.5));
 
-            when(contenidoServiceMock.rateContenido("C1", "user@esi.com", 5)).thenReturn(mockRes);
+            when(contenidoServiceMock.rateContenido("C1", "user@esi.com", 4.5)).thenReturn(mockRes);
 
             ResponseEntity<Map<String,Object>> resp =
-                    controllerUnderTest.valorarContenido("C1", 5, "user@esi.com");
+                    controllerUnderTest.valorarContenido("C1", 4.5, "user@esi.com");
 
             assertEquals(HttpStatus.OK, resp.getStatusCode());
-            assertEquals(4.5, resp.getBody().get("avg"));
+            assertEquals(4.5, (double)resp.getBody().get("avg"), 1e-9);
             assertEquals(2, resp.getBody().get("count"));
         }
 
@@ -128,15 +152,15 @@ class TDDValoracionContenidoTest {
         @DisplayName("GET /RatingContenido/{id} -> 200 con avg y count")
         void getRating_ok() {
             Map<String, Object> mockRes = new HashMap<>();
-            mockRes.put("avg", 3.0);
-            mockRes.put("count", 1);
+            mockRes.put("avg", 3.5);
+            mockRes.put("count", 4);
 
             when(contenidoServiceMock.ratingResumen("C1")).thenReturn(mockRes);
 
             ResponseEntity<Map<String,Object>> resp = controllerUnderTest.ratingContenido("C1");
             assertEquals(HttpStatus.OK, resp.getStatusCode());
-            assertEquals(3.0, resp.getBody().get("avg"));
-            assertEquals(1, resp.getBody().get("count"));
+            assertEquals(3.5, (double)resp.getBody().get("avg"), 1e-9);
+            assertEquals(4, resp.getBody().get("count"));
         }
     }
 }
