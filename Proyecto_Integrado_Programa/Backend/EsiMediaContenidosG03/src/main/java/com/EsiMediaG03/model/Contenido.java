@@ -1,7 +1,11 @@
 package com.EsiMediaG03.model;
 
 import java.time.LocalDateTime;
+import java.util.HashMap;
+import java.util.HashSet;
 import java.util.List;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -35,6 +39,11 @@ public class Contenido {
     @Field("reproducciones")               
     @JsonProperty("reproducciones") 
     private long numReproducciones;
+
+    private Set<String> reproductores = new HashSet<>();
+    private Map<String, Double> ratings = new HashMap<>();
+    private int ratingCount;
+    private double ratingAvg;
 
     public String getId() {
         return id;
@@ -159,4 +168,16 @@ public class Contenido {
     public void setNumReproducciones(long numReproducciones) {
         this.numReproducciones = numReproducciones;
     }
+
+    public Set<String> getReproductores() { return reproductores; }
+    public void setReproductores(Set<String> reproductores) { this.reproductores = reproductores; }
+
+    public Map<String, Double> getRatings() { return ratings; }
+    public void setRatings(Map<String, Double> ratings) { this.ratings = ratings; }
+
+    public int getRatingCount() { return ratingCount; }
+    public void setRatingCount(int ratingCount) { this.ratingCount = ratingCount; }
+
+    public double getRatingAvg() { return ratingAvg; }
+    public void setRatingAvg(double ratingAvg) { this.ratingAvg = ratingAvg; }
 }

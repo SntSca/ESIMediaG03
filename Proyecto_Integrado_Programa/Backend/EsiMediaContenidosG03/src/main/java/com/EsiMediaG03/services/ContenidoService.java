@@ -6,6 +6,9 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Set;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -287,4 +290,69 @@ public class ContenidoService {
                     + " siendo creador de tipo " + requesterTipo + ".");
         }
     }
+
+    public void registrarReproductor(String contenidoId, String userEmail) {
+        if (userEmail == null || userEmail.isBlank()) return;
+        var q = new org.springframework.data.mongodb.core.query.Query(
+                org.springframework.data.mongodb.core.query.Criteria.where("_id").is(contenidoId));
+        var u = new org.springframework.data.mongodb.core.query.Update()
+                .addToSet("reproductores", userEmail);
+        mongoTemplate.updateFirst(q, u, Contenido.class);
+    }
+
+    public Map<String,Object> rateContenido(String id, String userEmail, double score) {
+        if (userEmail == null || userEmail.isBlank())
+            throw new ContenidoException("Debes iniciar sesión para valorar.");
+
+
+        if (score < 1.0 || score > 5.0)
+            throw new ContenidoValidationException("La puntuación debe estar entre 1.0 y 5.0.");
+        double twoX = score * 2.0;
+        if (Math.abs(twoX - Math.rint(twoX)) > 1e-9) 
+            throw new ContenidoValidationException("La puntuación debe ser entera o media estrella (incrementos de 0.5).");
+
+        Contenido c = contenidoDAO.findById(id)
+                .orElseThrow(() -> new ContenidoException("Contenido no encontrado: " + id));
+
+        
+        Set<String> repr = c.getReproductores();
+        if (repr == null || !repr.contains(userEmail))
+            throw new ContenidoException("Solo puedes valorar tras reproducir el contenido.");
+
+        Map<String, Double> ratings = c.getRatings();
+        if (ratings == null) {
+            ratings = new HashMap<>();
+            c.setRatings(ratings);
+        }
+
+        
+        if (ratings.containsKey(userEmail)) {
+            throw new ContenidoException("Ya has valorado este contenido. La primera valoración es definitiva.");
+        }
+
+        double total = c.getRatingAvg() * c.getRatingCount();
+        total += score;
+        c.setRatingCount(c.getRatingCount() + 1);
+        c.setRatingAvg(total / c.getRatingCount());
+
+        ratings.put(userEmail, score);
+
+        contenidoDAO.save(c);
+
+        Map<String,Object> res = new HashMap<>();
+        res.put("avg", c.getRatingAvg());
+        res.put("count", c.getRatingCount());
+        res.put("ratings", ratings);
+        return res;
+    }
+
+    public Map<String,Object> ratingResumen(String id) {
+        Contenido c = contenidoDAO.findById(id)
+                .orElseThrow(() -> new ContenidoException("Contenido no encontrado: " + id));
+        Map<String,Object> res = new HashMap<>();
+        res.put("avg", c.getRatingAvg());
+        res.put("count", c.getRatingCount());
+        return res;
+    }
+
 }
