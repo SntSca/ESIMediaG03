@@ -2,6 +2,8 @@ package com.EsiMediaG03.http;
 
 import com.EsiMediaG03.model.ListaPublica;
 import com.EsiMediaG03.services.ListaPublicaService;
+
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.*;
 
 import java.util.List;
@@ -55,5 +57,12 @@ public class ListaPublicaController {
     @DeleteMapping("/{listaId}/contenidos/{contenidoId}")
     public ListaPublica eliminarContenidoDeLista(@PathVariable String listaId, @PathVariable String contenidoId) {
         return listaService.eliminarContenidoDeLista(listaId, contenidoId);
+    }
+
+    @PostMapping("/mis-favoritos/init")
+    public ResponseEntity<ListaPublica> initMisFavoritos() {
+        String email = listaService.resolveEmailFromRequestOrSecurity();
+        ListaPublica lp = listaService.ensureMisFavoritosForUser(email);
+        return ResponseEntity.ok(lp);
     }
 }
