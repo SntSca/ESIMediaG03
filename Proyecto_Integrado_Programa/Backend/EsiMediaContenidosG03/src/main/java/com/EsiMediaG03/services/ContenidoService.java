@@ -7,8 +7,10 @@ import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
 import java.util.HashMap;
+import java.util.List;
 import java.util.Map;
 import java.util.Set;
+import java.util.stream.Collectors;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
@@ -370,6 +372,67 @@ public class ContenidoService {
         res.put("avg", c.getRatingAvg());
         res.put("count", c.getRatingCount());
         return res;
+    }
+
+    public void addFavorito(String contenidoId) {
+        String email = currentUserEmail();
+        ensureUserRoleCanFavorite(); 
+
+        if (!canFavorite(contenidoId)) {  
+            throw new AccessDeniedException("No se permite marcar como favorito");
+        }
+
+        Query q = Query.query(Criteria.where("_id").is(contenidoId));
+        Update u = new Update().addToSet("favoritosDeUsuarios", email); 
+        mongoTemplate.updateFirst(q, u, Contenido.class);
+    }
+
+   
+    public void removeFavorito(String contenidoId) {
+        String email = currentUserEmail();
+        Query q = Query.query(Criteria.where("_id").is(contenidoId));
+        Update u = new Update().pull("favoritosDeUsuarios", email); 
+        mongoTemplate.updateFirst(q, u, Contenido.class);
+    }
+
+  
+    public List<String> listFavoritosIdsDeUsuarioActual() {
+        String email = currentUserEmail();
+
+        Query q = Query.query(Criteria.where("favoritosDeUsuarios").is(email))
+                       .with(Sort.by(Sort.Direction.DESC, "fechaEstado")); // ajusta el orden si quieres
+
+        return mongoTemplate.find(q, Contenido.class)
+                .stream().map(Contenido::getId).collect(Collectors.toList());
+    }
+
+
+
+    private String currentUserEmail() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth instanceof AnonymousAuthenticationToken || auth.getName() == null) {
+            throw new AccessDeniedException("Usuario no autenticado");
+        }
+        return auth.getName(); 
+    }
+
+    private void ensureUserRoleCanFavorite() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isUsuario = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_USUARIO".equals(a.getAuthority()));
+        if (!isUsuario) {
+            throw new AccessDeniedException("Los creadores/administradores no pueden usar favoritos");
+        }
+    }
+
+    
+    private boolean canFavorite(String contenidoId) {
+        Contenido c = mongoTemplate.findById(contenidoId, Contenido.class);
+        if (c == null) throw new AccessDeniedException("Contenido no disponible");
+
+        List<ListaPublica> listas = listaPublicaDAO.findByContenidosIds(contenidoId);
+        boolean enPrivada = listas.stream().anyMatch(lp -> !lp.isPublica());
+        return !enPrivada;
     }
 
 }

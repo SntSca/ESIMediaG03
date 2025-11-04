@@ -231,5 +231,31 @@ public class ContenidoController {
         return ResponseEntity.ok(res);
     }
 
+    @PostMapping(path = "/{id}/favorito", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<Void> addFavorito(
+            @PathVariable("id") String contenidoId,
+            @RequestHeader(value = "X-User-Email", required = false) String xUserEmail // opcional
+    ) {
+        // (el service puede usar SecurityContext y si no, caer al header)
+        contenidoService.addFavorito(contenidoId);
+        return ResponseEntity.created(URI.create("/Contenidos/" + contenidoId + "/favorito")).build();
+    }
+
+    @DeleteMapping(path = "/{id}/favorito", consumes = MediaType.ALL_VALUE)
+    public ResponseEntity<Void> removeFavorito(
+            @PathVariable("id") String contenidoId,
+            @RequestHeader(value = "X-User-Email", required = false) String xUserEmail
+    ) {
+        contenidoService.removeFavorito(contenidoId);
+        return ResponseEntity.noContent().build();
+    }
+
+    @GetMapping(path = "/favoritos", produces = MediaType.APPLICATION_JSON_VALUE)
+    public ResponseEntity<List<String>> listFavoritos(
+            @RequestHeader(value = "X-User-Email", required = false) String xUserEmail
+    ) {
+        return ResponseEntity.ok(contenidoService.listFavoritosIdsDeUsuarioActual());
+    }
+
     
 }
