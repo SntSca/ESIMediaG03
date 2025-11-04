@@ -89,7 +89,7 @@ import static org.mockito.Mockito.*;
 
             StreamingTarget t = service.resolveStreamingTarget("IDV", false, 22);
             Assertions.assertTrue(t.isExternalRedirect());
-            Assertions.assertEquals("https://youtu.be/xyz", t.externalUrl());
+            Assertions.assertEquals("https://youtu.be/xyz",  t.externalUrl());
         }
 
         @Test

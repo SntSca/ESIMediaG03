@@ -126,7 +126,7 @@ class TDD_ContenidosFavoritosTest {
         Contenido cA = mock(Contenido.class); when(cA.getId()).thenReturn("C3");
         Contenido cB = mock(Contenido.class); when(cB.getId()).thenReturn("C2");
         Contenido cC = mock(Contenido.class); when(cC.getId()).thenReturn("C1");
-        when(mongoTemplate.find(any(Query.class), eq(Contenido.class))).thenReturn(List.of(cA, cB, cC));
+        when(mongoTemplate.find( any(Query.class), eq(Contenido.class))).thenReturn(List.of(cA, cB, cC));
 
         List<String> ids = service.listFavoritosIdsDeUsuarioActual();
 
