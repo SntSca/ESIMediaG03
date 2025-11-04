@@ -6,11 +6,19 @@ import java.nio.file.Path;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.Period;
+import java.util.List;
+import java.util.stream.Collectors;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.EsiMediaG03.dao.ContenidoDAO;
@@ -23,18 +31,21 @@ import com.EsiMediaG03.exceptions.ContenidoValidationException;
 import com.EsiMediaG03.exceptions.StreamingTargetException;
 import com.EsiMediaG03.exceptions.StreamingTargetResolutionException;
 import com.EsiMediaG03.model.Contenido;
-
+import com.EsiMediaG03.model.ListaPublica;
+import com.EsiMediaG03.dao.ListaPublicaDAO;
 @Service
 public class ContenidoService {
 
     private final ContenidoDAO contenidoDAO;
     private final MongoTemplate mongoTemplate;
+    private final ListaPublicaDAO listaPublicaDAO;
     private static final String VIDEO_MP4 = "video/mp4";
     private static final String CONTENIDO_NO_ENCONTRADO = "Contenido no encontrado: ";
 
-    public ContenidoService(ContenidoDAO contenidoDAO, MongoTemplate mongoTemplate) {
+    public ContenidoService(ContenidoDAO contenidoDAO, MongoTemplate mongoTemplate, ListaPublicaDAO listaPublicaDAO) {
         this.contenidoDAO = contenidoDAO;
         this.mongoTemplate = mongoTemplate;
+        this.listaPublicaDAO = listaPublicaDAO;
     }
 
 
@@ -287,4 +298,66 @@ public class ContenidoService {
                     + " siendo creador de tipo " + requesterTipo + ".");
         }
     }
+
+    public void addFavorito(String contenidoId) {
+        String email = currentUserEmail();
+        ensureUserRoleCanFavorite(); 
+
+        if (!canFavorite(contenidoId)) {  
+            throw new AccessDeniedException("No se permite marcar como favorito");
+        }
+
+        Query q = Query.query(Criteria.where("_id").is(contenidoId));
+        Update u = new Update().addToSet("favoritosDeUsuarios", email); 
+        mongoTemplate.updateFirst(q, u, Contenido.class);
+    }
+
+   
+    public void removeFavorito(String contenidoId) {
+        String email = currentUserEmail();
+        Query q = Query.query(Criteria.where("_id").is(contenidoId));
+        Update u = new Update().pull("favoritosDeUsuarios", email); 
+        mongoTemplate.updateFirst(q, u, Contenido.class);
+    }
+
+  
+    public List<String> listFavoritosIdsDeUsuarioActual() {
+        String email = currentUserEmail();
+
+        Query q = Query.query(Criteria.where("favoritosDeUsuarios").is(email))
+                       .with(Sort.by(Sort.Direction.DESC, "fechaEstado")); // ajusta el orden si quieres
+
+        return mongoTemplate.find(q, Contenido.class)
+                .stream().map(Contenido::getId).collect(Collectors.toList());
+    }
+
+
+
+    private String currentUserEmail() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        if (auth == null || auth instanceof AnonymousAuthenticationToken || auth.getName() == null) {
+            throw new AccessDeniedException("Usuario no autenticado");
+        }
+        return auth.getName(); 
+    }
+
+    private void ensureUserRoleCanFavorite() {
+        Authentication auth = SecurityContextHolder.getContext().getAuthentication();
+        boolean isUsuario = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_USUARIO".equals(a.getAuthority()));
+        if (!isUsuario) {
+            throw new AccessDeniedException("Los creadores/administradores no pueden usar favoritos");
+        }
+    }
+
+    
+    private boolean canFavorite(String contenidoId) {
+        Contenido c = mongoTemplate.findById(contenidoId, Contenido.class);
+        if (c == null) throw new AccessDeniedException("Contenido no disponible");
+
+        List<ListaPublica> listas = listaPublicaDAO.findByContenidosIds(contenidoId);
+        boolean enPrivada = listas.stream().anyMatch(lp -> !lp.isPublica());
+        return !enPrivada;
+    }
 }
+

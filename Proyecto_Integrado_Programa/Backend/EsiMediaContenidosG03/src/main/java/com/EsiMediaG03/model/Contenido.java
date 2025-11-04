@@ -2,6 +2,8 @@ package com.EsiMediaG03.model;
 
 import java.time.LocalDateTime;
 import java.util.List;
+import java.util.Set;
+import java.util.LinkedHashSet;
 
 import org.springframework.data.annotation.Id;
 import org.springframework.data.mongodb.core.mapping.Document;
@@ -35,7 +37,17 @@ public class Contenido {
     @Field("reproducciones")               
     @JsonProperty("reproducciones") 
     private long numReproducciones;
+    private Set <String> favoritosDeUsuarios;
+    public Set<String> getFavoritosDeUsuarios() { return favoritosDeUsuarios; }
+    public void setFavoritosDeUsuarios(Set<String> favs) { this.favoritosDeUsuarios = favs; }
 
+    public void addFavoritoUsuario(String email) {
+        if (favoritosDeUsuarios == null) favoritosDeUsuarios = new LinkedHashSet<>();
+        favoritosDeUsuarios.add(email);
+    }
+    public void removeFavoritoUsuario(String email) {
+        if (favoritosDeUsuarios != null) favoritosDeUsuarios.remove(email);
+    }
     public String getId() {
         return id;
     }

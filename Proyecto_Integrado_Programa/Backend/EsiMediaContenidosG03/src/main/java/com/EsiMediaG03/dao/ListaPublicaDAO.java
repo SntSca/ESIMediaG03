@@ -12,6 +12,6 @@ public interface ListaPublicaDAO extends MongoRepository<ListaPublica, String> {
 
 
     List<ListaPublica> findByPublicaTrue();
-
+    List<ListaPublica> findByContenidosIds(String contenidoId);
     List<ListaPublica> findByUserEmail(String userEmail);
 }

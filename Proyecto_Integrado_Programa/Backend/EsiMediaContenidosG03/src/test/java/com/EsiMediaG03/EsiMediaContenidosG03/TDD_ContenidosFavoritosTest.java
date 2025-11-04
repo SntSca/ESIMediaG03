@@ -68,7 +68,7 @@ class TDD_ContenidosFavoritosTest {
     void addFavorito_ok() {
         asUsuario("user@example.com");
         when(mongoTemplate.findById("CNT-123", Contenido.class)).thenReturn(new Contenido());
-        when(listaPublicaDAO.findByContenidosIdsContains("CNT-123")).thenReturn(List.of()); // no privadas
+        when(listaPublicaDAO.findByContenidosIds("CNT-123")).thenReturn(List.of()); // no privadas
 
         service.addFavorito("CNT-123");
 
@@ -82,7 +82,7 @@ class TDD_ContenidosFavoritosTest {
         asUsuario("user@example.com");
         when(mongoTemplate.findById("CNT-PRIV", Contenido.class)).thenReturn(new Contenido());
         ListaPublica privada = new ListaPublica(); privada.setPublica(false);
-        when(listaPublicaDAO.findByContenidosIdsContains("CNT-PRIV")).thenReturn(List.of(privada));
+        when(listaPublicaDAO.findByContenidosIds("CNT-PRIV")).thenReturn(List.of(privada));
 
         assertThrows(AccessDeniedException.class, () -> service.addFavorito("CNT-PRIV"));
         verify(mongoTemplate, never()).updateFirst(any(Query.class), any(), eq(Contenido.class));
