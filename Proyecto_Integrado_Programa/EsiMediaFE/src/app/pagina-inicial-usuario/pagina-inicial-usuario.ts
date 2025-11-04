@@ -4,7 +4,7 @@ import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { AppUser, UserDto, Contenido } from '../auth/models';
-import { HttpClient, HttpErrorResponse } from '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from  '@angular/common/http';
 import { ContenidosService, ResolveResult } from '../contenidos.service';
 
 import { firstValueFrom } from 'rxjs';
