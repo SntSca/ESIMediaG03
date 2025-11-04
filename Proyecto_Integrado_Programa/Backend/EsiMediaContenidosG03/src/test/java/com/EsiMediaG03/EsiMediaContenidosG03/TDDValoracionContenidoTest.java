@@ -105,7 +105,7 @@ class TDDValoracionContenidoTest {
         @DisplayName("Score fuera de rango (0.5 y 5.5) -> ContenidoValidationException")
         void scoreInvalido_rango() {
             assertThrows(ContenidoValidationException.class,
-                    () -> serviceUnderTest.rateContenido("C1", "user@esi.com", 0.5));
+                    () -> serviceUnderTest.rateContenido("C1", "user@esi.com", 0.0));
             assertThrows(ContenidoValidationException.class,
                     () -> serviceUnderTest.rateContenido("C1", "user@esi.com", 5.5));
         }

@@ -7,9 +7,6 @@ import { AppUser, UserDto, Contenido } from '../auth/models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ContenidosService, ResolveResult } from '../contenidos.service';
 import { StarRatingComponent } from '../star-rating/star-rating.component';
-
-
-
 import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
 
@@ -20,11 +17,9 @@ import Swal from 'sweetalert2';
   templateUrl: './pagina-inicial-usuario.html',
   styleUrls: ['./pagina-inicial-usuario.css'],
 })
-
 export class PaginaInicialUsuario implements OnInit {
   readOnly = false;
   fromAdmin = false;
-  
 
   contenidos: Contenido[] = [];
   contenidosLoading = false;
@@ -35,8 +30,6 @@ export class PaginaInicialUsuario implements OnInit {
   playerKind: 'AUDIO' | 'VIDEO' = 'VIDEO';
   playingId: string | null = null;
   playingTitle: string | null = null;
-
-
 
   avatars: string[] = [
     'assets/avatars/avatar1.png','assets/avatars/avatar2.png','assets/avatars/avatar3.png',
@@ -207,6 +200,7 @@ export class PaginaInicialUsuario implements OnInit {
       vip: !!u?.vip
     };
   }
+
   salirModoLectura(): void {
     localStorage.removeItem('users_readonly_mode');
     localStorage.removeItem('users_readonly_from_admin');
@@ -262,10 +256,8 @@ export class PaginaInicialUsuario implements OnInit {
 
   async guardarCambios() {
     if (this.readOnly) return;
-
     const msg = this.validateProfileFields();
     if (msg) return this.failSave(msg);
-
     this.okMsg = null; this.errorMsg = ''; this.saving = true;
 
     try {
@@ -299,12 +291,12 @@ export class PaginaInicialUsuario implements OnInit {
     this.okMsg = 'Se ha editado correctamente';
     this.errorMsg = '';
     this.saving = false;
-
     if (this.selectedAvatar) this.userAvatar = this.selectedAvatar;
-
+    this.cargarContenidos();
     void Swal.fire({ icon: 'success', title: 'Se ha editado correctamente', timer: 1500, showConfirmButton: false });
     this.cdr.markForCheck();
   }
+
 
   private failSave(msg: string) {
     this.saving = false;
@@ -319,19 +311,16 @@ export class PaginaInicialUsuario implements OnInit {
   private async computeAliasToSend(): Promise<string | undefined> {
     const aliasNuevo = this.t(this.model?.alias);
     if (!aliasNuevo) return undefined;
-
     const noCambio =
       this.userAliasActual &&
       aliasNuevo &&
       aliasNuevo.localeCompare(this.userAliasActual, undefined, { sensitivity: 'accent' }) === 0;
-
     const aliasAEnviar = noCambio ? undefined : aliasNuevo;
     if (!aliasAEnviar) return undefined;
-
     const ok = await this.ensureAliasDisponible(aliasAEnviar);
     if (!ok) throw new Error('El alias ya existe. Elige otro.');
     return aliasAEnviar;
-    }
+  }
 
   private async ensureAliasDisponible(alias: string): Promise<boolean> {
     try {
@@ -346,7 +335,6 @@ export class PaginaInicialUsuario implements OnInit {
     const n = this.t(this.model?.nombre);
     const a = this.t(this.model?.apellidos);
     const al = this.t(this.model?.alias);
-
     if (n && n.length > this.MAX.nombre) return `El nombre supera ${this.MAX.nombre} caracteres.`;
     if (a && a.length > this.MAX.apellidos) return `Los apellidos superan ${this.MAX.apellidos} caracteres.`;
     if (al && (al.length < this.ALIAS_MIN || al.length > this.MAX.alias)) {
@@ -360,54 +348,52 @@ export class PaginaInicialUsuario implements OnInit {
     return safe ? safe.split(/\s+/).map(p => p[0]).join('').toUpperCase() : 'U';
   }
 
-public cargarContenidos(): void {
-  this.contenidosLoading = true;
-  this.contenidosError = null;
+  public cargarContenidos(): void {
+    this.contenidosLoading = true;
+    this.contenidosError = null;
 
-  this.http.get<any[]>(`${this.CONTENIDOS_BASE}/ListarContenidos`).subscribe({
-    next: (raw) => {
-      const items: Contenido[] = (raw || [])
-        .map((c: any) => ({
-          id: c.id ?? c._id ?? '',
-          userEmail: c.userEmail,
-          titulo: c.titulo,
-          descripcion: c.descripcion,
-          ficheroAudio: c.ficheroAudio,
-          urlVideo: c.urlVideo,
-          tags: c.tags ?? [],
-          duracionMinutos: c.duracionMinutos,
-          resolucion: c.resolucion,
-          vip: !!c.vip,
-          visible: !!c.visible,
-          disponibleHasta: c.disponibleHasta,
-          restringidoEdad: Number(c.restringidoEdad ?? 0),
-          tipo: c.tipo,
-          imagen: c.imagen,
-          reproducciones: c.reproducciones ?? 0,
-          fechaEstado: c.fechaEstado,
-        }))
-        .filter(item => item.visible)
-        .filter(item => this.model.vip || !item.vip)
-        .sort((a, b) => {
-          const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
-          const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
-          return tb - ta;
-        });
+    this.http.get<any[]>(`${this.CONTENIDOS_BASE}/ListarContenidos`).subscribe({
+      next: (raw) => {
+        const items: Contenido[] = (raw || [])
+          .map((c: any) => ({
+            id: c.id ?? c._id ?? '',
+            userEmail: c.userEmail,
+            titulo: c.titulo,
+            descripcion: c.descripcion,
+            ficheroAudio: c.ficheroAudio,
+            urlVideo: c.urlVideo,
+            tags: c.tags ?? [],
+            duracionMinutos: c.duracionMinutos,
+            resolucion: c.resolucion,
+            vip: !!c.vip,
+            visible: !!c.visible,
+            disponibleHasta: c.disponibleHasta,
+            restringidoEdad: Number(c.restringidoEdad ?? 0),
+            tipo: c.tipo,
+            imagen: c.imagen,
+            reproducciones: c.reproducciones ?? 0,
+            fechaEstado: c.fechaEstado,
+          }))
+          .filter(item => item.visible)
+          .filter(item => this.model.vip || !item.vip)
+          .sort((a, b) => {
+            const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
+            const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
+            return tb - ta;
+          });
 
-      this.contenidos = items;
-      this.contenidosLoading = false;
-      this.cdr.markForCheck();
-    },
-    error: (err: HttpErrorResponse) => {
-      console.error(err);
-      this.contenidosError = 'No se pudieron cargar los contenidos.';
-      this.contenidosLoading = false;
-      this.cdr.markForCheck();
-    },
-  });
-}
-
-
+        this.contenidos = items;
+        this.contenidosLoading = false;
+        this.cdr.markForCheck();
+      },
+      error: (err: HttpErrorResponse) => {
+        console.error(err);
+        this.contenidosError = 'No se pudieron cargar los contenidos.';
+        this.contenidosLoading = false;
+        this.cdr.markForCheck();
+      },
+    });
+  }
 
   private isHttpUrl(u: unknown): u is string {
     if (typeof u !== 'string') return false;
@@ -433,7 +419,6 @@ public cargarContenidos(): void {
   private openedInternally = false;
 
   private showError(msg: string) {
-    
     if (this.openedExternally || this.openedInternally) return;
     Swal.fire({ icon: 'error', title: 'Reproducción no disponible', text: msg });
     this.closePlayer();
@@ -487,11 +472,10 @@ public cargarContenidos(): void {
       throw e;
     }
   }
- 
+
   private handleExternalPlay(url: string, content: any, isUsuario: boolean): void {
     this.openExternalStrict(url);
     this.openedExternally = true;
-
     if (isUsuario) this.incrementViews(content);
     this.cdr.markForCheck();
   }
@@ -503,11 +487,9 @@ public cargarContenidos(): void {
     this.playingTitle = content.titulo || null;
     this.playerOpen = true;
     this.openedInternally = true;
-
     if (isUsuario) this.incrementViews(content);
     this.cdr.markForCheck();
   }
-
 
   private incrementViews(content: any): void {
     content.reproducciones = this.toNum(content.reproducciones) + 1;
@@ -528,16 +510,17 @@ public cargarContenidos(): void {
       document.body.appendChild(a);
       a.click();
       document.body.removeChild(a);
-      return true; 
+      return true;
     } catch {  }
 
-    return false; 
+    return false;
   }
 
   closePlayer() {
     try { if (this.playerSrc?.startsWith('blob:')) URL.revokeObjectURL(this.playerSrc); } catch {}
     this.playerOpen = false; this.playerSrc = null; this.playingId = null; this.playingTitle = null;
   }
+
 
   private ratingOpen = new Set<string>();
 
@@ -548,10 +531,7 @@ public cargarContenidos(): void {
   toggleRating(c: { id: string }): void {
     if (!c?.id) return;
     if (this.ratingOpen.has(c.id)) this.ratingOpen.delete(c.id);
-    else {
-      this.ratingOpen.add(c.id);
-
-    }
+    else this.ratingOpen.add(c.id);
   }
 
   closeRating(c: { id: string }): void {
@@ -561,6 +541,14 @@ public cargarContenidos(): void {
 
   onRated(id: string, resumen: any) {
     this.ratingOpen.delete(id);
+    this.cargarContenidos();
   }
+
+  onVipChanged(v: boolean): void {
+    this.model.vip = !!v;
+    this.cargarContenidos();        
+    this.cdr.markForCheck();        
+  }
+  
 
 }

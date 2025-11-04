@@ -312,7 +312,7 @@ public class ContenidoService {
             throw new ContenidoException("Debes iniciar sesión para valorar.");
 
 
-        if (score < 1.0 || score > 5.0)
+        if (score < 0.5 || score > 5.0)
             throw new ContenidoValidationException("La puntuación debe estar entre 1.0 y 5.0.");
         double twoX = score * 2.0;
         if (Math.abs(twoX - Math.rint(twoX)) > 1e-9) 

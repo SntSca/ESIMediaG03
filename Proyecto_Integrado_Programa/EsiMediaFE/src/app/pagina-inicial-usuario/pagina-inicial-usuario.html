@@ -1,17 +1,18 @@
+<!-- BANNER MODO LECTURA -->
 <div class="ro-banner" *ngIf="readOnly">
   <span>📖 Modo lectura activado — no puedes interactuar con esta página.</span>
   <button
-    class="btn-salir-ro"
+    class="btn-cerrar"
     *ngIf="fromAdmin"
     type="button"
     (click)="salirModoLectura()"
-    aria-label="Salir del modo lectura"
-  >
+    aria-label="Salir del modo lectura">
     Salir del modo lectura
   </button>
 </div>
 
 <div class="ro-wrap" [class.readonly]="readOnly">
+  <!-- HEADER USUARIO -->
   <div class="usuario-header">
     <div class="usuario-info">
       <div class="ava">
@@ -31,6 +32,7 @@
     </div>
   </div>
 
+  <!-- CATÁLOGO -->
   <section class="contenidos-section" aria-label="Catálogo de contenidos">
     <div *ngIf="contenidosLoading" class="state loading">
       <div class="spinner"></div>
@@ -39,87 +41,128 @@
 
     <div *ngIf="!contenidosLoading && contenidosError" class="state error">
       <span>⚠ {{ contenidosError }}</span>
-      <button class="btn btn--ghost" type="button" (click)="cargarContenidos()">Reintentar</button>
+      <button class="btn--ghost" type="button" (click)="cargarContenidos()">Reintentar</button>
     </div>
 
     <div *ngIf="!contenidosLoading && !contenidosError && contenidos.length === 0" class="state empty">
       <span>No hay contenidos disponibles.</span>
     </div>
 
-    <div *ngIf="!contenidosLoading && !contenidosError && contenidos.length > 0" class="grid">
-      <article *ngFor="let c of contenidos" class="card">
-        <div class="thumb">
-          <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimg">
-            <img [src]="c.imagen!" [alt]="c.titulo" loading="lazy" />
-          </ng-container>
-          <ng-template #noimg>
-            <div class="noimg" aria-hidden="true">Sin imagen</div>
-          </ng-template>
-
-          <div class="badges">
-            <span class="badge info">{{ c.tipo }}</span>
-            <span *ngIf="c.vip" class="badge vip">VIP</span>
-            <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
-          </div>
-
-          <button
-            type="button"
-            class="play-btn"
-            title="Reproducir"
-            (click)="play(c)">
-            ▶
-          </button>
-
-          <button
-            type="button"
-            class="rate-btn"
-            title="Valorar este contenido"
-            (click)="toggleRating(c)"
-            *ngIf="!readOnly">
-            ★
-          </button>
+    <!-- MARCO DEL CATÁLOGO -->
+    <div class="catalog-wrap" *ngIf="!contenidosLoading && !contenidosError && contenidos.length > 0">
+      <div class="catalog-frame">
+        <div class="catalog-frame__head">
+          <h2 class="catalog-frame__title">Catálogo</h2>
+          <!-- sitio para filtros / búsqueda si lo necesitas -->
         </div>
 
-        <div class="body">
-          <h3 class="card-title" [title]="c.titulo">{{ c.titulo }}</h3>
-          <p class="desc" *ngIf="c.descripcion">{{ c.descripcion }}</p>
+        <!-- GRID -->
+        <div class="grid">
+          <article *ngFor="let c of contenidos" class="card" tabindex="0">
+            <div class="thumb">
+              <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimg">
+                <img [src]="c.imagen!" [alt]="c.titulo" loading="lazy" />
+              </ng-container>
+              <ng-template #noimg>
+                <div class="noimg" aria-hidden="true">Sin imagen</div>
+              </ng-template>
 
-          <div class="meta">
-            <span>{{ c.resolucion || '—' }}</span>
-            <span>·</span>
-            <span>{{ c.duracionMinutos || '—' }} min</span>
-            <span *ngIf="c.reproducciones !== undefined" class="plays" title="Reproducciones">
-              · ▶ {{ c.reproducciones }}
-            </span>
-          </div>
+              <div class="badges">
+                <span class="badge info">{{ c.tipo }}</span>
+                <span *ngIf="c.vip" class="badge vip">VIP</span>
+                <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
+              </div>
 
-          <div class="rate-panel" *ngIf="isRatingOpen(c)">
-            <app-star-rating
-              [contentId]="c.id"
-              [userEmail]="userEmail"
-              [enabled]="true"
-              [autoReproducir]="false"
-              (rated)="onRated(c.id, $event)">
-            </app-star-rating>
+              <!-- Barra título + rating readonly en miniatura -->
+              <div class="title-bar">
+                <h3 class="card-title" [title]="c.titulo">{{ c.titulo }}</h3>
+                <div class="title-bar__rating">
+                  <app-star-rating
+                    [contentId]="c.id"
+                    [userEmail]="userEmail"
+                    [enabled]="false"
+                    [autoReproducir]="false">
+                  </app-star-rating>
+                </div>
+              </div>
 
-            <div class="rate-actions">
-              <button type="button" class="btn--ghost" (click)="closeRating(c)">Cancelar</button>
+              <!-- Acciones rápidas (aparecen al hover/focus) -->
+              <button type="button" class="play-btn" title="Reproducir" (click)="play(c)">▶</button>
+              <button *ngIf="!readOnly" type="button" class="rate-btn" title="Valorar" (click)="toggleRating(c)">★</button>
             </div>
-          </div>
 
-          <app-star-rating
-            *ngIf="fromAdmin"
-            [contentId]="c.id"
-            [userEmail]="userEmail"
-            [enabled]="false"
-            [autoReproducir]="false">
-          </app-star-rating>
+            <!-- OSCURECIDO (único, por debajo del header) -->
+            <div class="screen-dim" aria-hidden="true"></div>
+
+            <!-- POP-CARD (única), anclada por debajo de la barra -->
+            <div class="pop-card" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
+              <div class="pop-card__media">
+                <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimgPop">
+                  <img [src]="c.imagen!" [alt]="c.titulo" loading="lazy" />
+                </ng-container>
+                <ng-template #noimgPop>
+                  <div class="noimg" aria-hidden="true">Sin imagen</div>
+                </ng-template>
+
+                <div class="pop-card__badges">
+                  <span class="badge info">{{ c.tipo }}</span>
+                  <span *ngIf="c.vip" class="badge vip">VIP</span>
+                  <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
+                </div>
+              </div>
+
+              <div class="pop-card__body">
+                <div class="pop-card__head">
+                  <h3 class="pop-card__title" [title]="c.titulo">{{ c.titulo }}</h3>
+                  <div class="pop-card__rating">
+                    <app-star-rating
+                      [contentId]="c.id"
+                      [userEmail]="userEmail"
+                      [enabled]="false"
+                      [autoReproducir]="false">
+                    </app-star-rating>
+                  </div>
+                </div>
+
+                <p class="pop-card__desc" *ngIf="c.descripcion">{{ c.descripcion }}</p>
+
+                <div class="pop-card__meta">
+                  <span>{{ c.resolucion || '—' }}</span>
+                  <span>·</span>
+                  <span>{{ c.duracionMinutos || '—' }} min</span>
+                  <span *ngIf="c.reproducciones !== undefined" class="plays" title="Reproducciones">
+                    · ▶ {{ c.reproducciones }}
+                  </span>
+                </div>
+
+                <div class="pop-card__actions">
+                  <button type="button" class="play-btn play-btn--lg" title="Reproducir" (click)="play(c)">▶</button>
+                  <button *ngIf="!readOnly" type="button" class="rate-btn rate-btn--lg" title="Valorar" (click)="toggleRating(c)">★</button>
+                </div>
+
+                <div class="rate-panel" *ngIf="isRatingOpen(c)">
+                  <app-star-rating
+                    [contentId]="c.id"
+                    [userEmail]="userEmail"
+                    [enabled]="true"
+                    [autoReproducir]="false"
+                    (rated)="onRated(c.id, $event)">
+                  </app-star-rating>
+                  <div class="rate-actions">
+                    <button type="button" class="btn--ghost" (click)="closeRating(c)">Cancelar</button>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </article>
         </div>
-      </article>
+        <!-- /GRID -->
+      </div>
     </div>
-
+    <!-- /MARCO DEL CATÁLOGO -->
   </section>
 
+  <!-- MODAL EDITAR PERFIL -->
   <button class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></button>
   <div class="edit-panel modal" [class.open]="editOpen" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
     <h3>Editar perfil</h3>
@@ -142,6 +185,7 @@
         </label>
         <input type="date" [ngModel]="model.fechaNac" name="fechaNac_ro" class="ro" readonly />
       </div>
+
       <div class="row">
         <label for="nombre">Nombre</label>
         <input id="nombre" type="text" [(ngModel)]="model.nombre" name="nombre" />
@@ -158,8 +202,11 @@
       </div>
 
       <div class="row">
-        <label>VIP <input type="checkbox" [(ngModel)]="model.vip" name="vip" /></label>
+        <label>VIP
+          <input type="checkbox" [(ngModel)]="model.vip" name="vip" (ngModelChange)="onVipChanged($event)" />
+        </label>
       </div>
+
       <div class="Avatar">
         <label for="elegirAvatar">Avatar</label>
         <button id="elegirAvatar" type="button" class="btn" (click)="openAvatarModal()">Elegir Avatar</button>
@@ -171,8 +218,10 @@
           </div>
         </div>
       </div>
+
       <p class="ok" *ngIf="okMsg">{{ okMsg }}</p>
       <p class="err" *ngIf="errorMsg">{{ errorMsg }}</p>
+
       <div class="actions">
         <button class="btn-darseBaja" type="button" (click)="DarDeBaja()">Eliminar Cuenta</button>
         <button type="button" class="btn-out" (click)="cancelarEditar()">Cancelar</button>
@@ -180,11 +229,13 @@
           {{ saving ? 'Guardando…' : 'Guardar' }}
         </button>
       </div>
-
     </form>
   </div>
+
+  <!-- OVERLAY READ-ONLY -->
   <div class="ro-overlay" *ngIf="readOnly" aria-hidden="true" style="pointer-events: none;"></div>
 
+  <!-- MODAL AVATARES -->
   <div
     *ngIf="showAvatarModal"
     class="avatar-modal"
@@ -229,12 +280,12 @@
       </ul>
 
       <div class="avatar-modal-actions">
-        <button class="btn btn--ghost" type="button" (click)="closeAvatarModal()">Cancelar</button>
+        <button class="btn--ghost" type="button" (click)="closeAvatarModal()">Cancelar</button>
       </div>
     </dialog>
-
   </div>
 
+  <!-- PLAYER -->
   <div class="overlay" *ngIf="playerOpen" (click)="closePlayer()" (keydown)="($event)"></div>
   <div class="edit-panel modal" [class.open]="playerOpen" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
     <h3 style="margin-bottom:8px;">{{ playingTitle || 'Reproduciendo' }}</h3>
@@ -261,6 +312,4 @@
       <button type="button" class="btn-out" (click)="closePlayer()">Cerrar</button>
     </div>
   </div>
-
-
 </div>
