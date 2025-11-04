@@ -62,11 +62,21 @@
             <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
           </div>
 
-          <button type="button"
-                  class="play-btn"
-                  title="Reproducir"
-                  (click)="play(c)">
+          <button
+            type="button"
+            class="play-btn"
+            title="Reproducir"
+            (click)="play(c)">
             ▶
+          </button>
+
+          <button
+            type="button"
+            class="rate-btn"
+            title="Valorar este contenido"
+            (click)="toggleRating(c)"
+            *ngIf="!readOnly">
+            ★
           </button>
         </div>
 
@@ -82,9 +92,32 @@
               · ▶ {{ c.reproducciones }}
             </span>
           </div>
+
+          <div class="rate-panel" *ngIf="isRatingOpen(c)">
+            <app-star-rating
+              [contentId]="c.id"
+              [userEmail]="userEmail"
+              [enabled]="true"
+              [autoReproducir]="false"
+              (rated)="onRated(c.id, $event)">
+            </app-star-rating>
+
+            <div class="rate-actions">
+              <button type="button" class="btn--ghost" (click)="closeRating(c)">Cancelar</button>
+            </div>
+          </div>
+
+          <app-star-rating
+            *ngIf="fromAdmin"
+            [contentId]="c.id"
+            [userEmail]="userEmail"
+            [enabled]="false"
+            [autoReproducir]="false">
+          </app-star-rating>
         </div>
       </article>
     </div>
+
   </section>
 
   <button class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></button>
@@ -228,5 +261,6 @@
       <button type="button" class="btn-out" (click)="closePlayer()">Cerrar</button>
     </div>
   </div>
+
 
 </div>

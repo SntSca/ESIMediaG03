@@ -1,11 +1,14 @@
 import { ChangeDetectorRef, Component, OnInit } from '@angular/core';
-import { CommonModule } from '@angular/common';
+import { CommonModule, NgFor, NgIf } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { AppUser, UserDto, Contenido } from '../auth/models';
 import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ContenidosService, ResolveResult } from '../contenidos.service';
+import { StarRatingComponent } from '../star-rating/star-rating.component';
+
+
 
 import { firstValueFrom } from 'rxjs';
 import Swal from 'sweetalert2';
@@ -13,13 +16,15 @@ import Swal from 'sweetalert2';
 @Component({
   selector: 'app-pagina-inicial-usuario',
   standalone: true,
-  imports: [CommonModule, FormsModule],
+  imports: [CommonModule, FormsModule, NgFor, NgIf, StarRatingComponent],
   templateUrl: './pagina-inicial-usuario.html',
   styleUrls: ['./pagina-inicial-usuario.css'],
 })
+
 export class PaginaInicialUsuario implements OnInit {
   readOnly = false;
   fromAdmin = false;
+  
 
   contenidos: Contenido[] = [];
   contenidosLoading = false;
@@ -532,6 +537,30 @@ public cargarContenidos(): void {
   closePlayer() {
     try { if (this.playerSrc?.startsWith('blob:')) URL.revokeObjectURL(this.playerSrc); } catch {}
     this.playerOpen = false; this.playerSrc = null; this.playingId = null; this.playingTitle = null;
+  }
+
+  private ratingOpen = new Set<string>();
+
+  isRatingOpen(c: { id: string }): boolean {
+    return !!c?.id && this.ratingOpen.has(c.id);
+  }
+
+  toggleRating(c: { id: string }): void {
+    if (!c?.id) return;
+    if (this.ratingOpen.has(c.id)) this.ratingOpen.delete(c.id);
+    else {
+      this.ratingOpen.add(c.id);
+
+    }
+  }
+
+  closeRating(c: { id: string }): void {
+    if (!c?.id) return;
+    this.ratingOpen.delete(c.id);
+  }
+
+  onRated(id: string, resumen: any) {
+    this.ratingOpen.delete(id);
   }
 
 }

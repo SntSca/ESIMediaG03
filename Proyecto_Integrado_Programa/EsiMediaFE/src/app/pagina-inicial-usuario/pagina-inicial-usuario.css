@@ -372,3 +372,45 @@
 }
 .play-btn:hover{ transform: translateY(-2px); background: rgba(0,0,0,.7); }
 
+/* Botón estrellita flotando en la miniatura (como el play) */
+.rate-btn {
+  position: absolute;
+  right: 12px;
+  bottom: 12px;
+  width: 36px;
+  height: 36px;
+  border: none;
+  border-radius: 50%;
+  background: rgba(255, 215, 0, 0.15);
+  color: #f5c518;
+  font-size: 18px;
+  line-height: 36px;
+  text-align: center;
+  cursor: pointer;
+  backdrop-filter: blur(2px);
+  transition: transform .12s ease-in-out, background .12s ease-in-out;
+}
+.rate-btn:hover { transform: scale(1.06); background: rgba(255, 215, 0, 0.25); }
+.rate-btn:active { transform: scale(0.98); }
+
+/* Contenedor del panel de valoración */
+.rate-panel {
+  margin-top: 10px;
+  padding: 10px 12px;
+  border-radius: 10px;
+  background: #fafafa;
+  border: 1px solid #eee;
+}
+.rate-actions {
+  margin-top: 8px;
+  display: flex;
+  justify-content: flex-end;
+}
+.btn--ghost {
+  border: 1px solid #ddd;
+  background: transparent;
+  padding: 6px 10px;
+  border-radius: 8px;
+  cursor: pointer;
+}
+.btn--ghost:hover { background: #f3f3f3; }

@@ -1,0 +1,35 @@
+<div class="rating-wrapper" [class.disabled]="!enabled || alreadyRated">
+  <div class="stars" (mouseleave)="onLeave()">
+    <ng-container *ngFor="let s of stars; let i = index">
+      <span class="star"
+            (mousemove)="onMove($event, i+1)"
+            (click)="onClick(i+1, $event)"
+            role="button" aria-label="Valorar">
+        <svg class="icon" viewBox="0 0 24 24" aria-hidden="true">
+          <defs>
+            <linearGradient [attr.id]="'halfGrad'+i" x1="0" y1="0" x2="1" y2="0">
+              <stop offset="50%" />
+              <stop offset="50%" stop-opacity="0" />
+            </linearGradient>
+          </defs>
+          <path class="star-outline"
+                d="M12 .587l3.668 7.431L24 9.748l-6 5.847 1.417 8.263L12 19.771 4.583 23.858 6 15.595 0 9.748l8.332-1.73z"/>
+          <path *ngIf="starFill(i+1)==='full'" class="star-fill"
+                d="M12 .587l3.668 7.431L24 9.748l-6 5.847 1.417 8.263L12 19.771 4.583 23.858 6 15.595 0 9.748l8.332-1.73z"/>
+          <path *ngIf="starFill(i+1)==='half'" class="star-fill half"
+                [attr.fill]="'url(#halfGrad'+i+')'"
+                d="M12 .587l3.668 7.431L24 9.748l-6 5.847 1.417 8.263L12 19.771 4.583 23.858 6 15.595 0 9.748l8.332-1.73z"/>
+        </svg>
+      </span>
+    </ng-container>
+  </div>
+
+  <div class="meta">
+    <span class="avg">{{ avg | number:'1.1-1' }}</span>
+    <span class="sep">·</span>
+    <span class="count">{{ count }} voto{{ count===1?'':'s' }}</span>
+  </div>
+
+  <div *ngIf="errorMsg" class="error">{{ errorMsg }}</div>
+  <div *ngIf="alreadyRated" class="hint">Ya has valorado este contenido.</div>
+</div>

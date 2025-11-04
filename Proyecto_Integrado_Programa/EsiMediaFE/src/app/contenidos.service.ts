@@ -1,5 +1,5 @@
 import { Injectable, inject } from '@angular/core';
-import { HttpClient } from '@angular/common/http';
+import { HttpClient,HttpHeaders } from '@angular/common/http';
 import { environment } from './environments/environment';
 
 export type ResolveResult =
@@ -14,6 +14,12 @@ type HeaderOpts = {
   fechaNacISO?: string;  
   ageYears?: number;  
 };
+
+export interface RatingResumen {
+  avg: number;
+  count: number;
+  ratings?: Record<string, number>;
+}
 
 @Injectable({ providedIn: 'root' })
 export class ContenidosService {
@@ -71,7 +77,7 @@ export class ContenidosService {
         throw new Error(await this.extractMessage(head, `No disponible (HTTP ${head.status})`));
       }
     } catch {
-      // algunos servidores no permiten HEAD;
+      
     }
 
     const tiny = await fetch(url, {
@@ -80,7 +86,7 @@ export class ContenidosService {
       redirect: 'manual',
     });
 
-    if (tiny.status === 0) return; // opaque
+    if (tiny.status === 0) return; 
     if ([301, 302, 303, 307, 308].includes(tiny.status)) return; 
     if (!tiny.ok) {
       throw new Error(await this.extractMessage(tiny, `No disponible (HTTP ${tiny.status})`));
@@ -126,4 +132,15 @@ export class ContenidosService {
     const blobUrl = URL.createObjectURL(blob);
     return { kind: 'local', blobUrl, mime: ct || 'application/octet-stream' };
   }
+
+  obtenerRating(id: string) {
+    return this.http.get<RatingResumen>(`${this.BASE}/RatingContenido/${id}`);
+  }
+
+  valorarContenido(id: string, score: number, userEmail: string) {
+    const scorePath = score.toFixed(1);
+    const headers = new HttpHeaders({ 'X-User-Email': userEmail });
+    return this.http.post<RatingResumen>(`${this.BASE}/ValorarContenido/${id}/${scorePath}`, null, { headers });
+  }
+
 }
