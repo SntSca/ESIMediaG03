@@ -4,6 +4,7 @@ import java.io.InputStream;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;
+import java.util.Map;
 
 import org.springframework.core.io.InputStreamResource;
 import org.springframework.http.HttpHeaders;
@@ -23,6 +24,7 @@ import org.springframework.web.bind.annotation.RequestHeader;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestMethod;
 import org.springframework.web.bind.annotation.RestController;
+
 import com.EsiMediaG03.dto.ModificarContenidoRequest;
 import com.EsiMediaG03.dto.StreamingTarget;
 import com.EsiMediaG03.model.Contenido;
@@ -67,6 +69,7 @@ public class ContenidoController {
         StreamingTarget target = contenidoService.resolveStreamingTarget(id, userVip, age);
 
         contenidoService.registrarReproduccionSiUsuario(id, userRole);
+        contenidoService.registrarReproductor(id, userEmail);
 
         if (target.isExternalRedirect()) {
             return ResponseEntity.status(HttpStatus.FOUND)
@@ -209,5 +212,23 @@ public class ContenidoController {
             return null;
         }
     }
+
+
+    @PostMapping("/ValorarContenido/{id}/{score}")
+    public ResponseEntity<Map<String,Object>> valorarContenido(
+            @PathVariable String id,
+            @PathVariable double score,
+            @RequestHeader(value="X-User-Email", required=false) String userEmail
+    ) {
+        Map<String,Object> res = contenidoService.rateContenido(id, userEmail, score);
+        return ResponseEntity.ok(res);
+    }
+
+    @GetMapping("/RatingContenido/{id}")
+    public ResponseEntity<Map<String,Object>> ratingContenido(@PathVariable String id) {
+        Map<String,Object> res = contenidoService.ratingResumen(id);
+        return ResponseEntity.ok(res);
+    }
+
     
 }

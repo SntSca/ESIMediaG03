@@ -300,6 +300,13 @@ public class ContenidoService {
         mongoTemplate.updateFirst(q, u, Contenido.class);
     }
 
+    private String mapKeyForEmail(String email) {
+        if (email == null) return null;
+        return email.toLowerCase()
+                    .replace(".", "%2E")
+                    .replace("$", "%24");
+    }
+
     public Map<String,Object> rateContenido(String id, String userEmail, double score) {
         if (userEmail == null || userEmail.isBlank())
             throw new ContenidoException("Debes iniciar sesión para valorar.");
@@ -312,12 +319,12 @@ public class ContenidoService {
             throw new ContenidoValidationException("La puntuación debe ser entera o media estrella (incrementos de 0.5).");
 
         Contenido c = contenidoDAO.findById(id)
-                .orElseThrow(() -> new ContenidoException("Contenido no encontrado: " + id));
+            .orElseThrow(() -> new ContenidoException("Contenido no encontrado: " + id));
 
-        
         Set<String> repr = c.getReproductores();
-        if (repr == null || !repr.contains(userEmail))
+        if (repr == null || !repr.contains(userEmail)) {
             throw new ContenidoException("Solo puedes valorar tras reproducir el contenido.");
+        }
 
         Map<String, Double> ratings = c.getRatings();
         if (ratings == null) {
@@ -325,24 +332,25 @@ public class ContenidoService {
             c.setRatings(ratings);
         }
 
+        String key = mapKeyForEmail(userEmail);
+
         
-        if (ratings.containsKey(userEmail)) {
+        if (ratings.containsKey(key)) {
             throw new ContenidoException("Ya has valorado este contenido. La primera valoración es definitiva.");
         }
+
 
         double total = c.getRatingAvg() * c.getRatingCount();
         total += score;
         c.setRatingCount(c.getRatingCount() + 1);
         c.setRatingAvg(total / c.getRatingCount());
-
-        ratings.put(userEmail, score);
+        ratings.put(key, score);
 
         contenidoDAO.save(c);
 
         Map<String,Object> res = new HashMap<>();
         res.put("avg", c.getRatingAvg());
         res.put("count", c.getRatingCount());
-        res.put("ratings", ratings);
         return res;
     }
 

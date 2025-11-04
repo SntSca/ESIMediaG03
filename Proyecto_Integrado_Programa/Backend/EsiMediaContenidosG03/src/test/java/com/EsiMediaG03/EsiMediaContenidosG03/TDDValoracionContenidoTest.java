@@ -1,25 +1,37 @@
 package com.EsiMediaG03.EsiMediaContenidosG03;
 
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+
+import static org.junit.jupiter.api.Assertions.assertEquals;
+import static org.junit.jupiter.api.Assertions.assertThrows;
+import org.junit.jupiter.api.BeforeEach;
+import org.junit.jupiter.api.DisplayName;
+import org.junit.jupiter.api.Nested;
+import org.junit.jupiter.api.Test;
+import org.junit.jupiter.api.extension.ExtendWith;
+import static org.mockito.ArgumentMatchers.any;
+import org.mockito.InjectMocks;
+import org.mockito.Mock;
+import static org.mockito.Mockito.lenient;
+import static org.mockito.Mockito.never;
+import static org.mockito.Mockito.times;
+import static org.mockito.Mockito.verify;
+import static org.mockito.Mockito.when;
+import org.mockito.junit.jupiter.MockitoExtension;
+import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+
 import com.EsiMediaG03.dao.ContenidoDAO;
 import com.EsiMediaG03.exceptions.ContenidoException;
 import com.EsiMediaG03.exceptions.ContenidoValidationException;
 import com.EsiMediaG03.http.ContenidoController;
 import com.EsiMediaG03.model.Contenido;
 import com.EsiMediaG03.services.ContenidoService;
-import org.junit.jupiter.api.*;
-import org.junit.jupiter.api.Nested;
-import org.junit.jupiter.api.extension.ExtendWith;
-import org.mockito.*;
-import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.data.mongodb.core.MongoTemplate;
-import org.springframework.http.*;
-
-import java.util.*;
-
-import static org.junit.jupiter.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.any;
-import static org.mockito.Mockito.*;
-import static org.mockito.Mockito.lenient;
 
 @ExtendWith(MockitoExtension.class)
 class TDDValoracionContenidoTest {
@@ -70,7 +82,6 @@ class TDDValoracionContenidoTest {
             Map<String,Object> res = serviceUnderTest.rateContenido("C1", "user@esi.com", 4.5);
             assertEquals(1, res.get("count"));
             assertEquals(4.5, (double)res.get("avg"), 1e-9);
-            assertEquals(4.5, (double)((Map<?,?>)res.get("ratings")).get("user@esi.com"), 1e-9);
             verify(contenidoDAO, times(1)).save(any());
         }
 
