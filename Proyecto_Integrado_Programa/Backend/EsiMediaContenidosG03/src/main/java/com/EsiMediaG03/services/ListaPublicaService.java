@@ -40,7 +40,7 @@ public class ListaPublicaService {
         return listaPublicaDAO.findById(id);
     }
 
-    public void eliminarLista(String id) {
+    public void  eliminarLista(String id) {
         listaPublicaDAO.deleteById(id);
     }
 

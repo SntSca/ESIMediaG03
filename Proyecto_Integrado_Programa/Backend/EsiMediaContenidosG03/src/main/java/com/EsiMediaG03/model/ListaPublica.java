@@ -66,6 +66,7 @@ public class ListaPublica {
     }
 
     public LocalDateTime getFechaCreacion() {
+
         return fechaCreacion;
     }
 
@@ -73,7 +74,7 @@ public class ListaPublica {
         return contenidosIds;
     }
 
-    public void setContenidosIds(List<String> contenidosIds) {
+    public void  setContenidosIds(List<String> contenidosIds) {
         this.contenidosIds = contenidosIds;
     }
 }
