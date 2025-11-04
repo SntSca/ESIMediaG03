@@ -12,8 +12,14 @@ import java.util.Set;
 
 import org.springframework.data.mongodb.core.MongoTemplate;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
+import org.springframework.security.access.AccessDeniedException;
+import org.springframework.security.authentication.AnonymousAuthenticationToken;
+import org.springframework.security.core.Authentication;
+import org.springframework.data.mongodb.core.query.Criteria;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.data.mongodb.core.query.Update;
+import org.springframework.data.domain.Sort;
+import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.EsiMediaG03.dao.ContenidoDAO;
@@ -26,18 +32,21 @@ import com.EsiMediaG03.exceptions.ContenidoValidationException;
 import com.EsiMediaG03.exceptions.StreamingTargetException;
 import com.EsiMediaG03.exceptions.StreamingTargetResolutionException;
 import com.EsiMediaG03.model.Contenido;
-
+import com.EsiMediaG03.model.ListaPublica;
+import com.EsiMediaG03.dao.ListaPublicaDAO;
 @Service
 public class ContenidoService {
 
     private final ContenidoDAO contenidoDAO;
     private final MongoTemplate mongoTemplate;
+    private final ListaPublicaDAO listaPublicaDAO;
     private static final String VIDEO_MP4 = "video/mp4";
     private static final String CONTENIDO_NO_ENCONTRADO = "Contenido no encontrado: ";
 
-    public ContenidoService(ContenidoDAO contenidoDAO, MongoTemplate mongoTemplate) {
+    public ContenidoService(ContenidoDAO contenidoDAO, MongoTemplate mongoTemplate, ListaPublicaDAO listaPublicaDAO) {
         this.contenidoDAO = contenidoDAO;
         this.mongoTemplate = mongoTemplate;
+        this.listaPublicaDAO = listaPublicaDAO;
     }
 
 
@@ -364,3 +373,4 @@ public class ContenidoService {
     }
 
 }
+

@@ -2,7 +2,12 @@ package com.EsiMediaG03.services;
 
 import com.EsiMediaG03.dao.ListaPublicaDAO;
 import com.EsiMediaG03.model.ListaPublica;
+
+import jakarta.servlet.http.HttpServletRequest;
+
 import org.springframework.stereotype.Service;
+import org.springframework.web.context.request.RequestContextHolder;
+import org.springframework.web.context.request.ServletRequestAttributes;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -35,7 +40,7 @@ public class ListaPublicaService {
         return listaPublicaDAO.findById(id);
     }
 
-    public void eliminarLista(String id) {
+    public void  eliminarLista(String id) {
         listaPublicaDAO.deleteById(id);
     }
 
@@ -81,6 +86,36 @@ public ListaPublica anadirContenidoALista(String listaId, String contenidoId) {
             listaPublicaDAO.save(lista);
         }
         return lista;
+    }
+
+    public ListaPublica ensureMisFavoritosForUser(String email) {
+        if (email == null || email.isBlank())
+            throw new IllegalArgumentException("El email del usuario no puede ser nulo o vacío");
+
+        List<ListaPublica> mias = listaPublicaDAO.findByUserEmail(email);
+        for (ListaPublica lp : mias) {
+            if ("Mis Favoritos".equalsIgnoreCase(lp.getNombre())) return lp;
+        }
+
+        ListaPublica nueva = new ListaPublica();
+        nueva.setNombre("Mis Favoritos");
+        nueva.setDescripcion("Lista automática de favoritos del usuario");
+        nueva.setUserEmail(email);
+        nueva.setPublica(false);
+        nueva.setContenidosIds(new java.util.ArrayList<>());
+        return listaPublicaDAO.save(nueva);
+    }
+
+    public String resolveEmailFromRequestOrSecurity() {
+        var ctx = RequestContextHolder.getRequestAttributes();
+        if (ctx instanceof ServletRequestAttributes sra) {
+            HttpServletRequest req = sra.getRequest();
+            String h = req.getHeader("X-User-Email");
+            if (h != null && !h.isBlank()) return h;
+        }
+        var auth = org.springframework.security.core.context.SecurityContextHolder.getContext().getAuthentication();
+        if (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName())) return auth.getName();
+        return null;
     }
 }
 

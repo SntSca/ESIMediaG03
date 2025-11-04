@@ -39,6 +39,9 @@ public class Contenido {
     @Field("reproducciones")               
     @JsonProperty("reproducciones") 
     private long numReproducciones;
+    private Set <String> favoritosDeUsuarios;
+    public Set<String> getFavoritosDeUsuarios() { return favoritosDeUsuarios; }
+    public void setFavoritosDeUsuarios(Set<String> favs) { this.favoritosDeUsuarios = favs; }
 
     private Set<String> reproductores = new HashSet<>();
     private Map<String, Double> ratings = new HashMap<>();

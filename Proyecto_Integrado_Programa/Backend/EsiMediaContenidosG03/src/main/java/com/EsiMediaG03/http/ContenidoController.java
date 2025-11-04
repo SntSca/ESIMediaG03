@@ -1,6 +1,7 @@
 package com.EsiMediaG03.http;
 
 import java.io.InputStream;
+import java.net.URI;
 import java.nio.file.Files;
 import java.nio.file.Path;
 import java.util.List;

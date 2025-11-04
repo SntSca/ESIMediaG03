@@ -66,6 +66,7 @@ public class ListaPublica {
     }
 
     public LocalDateTime getFechaCreacion() {
+
         return fechaCreacion;
     }
 
