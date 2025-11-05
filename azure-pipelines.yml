@@ -122,11 +122,6 @@ stages:
             targetFolder: '$(Build.ArtifactStagingDirectory)/coverage-frontend'
             failOnEmptySource: false
 
-
-        - script: npm run build -- --configuration=production
-          displayName: "npm run build (prod)"
-          workingDirectory: Proyecto_Integrado_Programa/EsiMediaFE
-
         - task: CopyFiles@2
           displayName: "Copiar dist"
           inputs:
