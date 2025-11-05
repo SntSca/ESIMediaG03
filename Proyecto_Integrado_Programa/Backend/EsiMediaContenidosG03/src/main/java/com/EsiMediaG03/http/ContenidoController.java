@@ -30,12 +30,12 @@ import com.EsiMediaG03.dto.ModificarContenidoRequest;
 import com.EsiMediaG03.dto.StreamingTarget;
 import com.EsiMediaG03.model.Contenido;
 import com.EsiMediaG03.services.ContenidoService;
- 
+
 @RestController
 @RequestMapping("Contenidos")
 @CrossOrigin(origins = "http://localhost:4200")
 public class ContenidoController {
- 
+
     private static final long DEFAULT_CHUNK_SIZE = 1024L * 1024L;
     private final ContenidoService contenidoService;
 
@@ -54,7 +54,6 @@ public class ContenidoController {
         List<Contenido> lista = contenidoService.listarContenidos();
         return ResponseEntity.ok(lista);
     }
-
 
     @GetMapping("/ReproducirContenido/{id}")
     public ResponseEntity<Object> stream(@PathVariable String id,
@@ -147,6 +146,7 @@ public class ContenidoController {
         h.set(HttpHeaders.ACCEPT_RANGES, "bytes");
         return h;
     }
+
     @PutMapping("/ModificarContenido/{id}")
     public ResponseEntity<Contenido> modificarContenido(
             @PathVariable String id,
@@ -214,7 +214,6 @@ public class ContenidoController {
         }
     }
 
-
     @PostMapping("/ValorarContenido/{id}/{score}")
     public ResponseEntity<Map<String,Object>> valorarContenido(
             @PathVariable String id,
@@ -238,8 +237,8 @@ public class ContenidoController {
             @RequestHeader(value = "X-User-Role", required = false) String xUserRole
     ) {
         String email = resolveEmail(xUserEmail);
-        contenidoService.addFavorito(contenidoId, email, xUserRole);  
-        
+        contenidoService.addFavorito(contenidoId, email, xUserRole);
+
         return ResponseEntity.created(URI.create("/Contenidos/" + contenidoId + "/favorito")).build();
     }
 
@@ -249,7 +248,7 @@ public class ContenidoController {
             @RequestHeader(value = "X-User-Email", required = false) String xUserEmail
     ) {
         String email = resolveEmail(xUserEmail);
-        contenidoService.removeFavorito(contenidoId, email);         
+        contenidoService.removeFavorito(contenidoId, email);
         return ResponseEntity.noContent().build();
     }
 
@@ -258,9 +257,8 @@ public class ContenidoController {
             @RequestHeader(value = "X-User-Email", required = false) String xUserEmail
     ) {
         String email = resolveEmail(xUserEmail);
-        return ResponseEntity.ok(contenidoService.listFavoritosIds(email));  
+        return ResponseEntity.ok(contenidoService.listFavoritosIds(email));
     }
-
 
     private String resolveEmail(String headerEmail) {
         var ctx = org.springframework.security.core.context.SecurityContextHolder.getContext();
@@ -274,6 +272,18 @@ public class ContenidoController {
         return email;
     }
 
+    @GetMapping("/Estadisticas/Tops")
+    public ResponseEntity<Object> obtenerEstadisticasGlobales(
+            @RequestHeader(value = "X-User-Role", required = false) String userRole) {
 
-    
+        if (userRole == null ||
+            !(userRole.equalsIgnoreCase("ADMINISTRADOR") ||
+              userRole.equalsIgnoreCase("GESTOR_CONTENIDO"))) {
+            return ResponseEntity.status(HttpStatus.FORBIDDEN)
+                    .body(Map.of("error", "No autorizado: solo Administradores y Gestores."));
+        }
+
+        Map<String, Object> res = contenidoService.estadisticasGlobales();
+        return ResponseEntity.ok(res);
+    }
 }
