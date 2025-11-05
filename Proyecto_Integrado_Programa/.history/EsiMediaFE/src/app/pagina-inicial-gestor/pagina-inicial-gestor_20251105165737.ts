@@ -783,42 +783,19 @@ get contenidosFiltrados(): Contenido[] {
   const ordenar = this.filtros.ordenar;
   if (!ordenar) return base;
 
-  const compareValues = <T>(a: T | null | undefined, b: T | null | undefined, asc: boolean): number => {
-    if (a == null && b == null) return 0;
-    if (a == null) return asc ? 1 : -1;
-    if (b == null) return asc ? -1 : 1;
+  const by = <T>(sel: (c: Contenido) => T, asc = true) =>
+    base.toSorted((a, b) => compareValues(sel(a), sel(b), asc));
 
-    if (typeof a === 'string' && typeof b === 'string') {
-      const cmp = a.localeCompare(b, 'es', { sensitivity: 'base' });
-      return asc ? cmp : -cmp;
-    }
-
-    let cmp = 0;
-    if (a < b) cmp = -1;
-    else if (a > b) cmp = 1;
-
-    return asc ? cmp : -cmp;
-  };
-
-  const sortBy = <T>(sel: (c: Contenido) => T, asc: boolean) => {
-    const arr = [...base];             
-    arr.sort((a, b) => compareValues(sel(a), sel(b), asc)); 
-    return arr;
-  };
-
-  const sorters: Record<string, { sel: (c: Contenido) => any; asc: boolean }> = {
-    tituloAsc:  { sel: c => c.titulo ?? '',     asc: true  },
-    tituloDesc: { sel: c => c.titulo ?? '',     asc: false },
-    autorAsc:   { sel: c => c.userEmail ?? '',  asc: true  },
-    autorDesc:  { sel: c => c.userEmail ?? '',  asc: false },
-    ratingAsc:  { sel: c => Number(c.ratingAvg ?? 0), asc: true  },
-    ratingDesc: { sel: c => Number(c.ratingAvg ?? 0), asc: false },
-  };
-
-  const s = sorters[ordenar];
-  return s ? sortBy(s.sel, s.asc) : base;
+  switch (ordenar) {
+    case 'tituloAsc':  return by(c => c.titulo || '', true);
+    case 'tituloDesc': return by(c => c.titulo || '', false);
+    case 'autorAsc':   return by(c => c.userEmail || '', true);
+    case 'autorDesc':  return by(c => c.userEmail || '', false);
+    case 'ratingAsc':  return by(c => Number(c.ratingAvg ?? 0), true);
+    case 'ratingDesc': return by(c => Number(c.ratingAvg ?? 0), false);
+    default: return base;
+  }
 }
-
 
 resetFiltros() {
   this.filtros = {

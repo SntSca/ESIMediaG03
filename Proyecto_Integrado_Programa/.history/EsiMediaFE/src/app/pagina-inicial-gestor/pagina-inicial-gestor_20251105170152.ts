@@ -801,8 +801,8 @@ get contenidosFiltrados(): Contenido[] {
   };
 
   const sortBy = <T>(sel: (c: Contenido) => T, asc: boolean) => {
-    const arr = [...base];             
-    arr.sort((a, b) => compareValues(sel(a), sel(b), asc)); 
+    const arr = [...base];              // clonar para no mutar 'base'
+    arr.sort((a, b) => compareValues(sel(a), sel(b), asc)); // sort en sentencia separada
     return arr;
   };
 

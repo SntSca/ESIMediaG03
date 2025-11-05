@@ -171,7 +171,7 @@
             </thead>
 
             <tbody>
-              <tr *ngFor="let c of contenidosFiltrados; trackBy: trackContenido">
+              <tr *ngFor="let c of contenidosList; trackBy: trackContenido">
                 <td>
                   <div class="thumb">
                     <img *ngIf="c.imagen; else noImg"

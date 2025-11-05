@@ -28,6 +28,141 @@ interface ContenidoCreate {
   restringidoEdad: number;
   imagen?: string | null;
 }
+// ====== FILTROS ======
+filtros: {
+  q: string;
+  tipo: '' | 'AUDIO' | 'VIDEO';
+  visible: '' | boolean;
+  vip: '' | boolean;
+  edadMin: number | null;
+  listaId: any | '';
+  tag: string;
+  ordenar: '' | 'tituloAsc' | 'tituloDesc' | 'autorAsc' | 'autorDesc' | 'ratingAsc' | 'ratingDesc';
+} = {
+  q: '',
+  tipo: '',
+  visible: '',
+  vip: '',
+  edadMin: null,
+  listaId: '',
+  tag: '',
+  ordenar: ''
+};
+
+get allTags(): string[] {
+  // Une los posibles tags del catálogo + los que ya existan en contenidos
+  const base = new Set<string>([
+    ...this.availableTags.video,
+    ...this.availableTags.audio
+  ]);
+  for (const c of (this.contenidosList || [])) {
+    (c.tags || []).forEach(t => base.add((t || '').toString().trim()));
+  }
+  // devuelvo sin vacíos y ordenado alfabéticamente
+  return Array.from(base).filter(Boolean).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+}
+
+private norm(s: any): string {
+  return (typeof s === 'string' ? s : (s ?? '')).toString().normalize('NFD')
+    .replace(/\p{Diacritic}/gu, '')
+    .toLowerCase()
+    .trim();
+}
+
+private pasaTexto(c: Contenido, q: string): boolean {
+  if (!q) return true;
+  const needle = this.norm(q);
+  const haystack = [
+    c.titulo,
+    c.descripcion,
+    c.userEmail,
+    ...(c.tags || [])
+  ].map(v => this.norm(v)).join(' | ');
+  return haystack.includes(needle);
+}
+
+private pasaTipo(c: Contenido): boolean {
+  return !this.filtros.tipo || c.tipo === this.filtros.tipo;
+}
+
+private pasaVisible(c: Contenido): boolean {
+  return this.filtros.visible === '' || !!c.visible === this.filtros.visible;
+}
+
+private pasaVip(c: Contenido): boolean {
+  return this.filtros.vip === '' || !!c.vip === this.filtros.vip;
+}
+
+private pasaEdad(c: Contenido): boolean {
+  if (this.filtros.edadMin == null || isNaN(this.filtros.edadMin as any)) return true;
+  const restr = Number(c.restringidoEdad ?? 0);
+  return restr >= Number(this.filtros.edadMin);
+}
+
+private pasaLista(c: Contenido): boolean {
+  if (this.filtros.listaId === '' || !this.listasPublicas?.length) return true;
+  const lista = this.listasPublicas.find(l => String(l.id) === String(this.filtros.listaId));
+  const ids = (lista?.contenidosIds || []).map(String);
+  return ids.includes(String(c.id));
+}
+
+private pasaTag(c: Contenido): boolean {
+  if (!this.filtros.tag) return true;
+  return (c.tags || []).some(t => (t || '').toString().trim() === this.filtros.tag);
+}
+
+get contenidosFiltrados(): Contenido[] {
+  const base = (this.contenidosList || []).filter(c =>
+    this.pasaTexto(c, this.filtros.q) &&
+    this.pasaTipo(c) &&
+    this.pasaVisible(c) &&
+    this.pasaVip(c) &&
+    this.pasaEdad(c) &&
+    this.pasaLista(c) &&
+    this.pasaTag(c)
+  );
+
+  // Ordenación
+  const ordenar = this.filtros.ordenar;
+  if (!ordenar) return base;
+
+  const by = <T>(sel: (c: Contenido) => T, asc = true) =>
+    base.sort((a, b) => {
+      const av = sel(a) as any, bv = sel(b) as any;
+      if (av == null && bv == null) return 0;
+      if (av == null) return asc ? 1 : -1;
+      if (bv == null) return asc ? -1 : 1;
+      if (typeof av === 'string' && typeof bv === 'string') {
+        const cmp = av.localeCompare(bv, 'es', { sensitivity: 'base' });
+        return asc ? cmp : -cmp;
+      }
+      const cmp = (av < bv ? -1 : (av > bv ? 1 : 0));
+      return asc ? cmp : -cmp;
+    });
+
+  switch (ordenar) {
+    case 'tituloAsc':  return by(c => c.titulo || '', true);
+    case 'tituloDesc': return by(c => c.titulo || '', false);
+    case 'autorAsc':   return by(c => c.userEmail || '', true);
+    case 'autorDesc':  return by(c => c.userEmail || '', false);
+    case 'ratingAsc':  return by(c => Number(c.ratingAvg ?? 0), true);
+    case 'ratingDesc': return by(c => Number(c.ratingAvg ?? 0), false);
+    default: return base;
+  }
+}
+
+resetFiltros() {
+  this.filtros = {
+    q: '',
+    tipo: '',
+    visible: '',
+    vip: '',
+    edadMin: null,
+    listaId: '',
+    tag: '',
+    ordenar: ''
+  };
+}
 
 
 const trim = (s: unknown) => (typeof s === 'string' ? s.trim() : '');
@@ -686,152 +821,5 @@ export class PaginaInicialGestor implements OnInit {
       .filter(lista => (lista?.contenidosIds ?? []).map(String).includes(idStr))
       .map(lista => lista.nombre);
   }
-  // ====== FILTROS ======
-filtros: {
-  q: string;
-  tipo: '' | 'AUDIO' | 'VIDEO';
-  visible: '' | boolean;
-  vip: '' | boolean;
-  edadMin: number | null;
-  listaId: string | number;
-  tag: string;
-  ordenar: '' | 'tituloAsc' | 'tituloDesc' | 'autorAsc' | 'autorDesc' | 'ratingAsc' | 'ratingDesc';
-} = {
-  q: '',
-  tipo: '',
-  visible: '',
-  vip: '',
-  edadMin: null,
-  listaId: '',
-  tag: '',
-  ordenar: ''
-};
-
-get allTags(): string[] {
-  // Une los posibles tags del catálogo + los que ya existan en contenidos
-  const base = new Set<string>([
-    ...this.availableTags.video,
-    ...this.availableTags.audio
-  ]);
-  for (const c of (this.contenidosList || [])) {
-    (c.tags || []).forEach(t => base.add((t || '').toString().trim()));
-  }
-  // devuelvo sin vacíos y ordenado alfabéticamente
-  return Array.from(base).filter(Boolean).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-}
-
-private norm(s: any): string {
-  return (typeof s === 'string' ? s : (s ?? '')).toString().normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .trim();
-}
-
-private pasaTexto(c: Contenido, q: string): boolean {
-  if (!q) return true;
-  const needle = this.norm(q);
-  const haystack = [
-    c.titulo,
-    c.descripcion,
-    c.userEmail,
-    ...(c.tags || [])
-  ].map(v => this.norm(v)).join(' | ');
-  return haystack.includes(needle);
-}
-
-private pasaTipo(c: Contenido): boolean {
-  return !this.filtros.tipo || c.tipo === this.filtros.tipo;
-}
-
-private pasaVisible(c: Contenido): boolean {
-  return this.filtros.visible === '' || !!c.visible === this.filtros.visible;
-}
-
-private pasaVip(c: Contenido): boolean {
-  return this.filtros.vip === '' || !!c.vip === this.filtros.vip;
-}
-
-private pasaEdad(c: Contenido): boolean {
-  if (this.filtros.edadMin == null || isNaN(this.filtros.edadMin as any)) return true;
-  const restr = Number(c.restringidoEdad ?? 0);
-  return restr >= Number(this.filtros.edadMin);
-}
-
-private pasaLista(c: Contenido): boolean {
-  if (this.filtros.listaId === '' || !this.listasPublicas?.length) return true;
-  const lista = this.listasPublicas.find(l => String(l.id) === String(this.filtros.listaId));
-  const ids = (lista?.contenidosIds || []).map(String);
-  return ids.includes(String(c.id));
-}
-
-private pasaTag(c: Contenido): boolean {
-  if (!this.filtros.tag) return true;
-  return (c.tags || []).some(t => (t || '').toString().trim() === this.filtros.tag);
-}
-
-get contenidosFiltrados(): Contenido[] {
-  const base = (this.contenidosList || []).filter(c =>
-    this.pasaTexto(c, this.filtros.q) &&
-    this.pasaTipo(c) &&
-    this.pasaVisible(c) &&
-    this.pasaVip(c) &&
-    this.pasaEdad(c) &&
-    this.pasaLista(c) &&
-    this.pasaTag(c)
-  );
-
-  const ordenar = this.filtros.ordenar;
-  if (!ordenar) return base;
-
-  const compareValues = <T>(a: T | null | undefined, b: T | null | undefined, asc: boolean): number => {
-    if (a == null && b == null) return 0;
-    if (a == null) return asc ? 1 : -1;
-    if (b == null) return asc ? -1 : 1;
-
-    if (typeof a === 'string' && typeof b === 'string') {
-      const cmp = a.localeCompare(b, 'es', { sensitivity: 'base' });
-      return asc ? cmp : -cmp;
-    }
-
-    let cmp = 0;
-    if (a < b) cmp = -1;
-    else if (a > b) cmp = 1;
-
-    return asc ? cmp : -cmp;
-  };
-
-  const sortBy = <T>(sel: (c: Contenido) => T, asc: boolean) => {
-    const arr = [...base];             
-    arr.sort((a, b) => compareValues(sel(a), sel(b), asc)); 
-    return arr;
-  };
-
-  const sorters: Record<string, { sel: (c: Contenido) => any; asc: boolean }> = {
-    tituloAsc:  { sel: c => c.titulo ?? '',     asc: true  },
-    tituloDesc: { sel: c => c.titulo ?? '',     asc: false },
-    autorAsc:   { sel: c => c.userEmail ?? '',  asc: true  },
-    autorDesc:  { sel: c => c.userEmail ?? '',  asc: false },
-    ratingAsc:  { sel: c => Number(c.ratingAvg ?? 0), asc: true  },
-    ratingDesc: { sel: c => Number(c.ratingAvg ?? 0), asc: false },
-  };
-
-  const s = sorters[ordenar];
-  return s ? sortBy(s.sel, s.asc) : base;
-}
-
-
-resetFiltros() {
-  this.filtros = {
-    q: '',
-    tipo: '',
-    visible: '',
-    vip: '',
-    edadMin: null,
-    listaId: '',
-    tag: '',
-    ordenar: ''
-  };
-}
-
   
 }

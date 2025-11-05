@@ -39,6 +39,7 @@
     <div class="main-container">
       <aside class="filter-panel">
         <h3>Filtros</h3>
+
         <form class="filters-form" (ngSubmit)="$event.preventDefault()">
           <div class="form-row">
             <label for="q">🔎 Buscar</label>
@@ -171,7 +172,7 @@
             </thead>
 
             <tbody>
-              <tr *ngFor="let c of contenidosFiltrados; trackBy: trackContenido">
+              <tr *ngFor="let c of contenidosList; trackBy: trackContenido">
                 <td>
                   <div class="thumb">
                     <img *ngIf="c.imagen; else noImg"

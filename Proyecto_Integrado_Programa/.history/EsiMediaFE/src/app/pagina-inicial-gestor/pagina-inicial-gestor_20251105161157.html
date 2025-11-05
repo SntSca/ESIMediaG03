@@ -37,96 +37,97 @@
     </nav>
 
     <div class="main-container">
-      <aside class="filter-panel">
-        <h3>Filtros</h3>
-        <form class="filters-form" (ngSubmit)="$event.preventDefault()">
-          <div class="form-row">
-            <label for="q">🔎 Buscar</label>
-            <input id="q"
-                  type="search"
-                  [(ngModel)]="filtros.q"
-                  name="q"
-                  placeholder="Título, autor, descripción o tag…" />
-            <small class="hint-muted">Enter limpia/actualiza resultados.</small>
-          </div>
+<aside class="filter-panel">
+  <h3>Filtros</h3>
 
-          <div class="form-row">
-            <label for="tipo">📹/🎼 Tipo</label>
-            <select id="tipo" [(ngModel)]="filtros.tipo" name="tipo">
-              <option value="">Todos</option>
-              <option value="VIDEO">VIDEO</option>
-              <option value="AUDIO">AUDIO</option>
-            </select>
-          </div>
+  <form class="filters-form" (ngSubmit)="$event.preventDefault()">
+    <div class="form-row">
+      <label for="q">🔎 Buscar</label>
+      <input id="q"
+             type="search"
+             [(ngModel)]="filtros.q"
+             name="q"
+             placeholder="Título, autor, descripción o tag…" />
+      <small class="hint-muted">Enter limpia/actualiza resultados.</small>
+    </div>
 
-          <div class="form-row">
-            <label for="visible">👁️ Visibilidad</label>
-            <select id="visible" [(ngModel)]="filtros.visible" name="visible">
-              <option value="">Todos</option>
-              <option [ngValue]="true">Visible</option>
-              <option [ngValue]="false">Oculto</option>
-            </select>
-          </div>
+    <div class="form-row">
+      <label for="tipo">📹/🎼 Tipo</label>
+      <select id="tipo" [(ngModel)]="filtros.tipo" name="tipo">
+        <option value="">Todos</option>
+        <option value="VIDEO">VIDEO</option>
+        <option value="AUDIO">AUDIO</option>
+      </select>
+    </div>
 
-          <div class="form-row">
-            <label for="vip">👑 VIP</label>
-            <select id="vip" [(ngModel)]="filtros.vip" name="vip">
-              <option value="">Todos</option>
-              <option [ngValue]="true">VIP</option>
-              <option [ngValue]="false">No VIP</option>
-            </select>
-          </div>
+    <div class="form-row">
+      <label for="visible">👁️ Visibilidad</label>
+      <select id="visible" [(ngModel)]="filtros.visible" name="visible">
+        <option value="">Todos</option>
+        <option [ngValue]="true">Visible</option>
+        <option [ngValue]="false">Oculto</option>
+      </select>
+    </div>
 
-          <div class="form-row">
-            <label for="edadMin">🔞 Edad mínima</label>
-            <input id="edadMin"
-                  type="number"
-                  min="0"
-                  step="1"
-                  [(ngModel)]="filtros.edadMin"
-                  name="edadMin"
-                  placeholder="p. ej., 16" />
-            <small class="hint-muted">Muestra contenidos con restricción ≥ edad indicada.</small>
-          </div>
+    <div class="form-row">
+      <label for="vip">👑 VIP</label>
+      <select id="vip" [(ngModel)]="filtros.vip" name="vip">
+        <option value="">Todos</option>
+        <option [ngValue]="true">VIP</option>
+        <option [ngValue]="false">No VIP</option>
+      </select>
+    </div>
 
-          <div class="form-row">
-            <label for="lista">🗂️ Lista</label>
-            <select id="lista" [(ngModel)]="filtros.listaId" name="lista">
-              <option value="">Todas</option>
-              <option *ngFor="let l of listasPublicas" [ngValue]="l.id">{{ l.nombre }}</option>
-            </select>
-          </div>
+    <div class="form-row">
+      <label for="edadMin">🔞 Edad mínima</label>
+      <input id="edadMin"
+             type="number"
+             min="0"
+             step="1"
+             [(ngModel)]="filtros.edadMin"
+             name="edadMin"
+             placeholder="p. ej., 16" />
+      <small class="hint-muted">Muestra contenidos con restricción ≥ edad indicada.</small>
+    </div>
 
-          <div class="form-row">
-            <label for="tag">🏷️ Tag</label>
-            <select id="tag" [(ngModel)]="filtros.tag" name="tag">
-              <option value="">Todos</option>
-              <option *ngFor="let t of allTags" [value]="t">{{ t }}</option>
-            </select>
-          </div>
+    <div class="form-row">
+      <label for="lista">🗂️ Lista</label>
+      <select id="lista" [(ngModel)]="filtros.listaId" name="lista">
+        <option value="">Todas</option>
+        <option *ngFor="let l of listasPublicas" [ngValue]="l.id">{{ l.nombre }}</option>
+      </select>
+    </div>
 
-          <div class="form-row">
-            <label for="ordenar">↕️ Ordenar por</label>
-            <select id="ordenar" [(ngModel)]="filtros.ordenar" name="ordenar">
-              <option value="">—</option>
-              <option value="tituloAsc">Título (A–Z)</option>
-              <option value="tituloDesc">Título (Z–A)</option>
-              <option value="autorAsc">Autor (A–Z)</option>
-              <option value="autorDesc">Autor (Z–A)</option>
-              <option value="ratingDesc">Rating (alto→bajo)</option>
-              <option value="ratingAsc">Rating (bajo→alto)</option>
-            </select>
-          </div>
+    <div class="form-row">
+      <label for="tag">🏷️ Tag</label>
+      <select id="tag" [(ngModel)]="filtros.tag" name="tag">
+        <option value="">Todos</option>
+        <option *ngFor="let t of allTags" [value]="t">{{ t }}</option>
+      </select>
+    </div>
 
-          <div class="filters-actions">
-            <button type="button" class="secondary-btn" (click)="resetFiltros()">Limpiar</button>
-          </div>
+    <div class="form-row">
+      <label for="ordenar">↕️ Ordenar por</label>
+      <select id="ordenar" [(ngModel)]="filtros.ordenar" name="ordenar">
+        <option value="">—</option>
+        <option value="tituloAsc">Título (A–Z)</option>
+        <option value="tituloDesc">Título (Z–A)</option>
+        <option value="autorAsc">Autor (A–Z)</option>
+        <option value="autorDesc">Autor (Z–A)</option>
+        <option value="ratingDesc">Rating (alto→bajo)</option>
+        <option value="ratingAsc">Rating (bajo→alto)</option>
+      </select>
+    </div>
 
-          <div class="filters-result hint-muted" *ngIf="!loadingList">
-            {{ contenidosFiltrados.length }} resultado(s)
-          </div>
-        </form>
-      </aside>
+    <div class="filters-actions">
+      <button type="button" class="secondary-btn" (click)="resetFiltros()">Limpiar</button>
+    </div>
+
+    <div class="filters-result hint-muted" *ngIf="!loadingList">
+      {{ contenidosFiltrados.length }} resultado(s)
+    </div>
+  </form>
+</aside>
 
 
       <main class="content-area">
@@ -171,7 +172,7 @@
             </thead>
 
             <tbody>
-              <tr *ngFor="let c of contenidosFiltrados; trackBy: trackContenido">
+              <tr *ngFor="let c of contenidosList; trackBy: trackContenido">
                 <td>
                   <div class="thumb">
                     <img *ngIf="c.imagen; else noImg"

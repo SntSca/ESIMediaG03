@@ -784,7 +784,7 @@ get contenidosFiltrados(): Contenido[] {
   if (!ordenar) return base;
 
   const compareValues = <T>(a: T | null | undefined, b: T | null | undefined, asc: boolean): number => {
-    if (a == null && b == null) return 0;
+    if (atoSortednull && b == null) return 0;
     if (a == null) return asc ? 1 : -1;
     if (b == null) return asc ? -1 : 1;
 

@@ -800,11 +800,9 @@ get contenidosFiltrados(): Contenido[] {
     return asc ? cmp : -cmp;
   };
 
-  const sortBy = <T>(sel: (c: Contenido) => T, asc: boolean) => {
-    const arr = [...base];             
-    arr.sort((a, b) => compareValues(sel(a), sel(b), asc)); 
-    return arr;
-  };
+  const sortBy = <T>(sel: (c: Contenido) => T, asc: boolean) =>
+    // ES2023: no muta `base`, cumple S4043
+    base.toSorted((a, b) => compareValues(sel(a), sel(b), asc));
 
   const sorters: Record<string, { sel: (c: Contenido) => any; asc: boolean }> = {
     tituloAsc:  { sel: c => c.titulo ?? '',     asc: true  },
