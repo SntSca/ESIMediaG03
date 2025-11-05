@@ -56,22 +56,6 @@ stages:
             publishJUnitResults: true
             testResultsFiles: '**/surefire-reports/TEST-*.xml'
 
-        - task: CopyFiles@2
-          displayName: "Copiar reporte cobertura Backend"
-          continueOnError: true
-          inputs:
-            contents: |
-              GPS_EsiMedia_G03/Proyecto_Integrado_Programa/Backend/usersbe/target/site/jacoco/**
-              GPS_EsiMedia_G03/Proyecto_Integrado_Programa/Backend/EsiMediaContenidosG03/target/site/jacoco/**
-            targetFolder: '$(Build.ArtifactStagingDirectory)/coverage-backend'
-
-        - task: PublishBuildArtifacts@1
-          displayName: "Publicar cobertura Backend"
-          condition: always()  
-          inputs:
-            pathToPublish: '$(Build.ArtifactStagingDirectory)/coverage-backend'
-            artifactName: 'coverage-backend'
-
 
         - task: CopyFiles@2
           displayName: "Copiar artefactos usersbe"
