@@ -136,6 +136,7 @@ stages:
           inputs:
             contents: 'Proyecto_Integrado_Programa/EsiMediaFE/**/coverage/**'
             targetFolder: '$(Build.ArtifactStagingDirectory)/coverage-frontend'
+            failOnEmptySource: false
 
         - task: PublishBuildArtifacts@1
           displayName: "Publicar cobertura Frontend"
