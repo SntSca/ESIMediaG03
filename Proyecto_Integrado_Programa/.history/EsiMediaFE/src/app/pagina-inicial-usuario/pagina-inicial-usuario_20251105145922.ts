@@ -602,7 +602,6 @@ export class PaginaInicialUsuario implements OnInit {
 
       this.handleInternalPlay(result.blobUrl, c, isUsuario);
    
-      
     } catch (e: any) {
       const msg = e?.message ?? 'No se pudo reproducir este contenido.';
       this.showError(msg);
