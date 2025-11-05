@@ -374,56 +374,66 @@ public class ContenidoService {
         return res;
     }
 
-    public void addFavorito(String contenidoId) {
-        String email = currentUserEmail();
-        ensureUserRoleCanFavorite(); 
 
-        if (!canFavorite(contenidoId)) {  
+
+
+    public void addFavorito(String contenidoId, String userEmail, String roleHeader) {
+        String email = (userEmail != null && !userEmail.isBlank()) ? userEmail : currentUserEmailOrNull();
+        if (email == null) throw new AccessDeniedException("Usuario no autenticado");
+
+        ensureUserRoleCanFavorite(roleHeader); // ⬅️ usa fallback por cabecera si no hay auth
+
+        if (!canFavorite(contenidoId)) {
             throw new AccessDeniedException("No se permite marcar como favorito");
         }
 
         Query q = Query.query(Criteria.where("_id").is(contenidoId));
-        Update u = new Update().addToSet("favoritosDeUsuarios", email); 
+        Update u = new Update().addToSet("favoritosDeUsuarios", email);
         mongoTemplate.updateFirst(q, u, Contenido.class);
     }
 
-   
-    public void removeFavorito(String contenidoId) {
-        String email = currentUserEmail();
+    public void removeFavorito(String contenidoId, String userEmail) {
+        String email = (userEmail != null && !userEmail.isBlank()) ? userEmail : currentUserEmailOrNull();
+        if (email == null) throw new AccessDeniedException("Usuario no autenticado");
+
         Query q = Query.query(Criteria.where("_id").is(contenidoId));
-        Update u = new Update().pull("favoritosDeUsuarios", email); 
+        Update u = new Update().pull("favoritosDeUsuarios", email);
         mongoTemplate.updateFirst(q, u, Contenido.class);
     }
 
-  
-    public List<String> listFavoritosIdsDeUsuarioActual() {
-        String email = currentUserEmail();
+    public List<String> listFavoritosIds(String userEmail) {
+        String email = (userEmail != null && !userEmail.isBlank()) ? userEmail : currentUserEmailOrNull();
+        if (email == null) throw new AccessDeniedException("Usuario no autenticado");
 
         Query q = Query.query(Criteria.where("favoritosDeUsuarios").is(email))
-                       .with(Sort.by(Sort.Direction.DESC, "fechaEstado")); // ajusta el orden si quieres
-
+                    .with(Sort.by(Sort.Direction.DESC, "fechaEstado"));
         return mongoTemplate.find(q, Contenido.class)
                 .stream().map(Contenido::getId).collect(Collectors.toList());
     }
 
-
-
-    private String currentUserEmail() {
+    
+    private String currentUserEmailOrNull() {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        if (auth == null || auth instanceof AnonymousAuthenticationToken || auth.getName() == null) {
-            throw new AccessDeniedException("Usuario no autenticado");
-        }
-        return auth.getName(); 
+        if (auth == null || auth instanceof AnonymousAuthenticationToken) return null;
+        String name = auth.getName();
+        return (name != null && !"anonymousUser".equals(name)) ? name : null;
     }
 
-    private void ensureUserRoleCanFavorite() {
+    
+    private void ensureUserRoleCanFavorite(String roleHeader) {
         Authentication auth = SecurityContextHolder.getContext().getAuthentication();
-        boolean isUsuario = auth != null && auth.getAuthorities().stream()
-                .anyMatch(a -> "ROLE_USUARIO".equals(a.getAuthority()));
-        if (!isUsuario) {
+        boolean hasRoleUsuario = auth != null && auth.getAuthorities().stream()
+                .anyMatch(a -> "ROLE_USUARIO".equalsIgnoreCase(a.getAuthority()) || "USUARIO".equalsIgnoreCase(a.getAuthority()));
+
+        if (!hasRoleUsuario) {
+            if (roleHeader != null && roleHeader.equalsIgnoreCase("USUARIO")) return; 
+            
+            if (roleHeader != null && roleHeader.equalsIgnoreCase("ROLE_USUARIO")) return;
+        
             throw new AccessDeniedException("Los creadores/administradores no pueden usar favoritos");
         }
     }
+
 
     
     private boolean canFavorite(String contenidoId) {

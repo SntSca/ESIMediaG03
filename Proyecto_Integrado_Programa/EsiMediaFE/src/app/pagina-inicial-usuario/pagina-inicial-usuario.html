@@ -12,7 +12,7 @@
 </div>
 
 <div class="ro-wrap" [class.readonly]="readOnly">
-  <!-- HEADER USUARIO -->
+
   <div class="usuario-header">
     <div class="usuario-info">
       <div class="ava">
@@ -28,11 +28,14 @@
       </div>
     </div>
     <div class="btn-wrap">
+      <button class="btn-favs" *ngIf="isUsuario" (click)="goMisFavoritos()">
+        ❤️ Mis Favoritos
+      </button>
       <button class="btn-cerrar" (click)="CerrarSesion()">Cerrar sesión</button>
     </div>
   </div>
 
-  <!-- CATÁLOGO -->
+
   <section class="contenidos-section" aria-label="Catálogo de contenidos">
     <div *ngIf="contenidosLoading" class="state loading">
       <div class="spinner"></div>
@@ -48,15 +51,14 @@
       <span>No hay contenidos disponibles.</span>
     </div>
 
-    <!-- MARCO DEL CATÁLOGO -->
+  
     <div class="catalog-wrap" *ngIf="!contenidosLoading && !contenidosError && contenidos.length > 0">
       <div class="catalog-frame">
         <div class="catalog-frame__head">
           <h2 class="catalog-frame__title">Catálogo</h2>
-          <!-- sitio para filtros / búsqueda si lo necesitas -->
+          <!-- sitio para filtros / búsqueda -->
         </div>
 
-        <!-- GRID -->
         <div class="grid">
           <article *ngFor="let c of contenidos" class="card" tabindex="0">
             <div class="thumb">
@@ -73,7 +75,7 @@
                 <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
               </div>
 
-              <!-- Barra título + rating readonly en miniatura -->
+            
               <div class="title-bar">
                 <h3 class="card-title" [title]="c.titulo">{{ c.titulo }}</h3>
                 <div class="title-bar__rating">
@@ -86,15 +88,15 @@
                 </div>
               </div>
 
-              <!-- Acciones rápidas (aparecen al hover/focus) -->
+             
               <button type="button" class="play-btn" title="Reproducir" (click)="play(c)">▶</button>
               <button *ngIf="!readOnly" type="button" class="rate-btn" title="Valorar" (click)="toggleRating(c)">★</button>
             </div>
 
-            <!-- OSCURECIDO (único, por debajo del header) -->
+           
             <div class="screen-dim" aria-hidden="true"></div>
 
-            <!-- POP-CARD (única), anclada por debajo de la barra -->
+            
             <div class="pop-card" role="dialog" aria-modal="true" (click)="$event.stopPropagation()">
               <div class="pop-card__media">
                 <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimgPop">
@@ -137,6 +139,19 @@
 
                 <div class="pop-card__actions">
                   <button type="button" class="play-btn play-btn--lg" title="Reproducir" (click)="play(c)">▶</button>
+                  <button type="button"
+                          *ngIf="isUsuario"
+                          class="fav-btn fav-btn--lg"
+                          [class.is-fav]="isFav(c.id)"
+                          [attr.aria-pressed]="isFav(c.id)"
+                          [disabled]="pendingToggle[c.id]"
+                          (click)="onToggleFav(c.id)"
+                          [title]="isFav(c.id) ? 'Quitar de favoritos' : 'Añadir a favoritos'">
+                    <svg viewBox="0 0 24 24" class="heart" aria-hidden="true">
+                      <path d="M12 21s-6.3-4.35-9.1-7.13A5.91 5.91 0 0 1 12 4a5.91 5.91 0 0 1 9.1 9.87C18.3 16.65 12 21 12 21z"/>
+                    </svg>
+                    <span class="sr-only">{{ isFav(c.id) ? 'Quitar de favoritos' : 'Añadir a favoritos' }}</span>
+                  </button>
                   <button *ngIf="!readOnly" type="button" class="rate-btn rate-btn--lg" title="Valorar" (click)="toggleRating(c)">★</button>
                 </div>
 
@@ -156,13 +171,13 @@
             </div>
           </article>
         </div>
-        <!-- /GRID -->
+       
       </div>
     </div>
-    <!-- /MARCO DEL CATÁLOGO -->
+    
   </section>
 
-  <!-- MODAL EDITAR PERFIL -->
+  
   <button class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></button>
   <div class="edit-panel modal" [class.open]="editOpen" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
     <h3>Editar perfil</h3>
@@ -232,10 +247,10 @@
     </form>
   </div>
 
-  <!-- OVERLAY READ-ONLY -->
+  
   <div class="ro-overlay" *ngIf="readOnly" aria-hidden="true" style="pointer-events: none;"></div>
 
-  <!-- MODAL AVATARES -->
+  
   <div
     *ngIf="showAvatarModal"
     class="avatar-modal"
@@ -285,11 +300,10 @@
     </dialog>
   </div>
 
-  <!-- PLAYER -->
+
   <div class="overlay" *ngIf="playerOpen" (click)="closePlayer()" (keydown)="($event)"></div>
   <div class="edit-panel modal" [class.open]="playerOpen" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
-    <h3 style="margin-bottom:8px;">{{ playingTitle || 'Reproduciendo' }}</h3>
-
+    <h3 style="margin-bottom:8px; display:flex; align-items:center; gap:8px;"></h3>
     <ng-container [ngSwitch]="playerKind">
       <video *ngSwitchCase="'VIDEO'"
             [src]="playerSrc || undefined"

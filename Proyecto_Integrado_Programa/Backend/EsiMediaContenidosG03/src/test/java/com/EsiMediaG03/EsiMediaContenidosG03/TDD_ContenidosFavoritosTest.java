@@ -11,10 +11,6 @@ import org.mockito.junit.jupiter.MockitoExtension;
 import org.springframework.data.mongodb.core.MongoTemplate;
 import org.springframework.data.mongodb.core.query.Query;
 import org.springframework.security.access.AccessDeniedException;
-import org.springframework.security.authentication.UsernamePasswordAuthenticationToken;
-import org.springframework.security.core.authority.SimpleGrantedAuthority;
-import org.springframework.security.core.Authentication;
-import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.util.List;
 
@@ -32,45 +28,23 @@ class TDD_ContenidosFavoritosTest {
     ListaPublicaDAO listaPublicaDAO;
 
     @InjectMocks
-    ContenidoService service; 
+    ContenidoService service;
 
-    @BeforeEach
-    void setUpSecurity() {
-        SecurityContextHolder.clearContext();
-    }
-
-    @AfterEach
-    void tearDownSecurity() {
-        SecurityContextHolder.clearContext();
-    }
-
+    private static final String EMAIL_USUARIO = "user@example.com";
+    private static final String EMAIL_GESTOR  = "gestor@example.com";
+    private static final String EMAIL_ADMIN   = "admin@example.com";
     
-    private void asUsuario(String email) {
-        Authentication a = new UsernamePasswordAuthenticationToken(
-                email, "N/A", List.of(new SimpleGrantedAuthority("ROLE_USUARIO")));
-        SecurityContextHolder.getContext().setAuthentication(a);
-    }
-    private void asGestor(String email) {
-        Authentication a = new UsernamePasswordAuthenticationToken(
-                email, "N/A", List.of(new SimpleGrantedAuthority("ROLE_GESTOR_CONTENIDO")));
-        SecurityContextHolder.getContext().setAuthentication(a);
-    }
-    private void asAdmin(String email) {
-        Authentication a = new UsernamePasswordAuthenticationToken(
-                email, "N/A", List.of(new SimpleGrantedAuthority("ROLE_ADMINISTRADOR")));
-        SecurityContextHolder.getContext().setAuthentication(a);
-    }
-
-  
+    private static final String ROLE_USUARIO = "USUARIO";
+    private static final String ROLE_GESTOR  = "GESTOR_CONTENIDO";
+    private static final String ROLE_ADMIN   = "ADMINISTRADOR";
 
     @Test
-    @DisplayName("addFavorito OK -> ROLE_USUARIO y política permite (sin listas privadas)")
+    @DisplayName("addFavorito OK -> header role=USUARIO y política permite (sin listas privadas)")
     void addFavorito_ok() {
-        asUsuario("user@example.com");
         when(mongoTemplate.findById("CNT-123", Contenido.class)).thenReturn(new Contenido());
         when(listaPublicaDAO.findByContenidosIds("CNT-123")).thenReturn(List.of()); // no privadas
 
-        service.addFavorito("CNT-123");
+        service.addFavorito("CNT-123", EMAIL_USUARIO, ROLE_USUARIO);
 
         verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(), eq(Contenido.class));
         verifyNoMoreInteractions(mongoTemplate);
@@ -79,56 +53,50 @@ class TDD_ContenidosFavoritosTest {
     @Test
     @DisplayName("addFavorito FORBIDDEN -> política: contenido en una ListaPublica privada")
     void addFavorito_forbidden_policy() {
-        asUsuario("user@example.com");
         when(mongoTemplate.findById("CNT-PRIV", Contenido.class)).thenReturn(new Contenido());
         ListaPublica privada = new ListaPublica(); privada.setPublica(false);
         when(listaPublicaDAO.findByContenidosIds("CNT-PRIV")).thenReturn(List.of(privada));
 
-        assertThrows(AccessDeniedException.class, () -> service.addFavorito("CNT-PRIV"));
+        assertThrows(AccessDeniedException.class,
+            () -> service.addFavorito("CNT-PRIV", EMAIL_USUARIO, ROLE_USUARIO));
+
         verify(mongoTemplate, never()).updateFirst(any(Query.class), any(), eq(Contenido.class));
     }
 
     @Test
-    @DisplayName("addFavorito FORBIDDEN -> ROLE_GESTOR_CONTENIDO")
+    @DisplayName("addFavorito FORBIDDEN -> header role=GESTOR_CONTENIDO")
     void addFavorito_forbidden_gestor() {
-        asGestor("gestor@example.com");
-        assertThrows(AccessDeniedException.class, () -> service.addFavorito("CNT-999"));
+        assertThrows(AccessDeniedException.class,
+            () -> service.addFavorito("CNT-999", EMAIL_GESTOR, ROLE_GESTOR));
         verify(mongoTemplate, never()).updateFirst(any(Query.class), any(), eq(Contenido.class));
         verifyNoInteractions(listaPublicaDAO);
     }
 
     @Test
-    @DisplayName("addFavorito FORBIDDEN -> ROLE_ADMINISTRADOR")
+    @DisplayName("addFavorito FORBIDDEN -> header role=ADMINISTRADOR")
     void addFavorito_forbidden_admin() {
-        asAdmin("admin@example.com");
-        assertThrows(AccessDeniedException.class, () -> service.addFavorito("CNT-777"));
+        assertThrows(AccessDeniedException.class,
+            () -> service.addFavorito("CNT-777", EMAIL_ADMIN, ROLE_ADMIN));
         verify(mongoTemplate, never()).updateFirst(any(Query.class), any(), eq(Contenido.class));
         verifyNoInteractions(listaPublicaDAO);
     }
-
-    
 
     @Test
     @DisplayName("removeFavorito -> idempotente ($pull); no falla si no estaba")
     void removeFavorito_ok() {
-        asUsuario("user@example.com");
-        service.removeFavorito("CNT-XYZ");
+        service.removeFavorito("CNT-XYZ", EMAIL_USUARIO);
         verify(mongoTemplate, times(1)).updateFirst(any(Query.class), any(), eq(Contenido.class));
     }
 
-    
-
     @Test
-    @DisplayName("listFavoritosIdsDeUsuarioActual -> devuelve IDs en el orden obtenido")
+    @DisplayName("listFavoritosIds -> devuelve IDs en el orden obtenido")
     void listFavoritos_returnsIds() {
-        asUsuario("user@example.com");
-
         Contenido cA = mock(Contenido.class); when(cA.getId()).thenReturn("C3");
         Contenido cB = mock(Contenido.class); when(cB.getId()).thenReturn("C2");
         Contenido cC = mock(Contenido.class); when(cC.getId()).thenReturn("C1");
-        when(mongoTemplate.find( any(Query.class), eq(Contenido.class))).thenReturn(List.of(cA, cB, cC));
+        when(mongoTemplate.find(any(Query.class), eq(Contenido.class))).thenReturn(List.of(cA, cB, cC));
 
-        List<String> ids = service.listFavoritosIdsDeUsuarioActual();
+        List<String> ids = service.listFavoritosIds(EMAIL_USUARIO);
 
         assertEquals(List.of("C3","C2","C1"), ids);
     }

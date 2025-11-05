@@ -109,7 +109,7 @@ public ListaPublica anadirContenidoALista(String listaId, String contenidoId) {
     public String resolveEmailFromRequestOrSecurity() {
         var ctx = RequestContextHolder.getRequestAttributes();
         if (ctx instanceof ServletRequestAttributes sra) {
-            HttpServletRequest req = sra.getRequest();
+            var req = sra.getRequest();
             String h = req.getHeader("X-User-Email");
             if (h != null && !h.isBlank()) return h;
         }
@@ -117,5 +117,6 @@ public ListaPublica anadirContenidoALista(String listaId, String contenidoId) {
         if (auth != null && auth.getName() != null && !"anonymousUser".equals(auth.getName())) return auth.getName();
         return null;
     }
+
 }
 

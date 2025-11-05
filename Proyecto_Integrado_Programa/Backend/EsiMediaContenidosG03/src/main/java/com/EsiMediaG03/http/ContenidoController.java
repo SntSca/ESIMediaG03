@@ -231,13 +231,16 @@ public class ContenidoController {
         return ResponseEntity.ok(res);
     }
 
+    // ContenidoController.java
+
     @PostMapping(path = "/{id}/favorito", consumes = MediaType.ALL_VALUE, produces = MediaType.APPLICATION_JSON_VALUE)
     public ResponseEntity<Void> addFavorito(
             @PathVariable("id") String contenidoId,
-            @RequestHeader(value = "X-User-Email", required = false) String xUserEmail // opcional
+            @RequestHeader(value = "X-User-Email", required = false) String xUserEmail,
+            @RequestHeader(value = "X-User-Role", required = false) String xUserRole
     ) {
-        // (el service puede usar SecurityContext y si no, caer al header)
-        contenidoService.addFavorito(contenidoId);
+        String email = resolveEmail(xUserEmail);
+        contenidoService.addFavorito(contenidoId, email, xUserRole);  
         return ResponseEntity.created(URI.create("/Contenidos/" + contenidoId + "/favorito")).build();
     }
 
@@ -246,7 +249,8 @@ public class ContenidoController {
             @PathVariable("id") String contenidoId,
             @RequestHeader(value = "X-User-Email", required = false) String xUserEmail
     ) {
-        contenidoService.removeFavorito(contenidoId);
+        String email = resolveEmail(xUserEmail);
+        contenidoService.removeFavorito(contenidoId, email);         
         return ResponseEntity.noContent().build();
     }
 
@@ -254,8 +258,23 @@ public class ContenidoController {
     public ResponseEntity<List<String>> listFavoritos(
             @RequestHeader(value = "X-User-Email", required = false) String xUserEmail
     ) {
-        return ResponseEntity.ok(contenidoService.listFavoritosIdsDeUsuarioActual());
+        String email = resolveEmail(xUserEmail);
+        return ResponseEntity.ok(contenidoService.listFavoritosIds(email));  
     }
+
+
+    private String resolveEmail(String headerEmail) {
+        var ctx = org.springframework.security.core.context.SecurityContextHolder.getContext();
+        var auth = ctx != null ? ctx.getAuthentication() : null;
+        String scEmail = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName()))
+                ? auth.getName() : null;
+        String email = (scEmail != null && !scEmail.isBlank()) ? scEmail : headerEmail;
+        if (email == null || email.isBlank()) {
+            throw new org.springframework.security.access.AccessDeniedException("Usuario no autenticado");
+        }
+        return email;
+    }
+
 
     
 }

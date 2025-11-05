@@ -7,8 +7,9 @@ import { AppUser, UserDto, Contenido } from '../auth/models';
 import { HttpClient, HttpErrorResponse } from  '@angular/common/http';
 import { ContenidosService, ResolveResult } from '../contenidos.service';
 import { StarRatingComponent } from '../star-rating/star-rating.component';
-import { firstValueFrom } from 'rxjs';
+import { firstValueFrom, Observable, of } from 'rxjs';
 import Swal from 'sweetalert2';
+import { FavoritesService } from '../favorites.service';
 
 @Component({
   selector: 'app-pagina-inicial-usuario',
@@ -22,15 +23,26 @@ export class PaginaInicialUsuario implements OnInit {
   fromAdmin = false;
 
   contenidos: Contenido[] = [];
+  private catalogBackup: Contenido[] | null = null; 
   contenidosLoading = false;
   contenidosError: string | null = null;
+
   private readonly CONTENIDOS_BASE = 'http://localhost:8082/Contenidos';
+  private readonly FAVORITOS_URL = `${this.CONTENIDOS_BASE}/favoritos`;
+
+  private favIds = new Set<string>();
+  favsLoaded = false;
+  pendingToggle: Record<string, boolean> = {};
+  private onlyFavsView = false;
+
+
   playerOpen = false;
   playerSrc: string | null = null;
   playerKind: 'AUDIO' | 'VIDEO' = 'VIDEO';
   playingId: string | null = null;
   playingTitle: string | null = null;
 
+  
   avatars: string[] = [
     'assets/avatars/avatar1.png','assets/avatars/avatar2.png','assets/avatars/avatar3.png',
     'assets/avatars/avatar4.png','assets/avatars/avatar5.png','assets/avatars/avatar6.png'
@@ -105,15 +117,108 @@ export class PaginaInicialUsuario implements OnInit {
     private readonly cdr: ChangeDetectorRef,
     private readonly auth: AuthService,
     private readonly http: HttpClient,
-    private contenidosSvc: ContenidosService
+    private contenidosSvc: ContenidosService,
+    private favs: FavoritesService
   ) {}
+
+  
+  get isUsuario(): boolean {
+    return (this.loggedUser?.role ?? '').toString().toUpperCase() === 'USUARIO';
+  }
 
   ngOnInit(): void {
     this.computeReadOnlyFlags();
     this.bootstrapUser();
-    this.cargarContenidos();
+    this.cargarContenidos();        
+  }
+  
+  private apiListFavIds(): Observable<string[]> {
+    return this.favs.loadFavoritosIds();
+  }
+  private apiAddFav(id: string): Observable<any> {
+    return this.favs.addFavorito(id);
+  }
+  private apiRemoveFav(id: string): Observable<any> {
+    return this.favs.removeFavorito(id);
   }
 
+  private setFavIds(ids: string[] | null | undefined) {
+    this.favIds = new Set((ids ?? []).filter(Boolean));
+    this.favsLoaded = true;
+    this.cdr.markForCheck();
+  }
+
+  loadFavoritos(): void {
+    this.apiListFavIds().subscribe({
+      next: (ids) => this.setFavIds(ids),
+      error: () => { this.setFavIds([]); } 
+    });
+  }
+
+  isFav(id: string | null | undefined): boolean {
+    if (!id) return false;
+    return this.favIds.has(id);
+  }
+
+  async onToggleFav(id: string | null | undefined) {
+    if (!id || this.readOnly) return;
+    if (this.pendingToggle[id]) return;   
+    this.pendingToggle[id] = true;
+
+    const currentlyFav = this.isFav(id);
+
+  
+    if (currentlyFav) this.favIds.delete(id);
+    else this.favIds.add(id);
+    this.cdr.markForCheck();
+
+    try {
+      if (currentlyFav) {
+        await firstValueFrom(this.apiRemoveFav(id));
+      } else {
+        await firstValueFrom(this.apiAddFav(id));
+      }
+    } catch (e: any) {
+      
+      if (currentlyFav) this.favIds.add(id);
+      else this.favIds.delete(id);
+
+      const msg = e?.error?.message || e?.message || 'No se pudo actualizar favoritos';
+      Swal.fire({ icon: 'error', title: 'Favoritos', text: msg });
+    } finally {
+      this.pendingToggle[id] = false;
+      this.cdr.markForCheck();
+    }
+  }
+
+  
+  goMisFavoritos(): void {
+    if (!this.favsLoaded) this.loadFavoritos();
+
+    
+    if (this.onlyFavsView) {
+      if (this.catalogBackup) {
+        this.contenidos = this.catalogBackup;
+        this.catalogBackup = null;
+      }
+      this.onlyFavsView = false;
+      this.cdr.markForCheck();
+      return;
+    }
+
+    
+    this.catalogBackup = this.contenidos.slice(0);
+    const set = this.favIds;
+    this.contenidos = this.contenidos.filter(c => set.has(c.id));
+    this.onlyFavsView = true;
+
+    if (this.contenidos.length === 0) {
+      Swal.fire({ icon: 'info', title: 'Mis Favoritos', text: 'Aún no tienes contenidos en favoritos.' });
+    }
+    this.cdr.markForCheck();
+  }
+
+  
   private computeReadOnlyFlags(): void {
     const qp = this.route.snapshot.queryParamMap;
     const qModo = (qp.get('modoLectura') || '').toLowerCase();
@@ -158,6 +263,8 @@ export class PaginaInicialUsuario implements OnInit {
 
     this.userName = this.t(user.nombre) || user.email.split('@')[0];
     this.userEmail = user.email;
+    
+    if (!this.favsLoaded) this.loadFavoritos();
 
     this.auth.getPerfil(this.userEmail).subscribe({
       next: (u: any) => this.onPerfilLoaded(u),
@@ -297,7 +404,6 @@ export class PaginaInicialUsuario implements OnInit {
     this.cdr.markForCheck();
   }
 
-
   private failSave(msg: string) {
     this.saving = false;
     this.errorMsg = msg;
@@ -348,6 +454,15 @@ export class PaginaInicialUsuario implements OnInit {
     return safe ? safe.split(/\s+/).map(p => p[0]).join('').toUpperCase() : 'U';
   }
 
+  private isAdmin(): boolean {
+  return (this.loggedUser?.role ?? '').toString().toUpperCase() === 'ADMINISTRADOR';
+  }
+  private canSeeVip(): boolean {
+    return !!this.model.vip || (this.readOnly && this.fromAdmin && this.isAdmin());
+  }
+
+
+  
   public cargarContenidos(): void {
     this.contenidosLoading = true;
     this.contenidosError = null;
@@ -375,14 +490,23 @@ export class PaginaInicialUsuario implements OnInit {
             fechaEstado: c.fechaEstado,
           }))
           .filter(item => item.visible)
-          .filter(item => this.model.vip || !item.vip)
+          .filter(item => this.canSeeVip() ? true : !item.vip)
+
           .sort((a, b) => {
             const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
             const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
             return tb - ta;
           });
 
-        this.contenidos = items;
+    
+        if (this.onlyFavsView) {
+          this.catalogBackup = items.slice(0);
+          const set = this.favIds;
+          this.contenidos = items.filter(c => set.has(c.id));
+        } else {
+          this.contenidos = items;
+        }
+
         this.contenidosLoading = false;
         this.cdr.markForCheck();
       },
@@ -521,7 +645,6 @@ export class PaginaInicialUsuario implements OnInit {
     this.playerOpen = false; this.playerSrc = null; this.playingId = null; this.playingTitle = null;
   }
 
-
   private ratingOpen = new Set<string>();
 
   isRatingOpen(c: { id: string }): boolean {
@@ -546,9 +669,7 @@ export class PaginaInicialUsuario implements OnInit {
 
   onVipChanged(v: boolean): void {
     this.model.vip = !!v;
-    this.cargarContenidos();        
-    this.cdr.markForCheck();        
+    this.cargarContenidos();
+    this.cdr.markForCheck();
   }
-  
-
 }
