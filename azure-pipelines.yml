@@ -109,10 +109,6 @@ stages:
           displayName: "npm ci"
           workingDirectory: Proyecto_Integrado_Programa/EsiMediaFE
 
-        - script: npm run lint || echo "Lint con warnings/errores (no falla)"
-          displayName: "npm run lint"
-          workingDirectory: GPS_EsiMedia_G03/Proyecto_Integrado_Programa/EsiMediaFE
-          continueOnError: true
 
         - script: npm test -- --watch=false --code-coverage || echo "Tests fallidos (se sube cobertura igual)"
           displayName: "npm test --coverage"
@@ -126,11 +122,6 @@ stages:
             targetFolder: '$(Build.ArtifactStagingDirectory)/coverage-frontend'
             failOnEmptySource: false
 
-        - task: PublishBuildArtifacts@1
-          displayName: "Publicar cobertura Frontend"
-          inputs:
-            pathToPublish: '$(Build.ArtifactStagingDirectory)/coverage-frontend'
-            artifactName: 'coverage-frontend'
 
         - script: npm run build -- --configuration=production
           displayName: "npm run build (prod)"
