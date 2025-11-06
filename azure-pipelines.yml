@@ -175,7 +175,6 @@ stages:
         options: '-Dmaven.repo.local=$(m2Dir)'
         publishJUnitResults: true
         testResultsFiles: '**/surefire-reports/TEST-*.xml'
-
 # =========
 # STAGE: Sonar
 # =========
@@ -191,13 +190,18 @@ stages:
       name: Sonar-pool
     steps:
       - task: Maven@4
-        displayName: "Compile Backend for Sonar"
+        displayName: "Compile & Test Backend (JaCoCo)"
         inputs:
           mavenPomFile: 'Proyecto_Integrado_Programa/Backend/pom.xml'
-          goals: 'clean install -DskipTests'
+          goals: 'clean verify'
+          options: '-Dmaven.repo.local=$(m2Dir)'
+
       - powershell: |
           cd "$(Build.SourcesDirectory)\Proyecto_Integrado_Programa\Backend"
-          & "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat" -D sonar.token=$(SQ_TOKEN)
+          & "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat" `
+            -D sonar.token=$(SQ_TOKEN) `
+            -D sonar.java.binaries=usersbe/target/classes,EsiMediaContenidosG03/target/classes `
+            -D sonar.coverage.jacoco.xmlReportPaths=usersbe/target/site/jacoco/jacoco.xml,EsiMediaContenidosG03/target/site/jacoco/jacoco.xml
         displayName: "Run Sonar Backend"
 
   # ---- Frontend ----
@@ -215,7 +219,10 @@ stages:
 
       - powershell: |
           cd "$(Build.SourcesDirectory)\Proyecto_Integrado_Programa\EsiMediaFE"
-          & "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat" -D sonar.token=$(SQ_TOKEN)
+          & "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat" `
+            -D sonar.token=$(SQ_TOKEN) `
+            -D sonar.sources=src `
+            -D sonar.javascript.lcov.reportPaths=coverage/lcov.info
         displayName: "Run Sonar Frontend"
 
 # =========
