@@ -183,22 +183,36 @@ stages:
   displayName: "SonarQube (Local Agent)"
   dependsOn: Test
   jobs:
+
+  # ---- Backend ----
   - job: Sonar_Backend
     displayName: "Sonar BACKEND"
     pool:
       name: Sonar-pool
     steps:
+      - task: Maven@4
+        displayName: "Compile Backend for Sonar"
+        inputs:
+          mavenPomFile: 'Proyecto_Integrado_Programa/Backend/pom.xml'
+          goals: 'clean install -DskipTests'
       - powershell: |
           cd "$(Build.SourcesDirectory)\Proyecto_Integrado_Programa\Backend"
           & "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat" -D sonar.token=$(SQ_TOKEN)
         displayName: "Run Sonar Backend"
 
+  # ---- Frontend ----
   - job: Sonar_Frontend
     displayName: "Sonar FRONTEND"
     dependsOn: Sonar_Backend
     pool:
       name: Sonar-pool
     steps:
+      - script: |
+          cd Proyecto_Integrado_Programa/EsiMediaFE
+          npm ci
+          npm run build
+        displayName: "Build Frontend for Sonar"
+
       - powershell: |
           cd "$(Build.SourcesDirectory)\Proyecto_Integrado_Programa\EsiMediaFE"
           & "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat" -D sonar.token=$(SQ_TOKEN)
