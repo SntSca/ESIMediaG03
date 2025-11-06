@@ -195,6 +195,7 @@ stages:
 
   jobs:
 
+  # ---- Backend ----
   - job: Sonar_Backend
     displayName: "Sonar BACKEND"
     pool:
@@ -205,8 +206,10 @@ stages:
           sonar-scanner -Dsonar.token=$(SQ_TOKEN)
         displayName: "Run Sonar Backend"
 
+  # ---- Frontend (depende del Backend) ----
   - job: Sonar_Frontend
     displayName: "Sonar FRONTEND"
+    dependsOn: Sonar_Backend
     pool:
       name: Sonar-pool  # tu agente local
     steps:
