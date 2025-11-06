@@ -201,8 +201,19 @@ stages:
     pool:
       name: Sonar-pool  # tu agente local
     steps:
-      - script: |
-          "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat -Dsonar.token=$(SQ_TOKEN)"
+      - powershell: |
+          # Descarga y descomprime SonarScanner si no existe
+          $scannerPath = "C:\Users\AgenteLocal\sonar-scanner"
+          if (-not (Test-Path $scannerPath)) {
+              Invoke-WebRequest -Uri "https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-windows.zip" -OutFile "$env:TEMP\scanner.zip"
+              Expand-Archive "$env:TEMP\scanner.zip" -DestinationPath "C:\Users\AgenteLocal"
+              Rename-Item "C:\Users\AgenteLocal\sonar-scanner-5.0.1.3006-windows" "sonar-scanner"
+          }
+
+          # Ejecuta SonarScanner
+          cd "$(Build.SourcesDirectory)\Proyecto_Integrado_Programa\Backend"
+          & "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat" -Dsonar.login=$(SQ_TOKEN)
+        displayName: "Run Sonar Backend"
 
   # ---- Frontend (depende del Backend) ----
   - job: Sonar_Frontend
@@ -211,8 +222,10 @@ stages:
     pool:
       name: Sonar-pool  # tu agente local
     steps:
-      - script: |
-          "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat -Dsonar.token=$(SQ_TOKEN)"
+      - powershell: |
+          # Asumimos que ya está descargado
+          cd "$(Build.SourcesDirectory)\Proyecto_Integrado_Programa\EsiMediaFE"
+          & "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat" -Dsonar.login=$(SQ_TOKEN)
         displayName: "Run Sonar Frontend"
 
 # =========
