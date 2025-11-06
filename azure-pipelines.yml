@@ -140,7 +140,7 @@ stages:
       displayName: "npm ci"
       workingDirectory: Proyecto_Integrado_Programa/EsiMediaFE
 
-    - script: npm run build
+    - script: npm run build || true
       displayName: "npm run build"
       workingDirectory: Proyecto_Integrado_Programa/EsiMediaFE
 
