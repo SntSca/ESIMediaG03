@@ -192,23 +192,39 @@ stages:
 - stage: Sonar
   displayName: "SonarQube/SonarCloud (CLI)"
   dependsOn: Test
+
   jobs:
 
   - job: Sonar_Backend
     displayName: "Sonar BACKEND"
     steps:
-    - script: |
-        cd Proyecto_Integrado_Programa/Backend
-        sonar-scanner -Dsonar.login=$(SQ_TOKEN)
-      displayName: "Sonar Backend"
+      - script: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip -O scanner.zip
+          unzip scanner.zip
+          export PATH="$PATH:$(pwd)/sonar-scanner-5.0.1.3006-linux/bin"
+
+          cd Proyecto_Integrado_Programa/Backend
+          sonar-scanner \
+            -Dsonar.login=$(SQ_TOKEN)
+        displayName: "Run Sonar Backend"
 
   - job: Sonar_Frontend
     displayName: "Sonar FRONTEND"
     steps:
-    - script: |
-        cd Proyecto_Integrado_Programa/EsiMediaFE
-        sonar-scanner -Dsonar.login=$(SQ_TOKEN)
-      displayName: "Sonar Frontend"
+      - script: |
+          sudo apt-get update
+          sudo apt-get install -y unzip
+          wget https://binaries.sonarsource.com/Distribution/sonar-scanner-cli/sonar-scanner-cli-5.0.1.3006-linux.zip -O scanner.zip
+          unzip scanner.zip
+          export PATH="$PATH:$(pwd)/sonar-scanner-5.0.1.3006-linux/bin"
+
+          cd Proyecto_Integrado_Programa/EsiMediaFE
+          sonar-scanner \
+            -Dsonar.login=$(SQ_TOKEN)
+        displayName: "Run Sonar Frontend"
+
 
 # =========
 # STAGE: Deploy (solo main/release)
