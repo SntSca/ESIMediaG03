@@ -28,21 +28,14 @@ pr:
 pool:
   vmImage: ubuntu-latest
 
-# =============================
-# VARIABLES (lista obligatoria cuando se usa - group)
-# =============================
 variables:
   - group: esimedia-secrets  
-
   - name: jdkVersion
     value: '17'
-
   - name: nodeVersion
     value: '20.x'
-
   - name: m2Dir
     value: '$(Agent.ToolsDirectory)/m2'
-
   - name: IsMainOrRelease
     value: $[or(eq(variables['Build.SourceBranch'],'refs/heads/main'), startsWith(variables['Build.SourceBranch'],'refs/heads/release/'))]
 
@@ -70,10 +63,8 @@ stages:
   displayName: "Build (Backend + Frontend)"
   dependsOn: Preparation
   jobs:
-
-  # ---- Backend build (sin tests) ----
   - job: Build_Backend
-    displayName: "Backend | mvn -DskipTests package"
+    displayName: "Backend | mvn clean install"
     steps:
     - task: JavaToolInstaller@0
       inputs:
@@ -89,10 +80,10 @@ stages:
         path: $(m2Dir)
 
     - task: Maven@4
-      displayName: "mvn clean package (skip tests)"
+      displayName: "mvn clean install (skip tests)"
       inputs:
         mavenPomFile: 'Proyecto_Integrado_Programa/Backend/pom.xml'
-        goals: 'clean package -DskipTests -T 1C'
+        goals: 'clean install -DskipTests -T 1C'
         options: '-Dmaven.repo.local=$(m2Dir)'
 
     - task: CopyFiles@2
@@ -121,7 +112,6 @@ stages:
         pathToPublish: '$(Build.ArtifactStagingDirectory)/contenidos'
         artifactName: 'contenidos'
 
-  # ---- Frontend build ----
   - job: Build_Frontend
     displayName: "Frontend | npm ci + build"
     steps:
@@ -192,26 +182,22 @@ stages:
 - stage: Sonar
   displayName: "SonarQube (Local Agent)"
   dependsOn: Test
-
   jobs:
-
-  # ---- Backend ----
   - job: Sonar_Backend
     displayName: "Sonar BACKEND"
     pool:
-      name: Sonar-pool  # tu agente local
+      name: Sonar-pool
     steps:
       - powershell: |
           cd "$(Build.SourcesDirectory)\Proyecto_Integrado_Programa\Backend"
           & "C:\Users\AgenteLocal\sonar-scanner\bin\sonar-scanner.bat" -D sonar.token=$(SQ_TOKEN)
         displayName: "Run Sonar Backend"
 
-  # ---- Frontend ----
   - job: Sonar_Frontend
     displayName: "Sonar FRONTEND"
     dependsOn: Sonar_Backend
     pool:
-      name: Sonar-pool  # tu agente local
+      name: Sonar-pool
     steps:
       - powershell: |
           cd "$(Build.SourcesDirectory)\Proyecto_Integrado_Programa\EsiMediaFE"
