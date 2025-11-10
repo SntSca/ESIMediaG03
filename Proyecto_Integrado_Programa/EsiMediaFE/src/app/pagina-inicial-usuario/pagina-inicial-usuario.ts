@@ -909,7 +909,7 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     }
   }
 
-  // ⬇️ AÑADIDO: helper (por si quieres invertir la lógica de edad en el futuro)
+  // ⬇️ AÑADIDO: helper (por si quieres invertir la lógica de edad en el futuro).
   private matchesAgeRule(mode: AgeMode, minAge: number, x: number | null): boolean {
     if (!mode || x === null) return true;
     return mode === 'mayores' ? minAge >= x : minAge <= x;
