@@ -386,3 +386,226 @@
 .filter-select:hover{ transform: translateY(-1px); }
 .filter-select:focus{ outline:none; box-shadow: 0 0 0 3px rgba(14,165,233,.25), 0 8px 20px rgba(14,165,233,.25); }
 
+/* Layout principal tipo Admin */
+.main-container {
+  display: flex;
+  flex: 1;
+  min-height: 0;
+  padding: 20px;
+  background-color: #1b1f24;
+  overflow: hidden;
+  column-gap: 20px;
+}
+
+.filter-panel {
+  background-color: #20262d;
+  border-right: 1px solid #2b313a;
+  width: 280px;
+  padding: 12px;
+  overflow-y: auto;
+  flex-shrink: 0;
+  border-radius: 12px;
+}
+
+.filter-panel h3 {
+  color: #ff5a63;
+  margin-top: 0;
+  border-bottom: 2px solid #2b313a;
+  padding-bottom: 10px;
+}
+
+.filter-section { margin-bottom: 15px; }
+
+.filter-section label {
+  display: block;
+  margin-bottom: 8px;
+  font-weight: 700;
+  color: #ffffff;
+}
+
+.filter-section input,
+.filter-section select {
+  width: 100%;
+  padding: 10px;
+  border: 1px solid #333a44;
+  border-radius: 10px;
+  box-sizing: border-box;
+  background-color: #262c34;
+  color: #f0f3f8;
+  transition: border-color .2s ease, box-shadow .2s ease, background-color .2s ease;
+}
+
+.filter-section input::placeholder{ color:#9aa3ad; }
+
+.filter-section input:focus,
+.filter-section select:focus {
+  border-color: #e50914;
+  outline: none;
+  box-shadow: 0 0 0 3px rgba(229, 9, 20, 0.18);
+  background-color:#29313a;
+}
+
+.content-area {
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+  overflow-y: auto;
+  overflow-x: hidden;
+  font-size: 0.9em; /* ajusta si quieres */
+  padding-left: 4px;
+}
+/* === Layout 2 columnas === */
+.layout-2col{
+  display:grid;
+  grid-template-columns: 320px 1fr;
+  gap: 24px;
+  align-items: start;
+}
+
+/* Sidebar de filtros */
+.filters-sidebar{
+  position: sticky;
+  top: 12px;
+  background: #111827;           /* fondo oscuro tipo admin */
+  border: 1px solid #1f2937;
+  border-radius: 14px;
+  padding: 16px 16px 20px;
+  box-shadow: 0 4px 14px rgba(0,0,0,.25);
+  color: #e5e7eb;
+}
+
+.filters-title{
+  margin: 6px 0 14px;
+  font-size: 18px;
+  font-weight: 700;
+  color: #f87171;                 /* acento como admin */
+}
+
+.filters-form .fgroup{
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 14px;
+}
+
+.flabel{
+  font-weight: 600;
+  font-size: .95rem;
+  color: #cbd5e1;
+}
+
+.finput, .fselect{
+  width: 100%;
+  border-radius: 10px;
+  border: 1px solid #374151;
+  background: #0b1220;
+  color: #e5e7eb;
+  padding: 10px 12px;
+  outline: none;
+}
+.finput::placeholder{ color:#94a3b8; }
+
+.finput:focus, .fselect:focus{
+  border-color: #60a5fa;
+  box-shadow: 0 0 0 3px rgba(96,165,250,.25);
+}
+
+.row-2{
+  display: grid;
+  grid-template-columns: 1fr 100px;
+  gap: 10px;
+}
+
+/* Chips de tags */
+.chips{
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+}
+.chip{
+  border: 1px solid #374151;
+  background: #111827;
+  color: #e5e7eb;
+  border-radius: 999px;
+  padding: 6px 12px;
+  font-size: .9rem;
+  cursor: pointer;
+}
+.chip:hover{ border-color:#60a5fa; }
+.chip.active{
+  background: #2563eb;
+  border-color:#2563eb;
+}
+
+/* Acciones */
+.filters-actions{
+  display:flex;
+  justify-content:flex-end;
+}
+.btn-reset{
+  border-radius:10px;
+  padding:8px 12px;
+  border:1px solid #374151;
+  background:#0b1220;
+  color:#e5e7eb;
+}
+.btn-reset:hover{
+  border-color:#60a5fa;
+}
+
+/* Columna del catálogo (contenedor de tu bloque original) */
+.catalog-col{
+  min-width: 0;  /* evita overflow */
+}
+
+/* El panel derecho no debe crecer más que su columna */
+.content-area{
+  width: 100%;
+  max-width: calc(100% - 320px - 32px); /* resta sidebar + gap */
+  flex: 1;
+}
+/* Caja blanca que agrupa el catálogo: que nunca se pase de su contenedor */
+.catalog-wrap{
+  max-width: 100%;
+  width: 100%;
+  box-sizing: border-box;
+  overflow: hidden;     /* recorta cualquier “saliente” interno y muestra bien el borde redondeado */
+  border-radius: 12px;  /* asegúrate de tener el radio aquí (ajusta al que uses) */
+}
+
+/* Frame interno: que no empuje hacia la derecha */
+.catalog-frame{
+  max-width: 100%;
+  width: 100%;
+  margin-right: 0 !important;   /* por si había algún margen heredado */
+  box-sizing: border-box;
+}
+
+/* La rejilla no debe fijar un ancho que rompa el borde */
+.contenidos-section .grid{
+  width: 100%;
+  max-width: 100%;
+  box-sizing: border-box;
+  /* Grid fluido, pero sin provocar overflow horizontal */
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(240px, 1fr)); /* puedes subir/bajar 240 */
+  gap: 24px;
+  overflow: visible;
+}
+
+/* Las tarjetas nunca deben tener un ancho fijo que sobresalga */
+.contenidos-section .card{
+  max-width: 100%;
+  width: 100%;
+}
+
+/* El contenedor general tampoco debe forzar scroll horizontal */
+.ro-wrap{
+  overflow-x: clip;   /* evita un píxel de overflow pero mantiene sombras internas */
+}
+
+/* Si el layout tiene padding lateral, asegúrate de no sumar ancho extra */
+.main-container, .content-area, .catalog-wrap, .catalog-frame{
+  /* garantiza cálculo correcto del ancho con padding */
+  box-sizing: border-box;
+}

@@ -45,92 +45,165 @@
       </div>
 
   </div>
+<!-- CONTENIDOS -->
+<section class="contenidos-section" aria-label="Catálogo de contenidos">
 
-  <!-- CONTENIDOS -->
-  <section class="contenidos-section" aria-label="Catálogo de contenidos">
-    <div *ngIf="contenidosLoading" class="state loading">
-      <div class="spinner"></div>
-      <span>Cargando contenidos…</span>
-    </div>
-
-    <div *ngIf="!contenidosLoading && contenidosError" class="state error">
-      <span>⚠ {{ contenidosError }}</span>
-      <button class="btn--ghost" type="button" (click)="cargarContenidos()">Reintentar</button>
-    </div>
-
-    <div *ngIf="!contenidosLoading && !contenidosError && contenidos.length === 0" class="state empty">
-      <span>No hay contenidos disponibles.</span>
-    </div>
-
-    <div class="catalog-wrap" *ngIf="!contenidosLoading && !contenidosError && contenidos.length > 0">
-      <div class="catalog-frame">
-        <div class="catalog-frame__head">
-          <h2 class="catalog-frame__title">Catálogo</h2>
+  <!-- === Layout: panel lateral + área de contenido === -->
+  <div class="main-container">
+    
+    <!-- ===== Panel de filtros (lateral) ===== -->
+    <aside class="filter-panel">
+      <h3>🔎 Filtros</h3>
+      <form (submit)="$event.preventDefault()">
+        <div class="filter-section">
+          <label for="q">🔤 Búsqueda (título/descr)</label>
+          <input id="q" type="text" name="q"
+                 [(ngModel)]="filtrosContenido.q"
+                 (ngModelChange)="onFiltrosChange()"
+                 placeholder="Buscar..." />
         </div>
 
-        <div class="grid">
-          <article *ngFor="let c of contenidos" class="card" [class.is-open]="isDetailsOpen(c)">
+        <div class="filter-section">
+          <label for="tipo">🎞️ Tipo</label>
+          <select id="tipo" name="tipo"
+                  [(ngModel)]="filtrosContenido.tipo"
+                  (ngModelChange)="onFiltrosChange()">
+            <option value="">Todos</option>
+            <option *ngFor="let t of tiposDisponibles" [value]="t">{{ t }}</option>
+          </select>
+        </div>
 
-            <!-- THUMB (abre detalles con click) -->
-            <div class="thumb" (click)="openDetails(c)" (keydown)="handleKeyDown($event)">
-              <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimg">
-                <img [src]="c.imagen!" [alt]="c.titulo" loading="lazy" />
-              </ng-container>
-              <ng-template #noimg>
-                <div class="noimg" aria-hidden="true">Sin imagen</div>
-              </ng-template>
+        <div class="filter-section">
+          <label for="categoria">🏷️ Categoría</label>
+          <select id="categoria" name="categoria"
+                  [(ngModel)]="filtrosContenido.categoria"
+                  (ngModelChange)="onFiltrosChange()">
+            <option value="">Todas</option>
+            <option *ngFor="let c of categoriasDisponibles" [value]="c">{{ c }}</option>
+          </select>
+        </div>
 
-              <div class="badges">
-                <span class="badge info">{{ c.tipo }}</span>
-                <span *ngIf="c.vip" class="badge vip">VIP</span>
-                <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
-              </div>
+        <div class="filter-section">
+          <label for="role">🛡️ Rol de acceso</label>
+          <select id="role" name="role"
+                  [(ngModel)]="filtrosContenido.role"
+                  (ngModelChange)="onFiltrosChange()">
+            <option value="">Cualquiera</option>
+            <option value="VIP">VIP</option>
+            <option value="STANDARD">Estándar</option>
+          </select>
+        </div>
 
-              <div class="title-bar">
-                <h3 class="card-title" [title]="c.titulo">{{ c.titulo }}</h3>
-                <div class="title-bar__rating">
-                  <app-star-rating
-                    [contentId]="c.id"
-                    [userEmail]="userEmail"
-                    [enabled]="false"
-                    [autoReproducir]="false">
-                  </app-star-rating>
-                </div>
-              </div>
+        <div class="filter-section">
+          <label>👶 Clasificación por edad</label>
+          <div style="display:flex; gap:8px;">
+            <select name="ageMode"
+                    [(ngModel)]="filtrosContenido.ageMode"
+                    (ngModelChange)="onFiltrosChange()">
+              <option value="">Sin filtro</option>
+              <option value="mayores">Mayores de… (+X)</option>
+              <option value="menores">Menores de… (≤X)</option>
+            </select>
+            <input type="number" min="0" name="ageValue"
+                   [(ngModel)]="filtrosContenido.ageValue"
+                   (ngModelChange)="onFiltrosChange()" placeholder="X" />
+          </div>
+        </div>
 
-              <!-- Botones dentro del thumb NO deben abrir/cerrar -->
-              <div class="thumb-actions">
-                <button type="button" class="play-btn" title="Reproducir" (click)="play(c); $event.stopPropagation()">▶</button>
-                <button *ngIf="!readOnly" type="button" class="rate-btn" title="Valorar" (click)="toggleRating(c); $event.stopPropagation()">★</button>
-              </div>
-            </div>
+        <div class="filter-section">
+          <label for="resol">🖥️ Resolución</label>
+          <select id="resol" name="resolucion"
+                  [(ngModel)]="filtrosContenido.resolucion"
+                  (ngModelChange)="onFiltrosChange()">
+            <option value="">Todas</option>
+            <option *ngFor="let r of resolucionesDisponibles" [value]="r">{{ r }}</option>
+          </select>
+        </div>
 
-            <!-- CLIC FUERA PARA CERRAR -->
-            <div class="screen-dim" (click)="closeDetails(c)" (keydown)="handleKeyDown($event)" aria-hidden="true"></div>
+        <div class="filter-section">
+          <label>🏷️ Tags</label>
+          <div class="chips">
+            <button type="button" class="chip"
+                    *ngFor="let tag of tagsDisponibles"
+                    [class.active]="filtrosContenido.tags.includes(tag)"
+                    (click)="toggleTag(tag)">
+              {{ tag }}
+            </button>
+          </div>
+        </div>
 
-            <!-- POP CARD (dialog) -->
-            <div class="pop-card" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
-              <button type="button" class="pop-card__close" aria-label="Cerrar" (click)="closeDetails(c)">✕</button>
+        <div class="filter-section">
+          <label for="orden">↕️ Ordenar</label>
+          <select id="orden" name="ordenar"
+                  [(ngModel)]="filtrosContenido.ordenar"
+                  (ngModelChange)="onFiltrosChange()">
+            <option value="fecha">Fecha</option>
+            <option value="titulo">Título</option>
+            <option value="reproducciones">Reproducciones</option>
+          </select>
+        </div>
 
-              <div class="pop-card__media">
-                <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimgPop">
+        <div class="filter-section">
+          <label for="dir">⬆⬇ Dirección</label>
+          <select id="dir" name="dir"
+                  [(ngModel)]="filtrosContenido.dir"
+                  (ngModelChange)="onFiltrosChange()">
+            <option value="desc">Descendente</option>
+            <option value="asc">Ascendente</option>
+          </select>
+        </div>
+
+        <button type="button" class="btn--ghost btn-reset" (click)="resetFiltros()">Limpiar</button>
+      </form>
+    </aside>
+    <!-- ===== Fin filtros ===== -->
+
+    <!-- ===== Área de contenido (tu catálogo original) ===== -->
+    <main class="content-area">
+
+      <div *ngIf="contenidosLoading" class="state loading">
+        <div class="spinner"></div>
+        <span>Cargando contenidos…</span>
+      </div>
+
+      <div *ngIf="!contenidosLoading && contenidosError" class="state error">
+        <span>⚠ {{ contenidosError }}</span>
+        <button class="btn--ghost" type="button" (click)="cargarContenidos()">Reintentar</button>
+      </div>
+
+      <div *ngIf="!contenidosLoading && !contenidosError && filteredCon.length === 0" class="state empty">
+        <span>No hay contenidos disponibles.</span>
+      </div>
+
+      <div class="catalog-wrap" *ngIf="!contenidosLoading && !contenidosError && filteredCon.length > 0">
+        <div class="catalog-frame">
+          <div class="catalog-frame__head">
+            <h2 class="catalog-frame__title">Catálogo</h2>
+          </div>
+
+          <div class="grid">
+            <!-- SOLO cambiamos el *ngFor para usar filteredCon -->
+            <article *ngFor="let c of filteredCon" class="card" [class.is-open]="isDetailsOpen(c)">
+
+              <!-- ==== A PARTIR DE AQUÍ, TU TARJETA ORIGINAL TAL CUAL ==== -->
+
+              <div class="thumb" (click)="openDetails(c)" (keydown)="handleKeyDown($event)">
+                <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimg">
                   <img [src]="c.imagen!" [alt]="c.titulo" loading="lazy" />
                 </ng-container>
-                <ng-template #noimgPop>
+                <ng-template #noimg>
                   <div class="noimg" aria-hidden="true">Sin imagen</div>
                 </ng-template>
 
-                <div class="pop-card__badges">
+                <div class="badges">
                   <span class="badge info">{{ c.tipo }}</span>
                   <span *ngIf="c.vip" class="badge vip">VIP</span>
                   <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
                 </div>
-              </div>
 
-              <div class="pop-card__body">
-                <div class="pop-card__head">
-                  <h3 class="pop-card__title" [title]="c.titulo">{{ c.titulo }}</h3>
-                  <div class="pop-card__rating">
+                <div class="title-bar">
+                  <h3 class="card-title" [title]="c.titulo">{{ c.titulo }}</h3>
+                  <div class="title-bar__rating">
                     <app-star-rating
                       [contentId]="c.id"
                       [userEmail]="userEmail"
@@ -140,55 +213,103 @@
                   </div>
                 </div>
 
-                <p class="pop-card__desc" *ngIf="c.descripcion">{{ c.descripcion }}</p>
+                <div class="thumb-actions">
+                  <button type="button" class="play-btn" title="Reproducir" (click)="play(c); $event.stopPropagation()">▶</button>
+                  <button *ngIf="!readOnly" type="button" class="rate-btn" title="Valorar" (click)="toggleRating(c); $event.stopPropagation()">★</button>
+                </div>
+              </div>
 
-                <div class="pop-card__meta">
-                  <span>{{ c.resolucion || '—' }}</span>
-                  <span>·</span>
-                  <span>{{ c.duracionMinutos || '—' }} min</span>
-                  <span *ngIf="c.reproducciones !== undefined" class="plays" title="Reproducciones">· ▶ {{ c.reproducciones }}</span>
+              <div class="screen-dim" (click)="closeDetails(c)" (keydown)="handleKeyDown($event)" aria-hidden="true"></div>
+
+              <div class="pop-card" aria-modal="true" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
+                <button type="button" class="pop-card__close" aria-label="Cerrar" (click)="closeDetails(c)">✕</button>
+
+                <div class="pop-card__media">
+                  <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimgPop">
+                    <img [src]="c.imagen!" [alt]="c.titulo" loading="lazy" />
+                  </ng-container>
+                  <ng-template #noimgPop>
+                    <div class="noimg" aria-hidden="true">Sin imagen</div>
+                  </ng-template>
+
+                  <div class="pop-card__badges">
+                    <span class="badge info">{{ c.tipo }}</span>
+                    <span *ngIf="c.vip" class="badge vip">VIP</span>
+                    <span *ngIf="(c.restringidoEdad ?? 0) > 0" class="badge age">+{{ c.restringidoEdad }}</span>
+                  </div>
                 </div>
 
-                <div class="pop-card__actions">
-                  <button type="button" class="play-btn play-btn--lg" title="Reproducir" (click)="play(c); $event.stopPropagation()">▶</button>
+                <div class="pop-card__body">
+                  <div class="pop-card__head">
+                    <h3 class="pop-card__title" [title]="c.titulo">{{ c.titulo }}</h3>
+                    <div class="pop-card__rating">
+                      <app-star-rating
+                        [contentId]="c.id"
+                        [userEmail]="userEmail"
+                        [enabled]="false"
+                        [autoReproducir]="false">
+                      </app-star-rating>
+                    </div>
+                  </div>
 
-                  <button type="button"
-                          *ngIf="isUsuario"
-                          class="fav-btn fav-btn--lg"
-                          [class.is-fav]="isFav(c.id)"
-                          [attr.aria-pressed]="isFav(c.id)"
-                          [disabled]="pendingToggle[c.id]"
-                          (click)="onToggleFav(c.id); $event.stopPropagation()"
-                          [title]="isFav(c.id) ? 'Quitar de favoritos' : 'Añadir a favoritos'">
-                    <svg viewBox="0 0 24 24" class="heart" aria-hidden="true">
-                      <path d="M12 21s-6.3-4.35-9.1-7.13A5.91 5.91 0 0 1 12 4a5.91 5.91 0 0 1 9.1 9.87C18.3 16.65 12 21 12 21z"/>
-                    </svg>
-                    <span class="sr-only">{{ isFav(c.id) ? 'Quitar de favoritos' : 'Añadir a favoritos' }}</span>
-                  </button>
+                  <p class="pop-card__desc" *ngIf="c.descripcion">{{ c.descripcion }}</p>
 
-                  <button *ngIf="!readOnly" type="button" class="rate-btn rate-btn--lg" title="Valorar" (click)="toggleRating(c); $event.stopPropagation()">★</button>
-                </div>
+                  <div class="pop-card__meta">
+                    <span>{{ c.resolucion || '—' }}</span>
+                    <span>·</span>
+                    <span>{{ c.duracionMinutos || '—' }} min</span>
+                    <span *ngIf="c.reproducciones !== undefined" class="plays" title="Reproducciones">· ▶ {{ c.reproducciones }}</span>
+                  </div>
 
-                <div class="rate-panel" *ngIf="isRatingOpen(c)">
-                  <app-star-rating
-                    [contentId]="c.id"
-                    [userEmail]="userEmail"
-                    [enabled]="true"
-                    [autoReproducir]="false"
-                    (rated)="onRated(c.id, $event)">
-                  </app-star-rating>
-                  <div class="rate-actions">
-                    <button type="button" class="btn--ghost" (click)="closeRating(c)">Cancelar</button>
+                  <div class="pop-card__actions">
+                    <button type="button" class="play-btn play-btn--lg" title="Reproducir" (click)="play(c); $event.stopPropagation()">▶</button>
+
+                    <button type="button"
+                            *ngIf="isUsuario"
+                            class="fav-btn fav-btn--lg"
+                            [class.is-fav]="isFav(c.id)"
+                            [attr.aria-pressed]="isFav(c.id)"
+                            [disabled]="pendingToggle[c.id]"
+                            (click)="onToggleFav(c.id); $event.stopPropagation()"
+                            [title]="isFav(c.id) ? 'Quitar de favoritos' : 'Añadir a favoritos'">
+                      <svg viewBox="0 0 24 24" class="heart" aria-hidden="true">
+                        <path d="M12 21s-6.3-4.35-9.1-7.13A5.91 5.91 0 0 1 12 4a5.91 5.91 0 0 1 9.1 9.87C18.3 16.65 12 21 12 21z"/>
+                      </svg>
+                      <span class="sr-only">{{ isFav(c.id) ? 'Quitar de favoritos' : 'Añadir a favoritos' }}</span>
+                    </button>
+
+                    <button *ngIf="!readOnly" type="button" class="rate-btn rate-btn--lg" title="Valorar" (click)="toggleRating(c); $event.stopPropagation()">★</button>
+                  </div>
+
+                  <div class="rate-panel" *ngIf="isRatingOpen(c)">
+                    <app-star-rating
+                      [contentId]="c.id"
+                      [userEmail]="userEmail"
+                      [enabled]="true"
+                      [autoReproducir]="false"
+                      (rated)="onRated(c.id, $event)">
+                    </app-star-rating>
+                    <div class="rate-actions">
+                      <button type="button" class="btn--ghost" (click)="closeRating(c)">Cancelar</button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </article>
-        </div>
 
+            </article>
+          </div>
+
+        </div>
       </div>
-    </div>
-  </section>
+
+    </main>
+    <!-- ===== Fin área de contenido ===== -->
+
+  </div>
+  <!-- === Fin layout === -->
+
+</section>
+
 
   <!-- OVERLAY Y PANEL EDICIÓN PERFIL -->
   <button class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></button>

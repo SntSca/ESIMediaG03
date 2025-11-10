@@ -11,6 +11,12 @@ import { firstValueFrom, Observable} from 'rxjs';
 import Swal from 'sweetalert2';
 import { FavoritesService } from '../favorites.service';
 
+// ⬇️ AÑADIDO: tipos de filtros usados en el front
+type RolContenidoFiltro = '' | 'VIP' | 'STANDARD';
+type OrdenContenido = 'fecha' | 'titulo' | 'reproducciones';
+type Direccion = 'asc' | 'desc';
+type AgeMode = '' | 'mayores' | 'menores';
+
 @Component({
   selector: 'app-pagina-inicial-usuario',
   standalone: true,
@@ -23,9 +29,58 @@ export class PaginaInicialUsuario implements OnInit {
   fromAdmin = false;
 
   contenidos: Contenido[] = [];
+  filteredCon: Contenido[] = [];
   private catalogBackup: Contenido[] | null = null; 
   contenidosLoading = false;
   contenidosError: string | null = null;
+
+  // === FILTROS DE CATÁLOGO ===
+  filtrosContenido = {
+    q: '',
+    tipo: '',
+    categoria: '',
+    role: '' as '' | 'VIP' | 'STANDARD',
+    ageMode: '' as '' | 'mayores' | 'menores',
+    ageValue: null as number | null,
+    tags: [] as string[],
+    resolucion: '',
+    ordenar: 'fecha' as 'fecha' | 'titulo' | 'reproducciones',
+    dir: 'desc' as 'asc' | 'desc',
+  };
+
+  // Opciones de selección derivadas del catálogo
+  tiposDisponibles: string[] = [];
+  categoriasDisponibles: string[] = [];
+  resolucionesDisponibles: string[] = [];
+  tagsDisponibles: string[] = ['Acción', 'Comedia', 'Drama', 'Suspenso', 'Animación', 'Ciencia Ficción', 'Terror', 'Documental', 'Romance', 'Aventura'];
+
+  // Métodos mínimos usados por el HTML del panel de filtros
+  onFiltrosChange(): void {
+    this.applyFilter();
+  }
+
+  toggleTag(tag: string): void {
+    const i = this.filtrosContenido.tags.indexOf(tag);
+    if (i >= 0) this.filtrosContenido.tags.splice(i, 1);
+    else this.filtrosContenido.tags.push(tag);
+    this.applyFilter();
+  }
+
+  resetFiltros(): void {
+    this.filtrosContenido = {
+      q: '',
+      tipo: '',
+      categoria: '',
+      role: '',
+      ageMode: '',
+      ageValue: null,
+      tags: [],
+      resolucion: '',
+      ordenar: 'fecha',
+      dir: 'desc',
+    };
+    this.applyFilter();
+  }
 
   private readonly CONTENIDOS_BASE = 'http://localhost:8082/Contenidos';
   private readonly FAVORITOS_URL = `${this.CONTENIDOS_BASE}/favoritos`;
@@ -120,6 +175,13 @@ export class PaginaInicialUsuario implements OnInit {
     private contenidosSvc: ContenidosService,
     private favs: FavoritesService
   ) {}
+
+  // ⬇️ AÑADIDO: opciones estáticas que siempre aparecen en la UI
+  private readonly DEFAULT_TIPOS = ['AUDIO','VIDEO'];
+  private readonly DEFAULT_CATEGORIAS = ['Acción', 'Comedia', 'Drama', 'Suspenso', 'Animación', 'Ciencia Ficción', 'Terror', 'Documental', 'Romance', 'Aventura'];
+  private readonly DEFAULT_RESOLUCIONES = ['480p','720p','1080p','4K'];
+
+
 
   
   get isUsuario(): boolean {
@@ -528,6 +590,8 @@ export class PaginaInicialUsuario implements OnInit {
         this.catalogBackup = items.slice(0);
         this.contenidos = items;
         this.contenidosLoading = false;
+        this.filteredCon = items;    // ← AÑADIR para que se vean sin filtros
+        this.onFiltrosChange?.();    // ← AÑADIR (recalcula si tienes applyFilter)
 
         if (this.filterMode === 'favoritos' && !this.favsLoaded) this.loadFavoritos();
 
@@ -752,6 +816,103 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     this.cdr.markForCheck();
   }
 
+  // ⬇️ AÑADIDO: normalización simple para comparar tags
+  private normalizeTag(t: unknown): string {
+    return String(t ?? '').trim().toLowerCase();
+  }
 
-  
+
+  // ⬇️ AÑADIDO: aplica filtros (type, category, role VIP/STD, edad mínima/máxima, tags, resolución y orden)
+  private applyFrontFilters(): void {
+    const base = this.catalogBackup ?? [];
+    const f = this.filtrosContenido;
+
+    const q = String(f.q ?? '').trim().toLowerCase();
+    const wantTipo = String(f.tipo ?? '').trim().toUpperCase();
+    const wantCat = this.normalizeTag(f.categoria);
+    const wantRole = (f.role || '').toUpperCase();            // 'VIP' | 'STANDARD' | ''
+    const wantRes = String(f.resolucion ?? '').trim();
+    const selTags = (f.tags ?? []).map(this.normalizeTag.bind(this));
+
+    // texto: título o descripción
+    const matchesText = (c: Contenido) =>
+      !q || [c.titulo, c.descripcion].some(v => String(v ?? '').toLowerCase().includes(q));
+
+    // tipo AUDIO/VIDEO
+    const matchesTipo = (c: Contenido) =>
+      !wantTipo || String(c.tipo ?? '').toUpperCase() === wantTipo;
+
+    // categoría por tags (si seleccionas una categoría concreta)
+    const matchesCategoria = (c: Contenido) => {
+      if (!wantCat) return true;
+      const tags = (c.tags ?? []).map(this.normalizeTag.bind(this));
+      return tags.includes(wantCat);
+    };
+
+    // rol de acceso (VIP = vip:true, STANDARD = vip:false)
+    const matchesRole = (c: Contenido) => {
+      if (!wantRole) return true;
+      return wantRole === 'VIP' ? !!c.vip : !c.vip;
+    };
+
+    // edad (restringidoEdad: mínima edad requerida)
+    const matchesEdad = (c: Contenido) => {
+      const minAge = Number(c.restringidoEdad ?? 0);
+      const v = f.ageValue ?? null;
+      if (!f.ageMode || v === null) return true;
+      return f.ageMode === 'mayores' ? minAge >= v : minAge <= v;
+    };
+
+    // resolución exacta (si se indica)
+    const matchesResolucion = (c: Contenido) =>
+      !wantRes || String(c.resolucion ?? '').trim() === wantRes;
+
+    // tags (si marcas chips, deben estar todos incluidos)
+    const matchesTags = (c: Contenido) => {
+      if (!selTags.length) return true;
+      const tags = (c.tags ?? []).map(this.normalizeTag.bind(this));
+      return selTags.every(t => tags.includes(t));
+    };
+
+    let out = base
+      .filter(matchesText)
+      .filter(matchesTipo)
+      .filter(matchesCategoria)
+      .filter(matchesRole)
+      .filter(matchesEdad)
+      .filter(matchesResolucion)
+      .filter(matchesTags);
+
+    // ordenar
+    const cmp = this.cmpOrden(f.ordenar);
+    out.sort((a,b) => {
+      const s = cmp(a,b);
+      return f.dir === 'asc' ? s : -s;
+    });
+
+    this.contenidos = out;
+    this.cdr.markForCheck();
+  }
+
+  // ⬇️ AÑADIDO: comparadores para ordenación
+  private cmpOrden(kind: OrdenContenido): (a: Contenido, b: Contenido)=>number {
+    switch (kind) {
+      case 'titulo': return (a,b)=> String(a.titulo||'').localeCompare(String(b.titulo||''));
+      case 'reproducciones': return (a,b)=> (a.reproducciones??0) - (b.reproducciones??0);
+      case 'fecha':
+      default:
+        return (a,b)=> {
+          const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
+          const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
+          return ta - tb;
+        };
+    }
+  }
+
+  // ⬇️ AÑADIDO: helper (por si quieres invertir la lógica de edad en el futuro)
+  private matchesAgeRule(mode: AgeMode, minAge: number, x: number | null): boolean {
+    if (!mode || x === null) return true;
+    return mode === 'mayores' ? minAge >= x : minAge <= x;
+  }
+
 }
