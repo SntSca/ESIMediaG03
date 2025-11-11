@@ -11,7 +11,6 @@ import { firstValueFrom, Observable} from 'rxjs';
 import Swal from 'sweetalert2';
 import { FavoritesService } from '../favorites.service';
 
-// ⬇️ AÑADIDO: tipos de filtros usados en el front
 type RolContenidoFiltro = '' | 'VIP' | 'STANDARD';
 type OrdenContenido = 'fecha' | 'titulo' | 'reproducciones';
 type Direccion = 'asc' | 'desc';
@@ -46,7 +45,6 @@ export class PaginaInicialUsuario implements OnInit {
 
   goPage(p: number){ 
     this.page = Math.min(this.totalPages, Math.max(1, p));
-    // opcional: subir arriba al cambiar
     try{ window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
   }
   nextPage(){ this.goPage(this.page + 1); }
@@ -69,13 +67,12 @@ export class PaginaInicialUsuario implements OnInit {
     dir: 'desc' as 'asc' | 'desc',
   };
 
-  // Opciones de selección derivadas del catálogo
   tiposDisponibles: string[] = [];
   categoriasDisponibles: string[] = [];
   resolucionesDisponibles: string[] = [];
 
   onFiltrosChange(): void {
-    this.applyFilter();      // ← unifica todo (modo + filtros + orden)
+    this.applyFilter();
     this.cdr.markForCheck();
   }
 
@@ -190,7 +187,6 @@ export class PaginaInicialUsuario implements OnInit {
     private favs: FavoritesService
   ) {}
 
-  // ⬇️ AÑADIDO: opciones estáticas que siempre aparecen en la UI
   private readonly DEFAULT_TIPOS = ['AUDIO','VIDEO'];
   private readonly DEFAULT_CATEGORIAS = ['Acción', 'Comedia', 'Drama', 'Suspenso', 'Animación', 'Ciencia Ficción', 'Terror', 'Documental', 'Romance', 'Aventura'];
   private readonly DEFAULT_RESOLUCIONES = ['480p','720p','1080p','4K'];
@@ -808,14 +804,11 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     this.applyFilter();
   }
   private applyFilter(): void {
-    // Fuente base
     const base: Contenido[] = this.catalogBackup ?? this.contenidos.slice(0);
 
-    // === 1) Modo (todos / favoritos / historial) ===
     let working = base;
     if (this.filterMode === 'favoritos') {
       if (!this.favsLoaded) {
-        // hasta que carguen favoritos, muestra todo
         this.filteredCon = base.slice(0);
         return;
       }
@@ -825,13 +818,12 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
       working = base.filter(c => (c.reproducciones ?? 0) > 0);
     }
 
-    // === 2) Filtros del panel (tipo, categoría, role, edad, resolución, tags, búsqueda) ===
     const f = this.filtrosContenido;
 
     const q        = String(f.q ?? '').trim().toLowerCase();
     const wantTipo = String(f.tipo ?? '').trim().toUpperCase();
     const wantCat  = this.normalizeTag(f.categoria);
-    const wantRole = (f.role || '').toUpperCase();         // 'VIP' | 'STANDARD' | ''
+    const wantRole = (f.role || '').toUpperCase();
     const wantRes  = String(f.resolucion ?? '').trim();
     const ageMode  = f.ageMode;
     const ageVal   = f.ageValue;
@@ -863,7 +855,6 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
       return true;
     });
 
-    // === 3) Orden ===
     const dir = f.dir === 'asc' ? 1 : -1;
     if (f.ordenar === 'fecha') {
       out.sort((a,b) => {
@@ -877,20 +868,14 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
       out.sort((a,b) => ((b.reproducciones || 0) - (a.reproducciones || 0)) * dir);
     }
 
-    // === 4) Salida para la vista ===
     this.filteredCon = out;
-    this.page = 1;  // al cambiar filtros, vuelve a la primera página
-
+    this.page = 1;
   }
 
-
-  // ⬇️ AÑADIDO: normalización simple para comparar tags
   private normalizeTag(t: unknown): string {
     return String(t ?? '').trim().toLowerCase();
   }
 
-
-  // ⬇️ AÑADIDO: aplica filtros (type, category, role VIP/STD, edad mínima/máxima, tags, resolución y orden)
   private applyFrontFilters(): void {
     const base = this.catalogBackup ?? [];
     const f = this.filtrosContenido;
@@ -898,31 +883,26 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     const q = String(f.q ?? '').trim().toLowerCase();
     const wantTipo = String(f.tipo ?? '').trim().toUpperCase();
     const wantCat = this.normalizeTag(f.categoria);
-    const wantRole = (f.role || '').toUpperCase();            // 'VIP' | 'STANDARD' | ''
+    const wantRole = (f.role || '').toUpperCase();
     const wantRes = String(f.resolucion ?? '').trim();
 
-    // texto: título o descripción
     const matchesText = (c: Contenido) =>
       !q || [c.titulo, c.descripcion].some(v => String(v ?? '').toLowerCase().includes(q));
 
-    // tipo AUDIO/VIDEO
     const matchesTipo = (c: Contenido) =>
       !wantTipo || String(c.tipo ?? '').toUpperCase() === wantTipo;
 
-    // categoría por tags (si seleccionas una categoría concreta)
     const matchesCategoria = (c: Contenido) => {
       if (!wantCat) return true;
       const tags = (c.tags ?? []).map(this.normalizeTag.bind(this));
       return tags.includes(wantCat);
     };
 
-    // rol de acceso (VIP = vip:true, STANDARD = vip:false)
     const matchesRole = (c: Contenido) => {
       if (!wantRole) return true;
       return wantRole === 'VIP' ? !!c.vip : !c.vip;
     };
 
-    // edad (restringidoEdad: mínima edad requerida)
     const matchesEdad = (c: Contenido) => {
       const minAge = Number(c.restringidoEdad ?? 0);
       const v = f.ageValue ?? null;
@@ -930,7 +910,6 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
       return f.ageMode === 'mayores' ? minAge >= v : minAge <= v;
     };
 
-    // resolución exacta (si se indica)
     const matchesResolucion = (c: Contenido) =>
       !wantRes || String(c.resolucion ?? '').trim() === wantRes;
 
@@ -954,7 +933,6 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     this.cdr.markForCheck();
   }
 
-  // ⬇️ AÑADIDO: comparadores para ordenación
   private cmpOrden(kind: OrdenContenido): (a: Contenido, b: Contenido)=>number {
     switch (kind) {
       case 'titulo': return (a,b)=> String(a.titulo||'').localeCompare(String(b.titulo||''));
@@ -969,7 +947,6 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     }
   }
 
-  // ⬇️ AÑADIDO: helper (por si quieres invertir la lógica de edad en el futuro)
   private matchesAgeRule(mode: AgeMode, minAge: number, x: number | null): boolean {
     if (!mode || x === null) return true;
     return mode === 'mayores' ? minAge >= x : minAge <= x;

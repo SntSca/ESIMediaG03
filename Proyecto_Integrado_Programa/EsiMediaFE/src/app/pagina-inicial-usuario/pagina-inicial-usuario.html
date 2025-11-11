@@ -171,10 +171,7 @@
           </div>
 
           <div class="grid">
-            <!-- SOLO cambiamos el *ngFor para usar filteredCon -->
               <article *ngFor="let c of pagedCon" class="card" [class.is-open]="isDetailsOpen(c)">
-
-              <!-- ==== A PARTIR DE AQUÍ, TU TARJETA ORIGINAL TAL CUAL ==== -->
 
               <div class="thumb" (click)="openDetails(c)" (keydown)="handleKeyDown($event)">
                 <ng-container *ngIf="c.imagen && c.imagen.trim(); else noimg">
@@ -192,15 +189,16 @@
 
                 <div class="title-bar">
                   <h3 class="card-title" [title]="c.titulo">{{ c.titulo }}</h3>
-                  <div class="title-bar__rating">
-                    <app-star-rating
-                      [contentId]="c.id"
-                      [userEmail]="userEmail"
-                      [enabled]="false"
-                      [autoReproducir]="false">
-                    </app-star-rating>
-                  </div>
+                  <app-star-rating
+                    class="rating-only"
+                    [contentId]="c.id"
+                    [userEmail]="userEmail"
+                    [enabled]="false"
+                    [autoReproducir]="false">
+                  </app-star-rating>
                 </div>
+
+
 
                 <div class="thumb-actions">
                   <button type="button" class="play-btn" title="Reproducir" (click)="play(c); $event.stopPropagation()">▶</button>
