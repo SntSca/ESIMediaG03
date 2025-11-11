@@ -56,7 +56,7 @@
       <h3>🔎 Filtros</h3>
       <form (submit)="$event.preventDefault()">
         <div class="filter-section">
-          <label for="q">🔤 Búsqueda (título/descr)</label>
+          <label for="q">🔤 Búsqueda (Título)</label>
           <input id="q" type="text" name="q"
                  [(ngModel)]="filtrosContenido.q"
                  (ngModelChange)="onFiltrosChange()"
@@ -120,17 +120,6 @@
           </select>
         </div>
 
-        <div class="filter-section">
-          <label>🏷️ Tags</label>
-          <div class="chips">
-            <button type="button" class="chip"
-                    *ngFor="let tag of tagsDisponibles"
-                    [class.active]="filtrosContenido.tags.includes(tag)"
-                    (click)="toggleTag(tag)">
-              {{ tag }}
-            </button>
-          </div>
-        </div>
 
         <div class="filter-section">
           <label for="orden">↕️ Ordenar</label>
@@ -176,14 +165,14 @@
       </div>
 
       <div class="catalog-wrap" *ngIf="!contenidosLoading && !contenidosError && filteredCon.length > 0">
-        <div class="catalog-frame">
+        <div class="catalog-frame" #frame>
           <div class="catalog-frame__head">
             <h2 class="catalog-frame__title">Catálogo</h2>
           </div>
 
           <div class="grid">
             <!-- SOLO cambiamos el *ngFor para usar filteredCon -->
-            <article *ngFor="let c of filteredCon" class="card" [class.is-open]="isDetailsOpen(c)">
+              <article *ngFor="let c of pagedCon" class="card" [class.is-open]="isDetailsOpen(c)">
 
               <!-- ==== A PARTIR DE AQUÍ, TU TARJETA ORIGINAL TAL CUAL ==== -->
 
@@ -298,6 +287,12 @@
 
             </article>
           </div>
+        <div class="pager">
+          <button (click)="prevPage()" [disabled]="page <= 1">«</button>
+          <span class="page-info">Página {{ page }} / {{ totalPages }}</span>
+          <button (click)="nextPage()" [disabled]="page >= totalPages">»</button>
+        </div>
+
 
         </div>
       </div>

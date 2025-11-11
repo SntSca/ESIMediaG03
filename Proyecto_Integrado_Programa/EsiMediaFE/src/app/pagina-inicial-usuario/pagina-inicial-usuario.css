@@ -132,8 +132,11 @@
   border: 2px solid rgba(148,163,184,.35); border-top-color: #e5e7eb; animation: spin .8s linear infinite;
 }
 @keyframes spin { to { transform: rotate(360deg); } }
+.catalog-wrap{
+  /* padding:-4px;  ← inválido, quítalo */
+  padding: 0;              /* o el valor que quieras realmente */
+}
 
-.catalog-wrap{ padding:-4px; }
 .catalog-frame{
   width: min(1750px, 94vw);
   margin-inline:auto;
@@ -141,7 +144,7 @@
   border: 0px solid rgba(255,255,255,0.12);
   border-radius: 16px;
   box-shadow: 0 20px 60px rgba(0,0,0,.35), inset 0 0 0 1px rgba(255,255,255,.05);
-  --frame-pad: 29.8px;
+  --frame-pad: 20px;       /* si quieres reducir altura visual, baja este padding */
   --pop-w-min: 340px;   
   --pop-w-perc: 48cqw;   
   --pop-w-max: 640px;    
@@ -151,12 +154,16 @@
   --thumb-play-bottom: 12px;
   --thumb-play-left: 12px;
   padding: var(--frame-pad);
-  min-height: 570px;
-  position: relative;       
-  transform: translateZ(0); 
-  overflow: clip;           
-  container-type: inline-size; 
+
+  min-height: unset;        /* o simplemente elimina la línea */
+  height: auto;
+
+  position: relative;
+  transform: translateZ(0);
+  overflow: clip;
+  container-type: inline-size;
 }
+
 .catalog-frame__head{
   display:flex; align-items:center; justify-content:space-between; gap:12px;
   padding:8px 4px 12px;
@@ -599,13 +606,96 @@
   width: 100%;
 }
 
-/* El contenedor general tampoco debe forzar scroll horizontal */
-.ro-wrap{
-  overflow-x: clip;   /* evita un píxel de overflow pero mantiene sombras internas */
-}
 
 /* Si el layout tiene padding lateral, asegúrate de no sumar ancho extra */
 .main-container, .content-area, .catalog-wrap, .catalog-frame{
   /* garantiza cálculo correcto del ancho con padding */
   box-sizing: border-box;
+}
+/* --- GRID de catálogo con columnas FIJAS --- */
+/* Frame: head | grid | pager */
+.catalog-frame{
+  display: grid;
+  grid-template-rows: auto 1fr auto;   /* head | contenido | paginador */
+  --frame-pad: 20px;
+  --row-gap: 24px;
+  --row-h: 200px;                      /* alto aprox de una fila de tarjetas */
+  padding: var(--frame-pad);
+  min-height: calc(3 * var(--row-h) + 2 * var(--row-gap) + 2 * var(--frame-pad));
+}
+
+/* Grid SIN height fija */
+.catalog-frame .grid{
+  grid-row: 2;
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 260px);  /* o 340px si prefieres */
+  gap: 24px;
+  justify-content: start;     /* o center */
+  margin-bottom: 12px;
+}
+
+/* Paginador abajo del frame */
+.catalog-frame .pager{
+  grid-row: 3;
+  margin: 12px 0 0;
+  padding-bottom: 12px;
+}
+
+.pager button{
+  padding: 8px 12px;
+  border-radius: 10px;
+  background: #202833;
+  color: #e8eef7;
+  border: 1px solid #2f3a47;
+  cursor: pointer;
+}
+.pager button[disabled]{
+  opacity: .5;
+  cursor: not-allowed;
+}
+.pager .page-info{ opacity:.8; }
+.page-info{ opacity:.85; }
+
+/* Panel de filtros pegado al top y con scroll interno */
+.filter-panel{
+  position: sticky;
+  top: 88px;                         /* ajusta según la altura de tu header */
+  height: calc(100vh - 40px);       /* alto visible del panel */
+  overflow: hidden;                  /* evita doble scroll en el contenedor */
+  display: flex;
+  flex-direction: column;
+  padding-right: 4px;                /* para que no tape el borde el scrollbar */
+}
+
+/* El formulario es el que scrollea */
+.filter-panel > form{
+  overflow-y: auto;
+  overflow-x: hidden;
+  padding-right: 6px;                /* espacio para la barra */
+  scrollbar-gutter: stable both-edges;
+}
+
+/* Opcional: estiliza el scroll en navegadores WebKit */
+.filter-panel > form::-webkit-scrollbar { width: 10px; }
+.filter-panel > form::-webkit-scrollbar-thumb {
+  background: #2c3540; border-radius: 8px;
+}
+.filter-panel > form::-webkit-scrollbar-track { background: transparent; }
+
+/* Mini paginador siempre visible bajo la grilla */
+.pager {
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  gap: 12px;
+  margin-top: 24px;
+  padding-bottom: 12px;
+}
+.grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, 340px);
+  gap: 24px;
+  justify-content: center;
+  align-content: start;
+  height: calc(475px); /* tres filas fijas */
 }

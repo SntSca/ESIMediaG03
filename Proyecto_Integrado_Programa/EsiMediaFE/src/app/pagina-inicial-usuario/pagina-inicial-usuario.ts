@@ -30,6 +30,28 @@ export class PaginaInicialUsuario implements OnInit {
 
   contenidos: Contenido[] = [];
   filteredCon: Contenido[] = [];
+
+    // --- Paginación ---
+  pageSize = 12; // 3 filas x 4 columnas
+  page = 1;
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredCon.length / this.pageSize));
+  }
+
+  get pagedCon(): Contenido[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.filteredCon.slice(start, start + this.pageSize);
+  }
+
+  goPage(p: number){ 
+    this.page = Math.min(this.totalPages, Math.max(1, p));
+    // opcional: subir arriba al cambiar
+    try{ window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+  }
+  nextPage(){ this.goPage(this.page + 1); }
+  prevPage(){ this.goPage(this.page - 1); }
+
   private catalogBackup: Contenido[] | null = null; 
   contenidosLoading = false;
   contenidosError: string | null = null;
@@ -42,7 +64,6 @@ export class PaginaInicialUsuario implements OnInit {
     role: '' as '' | 'VIP' | 'STANDARD',
     ageMode: '' as '' | 'mayores' | 'menores',
     ageValue: null as number | null,
-    tags: [] as string[],
     resolucion: '',
     ordenar: 'fecha' as 'fecha' | 'titulo' | 'reproducciones',
     dir: 'desc' as 'asc' | 'desc',
@@ -52,19 +73,13 @@ export class PaginaInicialUsuario implements OnInit {
   tiposDisponibles: string[] = [];
   categoriasDisponibles: string[] = [];
   resolucionesDisponibles: string[] = [];
-  tagsDisponibles: string[] = ['Acción', 'Comedia', 'Drama', 'Suspenso', 'Animación', 'Ciencia Ficción', 'Terror', 'Documental', 'Romance', 'Aventura'];
 
-  // Métodos mínimos usados por el HTML del panel de filtros
   onFiltrosChange(): void {
-    this.applyFilter();
+    this.applyFilter();      // ← unifica todo (modo + filtros + orden)
+    this.cdr.markForCheck();
   }
 
-  toggleTag(tag: string): void {
-    const i = this.filtrosContenido.tags.indexOf(tag);
-    if (i >= 0) this.filtrosContenido.tags.splice(i, 1);
-    else this.filtrosContenido.tags.push(tag);
-    this.applyFilter();
-  }
+
 
   resetFiltros(): void {
     this.filtrosContenido = {
@@ -74,7 +89,6 @@ export class PaginaInicialUsuario implements OnInit {
       role: '',
       ageMode: '',
       ageValue: null,
-      tags: [],
       resolucion: '',
       ordenar: 'fecha',
       dir: 'desc',
@@ -589,9 +603,14 @@ export class PaginaInicialUsuario implements OnInit {
 
         this.catalogBackup = items.slice(0);
         this.contenidos = items;
+        this.tiposDisponibles = this.DEFAULT_TIPOS.slice();
+        this.categoriasDisponibles = this.DEFAULT_CATEGORIAS.slice();
+        this.resolucionesDisponibles = this.DEFAULT_RESOLUCIONES.slice();
+
+
         this.contenidosLoading = false;
-        this.filteredCon = items;    // ← AÑADIR para que se vean sin filtros
-        this.onFiltrosChange?.();    // ← AÑADIR (recalcula si tienes applyFilter)
+        this.applyFilter();
+
 
         if (this.filterMode === 'favoritos' && !this.favsLoaded) this.loadFavoritos();
 
@@ -788,33 +807,82 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     }
     this.applyFilter();
   }
-
   private applyFilter(): void {
+    // Fuente base
     const base: Contenido[] = this.catalogBackup ?? this.contenidos.slice(0);
 
-    let filtered = base;
-
+    // === 1) Modo (todos / favoritos / historial) ===
+    let working = base;
     if (this.filterMode === 'favoritos') {
       if (!this.favsLoaded) {
-        this.contenidos = base;
-        this.onlyFavsView = true;
-        this.cdr.markForCheck();
+        // hasta que carguen favoritos, muestra todo
+        this.filteredCon = base.slice(0);
         return;
       }
       const set = this.favIds;
-      filtered = base.filter(c => set.has(c.id));
-      this.onlyFavsView = true;
+      working = base.filter(c => set.has(c.id));
     } else if (this.filterMode === 'historial') {
-      filtered = base.filter(c => (c.reproducciones ?? 0) > 0);
-      this.onlyFavsView = false;
-    } else {
-      filtered = base;
-      this.onlyFavsView = false;
+      working = base.filter(c => (c.reproducciones ?? 0) > 0);
     }
 
-    this.contenidos = filtered;
-    this.cdr.markForCheck();
+    // === 2) Filtros del panel (tipo, categoría, role, edad, resolución, tags, búsqueda) ===
+    const f = this.filtrosContenido;
+
+    const q        = String(f.q ?? '').trim().toLowerCase();
+    const wantTipo = String(f.tipo ?? '').trim().toUpperCase();
+    const wantCat  = this.normalizeTag(f.categoria);
+    const wantRole = (f.role || '').toUpperCase();         // 'VIP' | 'STANDARD' | ''
+    const wantRes  = String(f.resolucion ?? '').trim();
+    const ageMode  = f.ageMode;
+    const ageVal   = f.ageValue;
+
+    let out = working.filter(c => {
+      if (q) {
+        const tit = (c.titulo || '').toString().toLowerCase();
+        if (!tit.includes(q)) return false;
+      }
+      if (wantTipo && String(c.tipo || '').toUpperCase() !== wantTipo) return false;
+
+      if (wantRole === 'VIP' && !c.vip) return false;
+      if (wantRole === 'STANDARD' && !!c.vip) return false;
+
+      if (wantCat) {
+        const tags = (c.tags || []).map(x => this.normalizeTag(x));
+        if (!tags.includes(wantCat)) return false;
+      }
+
+      if (wantRes && String(c.resolucion || '').trim() !== wantRes) return false;
+
+
+      if (ageMode && ageVal !== null) {
+        const minAge = Number(c.restringidoEdad ?? 0);
+        if (ageMode === 'mayores' && !(minAge >= ageVal)) return false;
+        if (ageMode === 'menores' && !(minAge <= ageVal)) return false;
+      }
+
+      return true;
+    });
+
+    // === 3) Orden ===
+    const dir = f.dir === 'asc' ? 1 : -1;
+    if (f.ordenar === 'fecha') {
+      out.sort((a,b) => {
+        const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
+        const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
+        return (tb - ta) * dir;
+      });
+    } else if (f.ordenar === 'titulo') {
+      out.sort((a,b) => a.titulo.localeCompare(b.titulo) * dir);
+    } else if (f.ordenar === 'reproducciones') {
+      out.sort((a,b) => ((b.reproducciones || 0) - (a.reproducciones || 0)) * dir);
+    }
+
+    // === 4) Salida para la vista ===
+    this.filteredCon = out;
+    this.page = 1;  // al cambiar filtros, vuelve a la primera página
+
   }
+
 
   // ⬇️ AÑADIDO: normalización simple para comparar tags
   private normalizeTag(t: unknown): string {
@@ -832,7 +900,6 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     const wantCat = this.normalizeTag(f.categoria);
     const wantRole = (f.role || '').toUpperCase();            // 'VIP' | 'STANDARD' | ''
     const wantRes = String(f.resolucion ?? '').trim();
-    const selTags = (f.tags ?? []).map(this.normalizeTag.bind(this));
 
     // texto: título o descripción
     const matchesText = (c: Contenido) =>
@@ -867,12 +934,6 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     const matchesResolucion = (c: Contenido) =>
       !wantRes || String(c.resolucion ?? '').trim() === wantRes;
 
-    // tags (si marcas chips, deben estar todos incluidos)
-    const matchesTags = (c: Contenido) => {
-      if (!selTags.length) return true;
-      const tags = (c.tags ?? []).map(this.normalizeTag.bind(this));
-      return selTags.every(t => tags.includes(t));
-    };
 
     let out = base
       .filter(matchesText)
@@ -881,7 +942,6 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
       .filter(matchesRole)
       .filter(matchesEdad)
       .filter(matchesResolucion)
-      .filter(matchesTags);
 
     // ordenar
     const cmp = this.cmpOrden(f.ordenar);
@@ -909,7 +969,7 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     }
   }
 
-  // ⬇️ AÑADIDO: helper (por si quieres invertir la lógica de edad en el futuro).
+  // ⬇️ AÑADIDO: helper (por si quieres invertir la lógica de edad en el futuro)
   private matchesAgeRule(mode: AgeMode, minAge: number, x: number | null): boolean {
     if (!mode || x === null) return true;
     return mode === 'mayores' ? minAge >= x : minAge <= x;
