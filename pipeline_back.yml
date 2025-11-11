@@ -1,0 +1,32 @@
+trigger:
+- development 
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+variables:
+  # El PAT se guarda como variable secreta en Azure DevOps
+  GITHUB_PAT: $(GITHUB_PAT)
+  # URL del repositorio de backup
+  BACKUP_REPO_URL: "https://github.com/SantiagoSanchez-CeleminArevalo/Copia_seguridad_EsiMediaG03.git"
+
+steps:
+- script: |
+    git config --global user.name "CopiaSeguridad"
+    git config --global user.email "proyecto.integrado.iso@gmail.com"
+  displayName: 'Configurar Git'
+
+- script: |
+    git clone https://$(GITHUB_PAT)@github.com/SantiagoSanchez-CeleminArevalo/Copia_seguridad_EsiMediaG03.git backup-repo
+  displayName: 'Clonar repositorio de backup'
+
+- script: |
+    rsync -av $(Build.SourcesDirectory)/ backup-repo/
+  displayName: 'Copiar todo el repositorio al backup'
+
+- script: |
+    cd backup-repo
+    git add .
+    git diff-index --quiet HEAD || git commit -m "Backup automático $(Build.BuildId)"
+    git push
+  displayName: 'Commit y push al repositorio de backup'
