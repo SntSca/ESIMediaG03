@@ -304,6 +304,7 @@ export class PaginaInicialUsuario implements OnInit {
     const avatar = this.normUrl(this.resolveAvatarRaw(u));
     this.userAvatar = avatar || null;
     if (!avatar) this.userInitials = this.initialsFrom(u?.alias || u?.nombre || this.userName);
+    this.applyFilter();
     this.cdr.markForCheck();
   }
   private resolveAvatarRaw(u: any): string { return this.t(u?.fotoUrl) || this.t(u?.foto) || this.t(this.model?.foto); }
@@ -403,7 +404,9 @@ export class PaginaInicialUsuario implements OnInit {
   private isAdmin(): boolean { return (this.loggedUser?.role ?? '').toString().toUpperCase() === 'ADMINISTRADOR'; }
   private canSeeVip(): boolean { return !!this.model.vip || (this.readOnly && this.fromAdmin && this.isAdmin()); }
 
-  // ===== Catálogo =====
+
+
+
   public cargarContenidos(): void {
     this.contenidosLoading = true; this.contenidosError = null;
     this.http.get<any[]>(`${this.CONTENIDOS_BASE}/ListarContenidos`).subscribe({
@@ -429,6 +432,7 @@ export class PaginaInicialUsuario implements OnInit {
         }))
           .filter(item => item.visible)
           .filter(item => this.canSeeVip() ? true : !item.vip)
+          .filter(item => this.canSeeByAge(item))
           .sort((a, b) => {
             const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
             const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
@@ -440,7 +444,7 @@ export class PaginaInicialUsuario implements OnInit {
         this.categoriasDisponibles = this.DEFAULT_CATEGORIAS.slice();
         this.resolucionesDisponibles = this.DEFAULT_RESOLUCIONES.slice();
         this.contenidosLoading = false;
-        this.applyFilter();
+        //this.applyFilter();
         if (this.filterMode === 'favoritos' && !this.favsLoaded) this.loadFavoritos();
         this.applyFilter();
         this.cdr.markForCheck();
@@ -627,15 +631,32 @@ export class PaginaInicialUsuario implements OnInit {
   onFilterChange(): void { if (this.filterMode === 'favoritos' && !this.favsLoaded) this.loadFavoritos(); this.applyFilter(); }
 
   private applyFilter(): void {
-    const base: Contenido[] = this.catalogBackup ?? this.contenidos.slice(0);
+    // 1) Base del catálogo (backup si existe)
+    const base0: Contenido[] = this.catalogBackup ?? this.contenidos.slice(0);
+
+    // 2) Normalización previa SIEMPRE: visibilidad VIP y rango de edad
+    //    - Admin en modo lectura ve todo porque canSeeVip()/canSeeByAge() ya lo contemplan
+    const base = base0
+      .filter(item => this.canSeeVip() ? true : !item.vip)
+      .filter(item => this.canSeeByAge(item));
+
+    // 3) Capas de filtro "vista" (favoritos / historial)
     let working = base;
+
     if (this.filterMode === 'favoritos') {
-      if (!this.favsLoaded) { this.filteredCon = base.slice(0); return; }
-      const set = this.favIds; working = base.filter(c => set.has(c.id));
+      if (!this.favsLoaded) {
+        // mientras se cargan los favoritos, mostramos la base ya normalizada
+        this.filteredCon = base.slice(0);
+        this.page = 1;
+        return;
+      }
+      const set = this.favIds;
+      working = base.filter(c => set.has(c.id));
     } else if (this.filterMode === 'historial') {
       working = base.filter(c => (c.reproducciones ?? 0) > 0);
     }
 
+    // 4) Filtros avanzados (texto, tipo, categoría, rol, resolución, edad avanzada UI…)
     const f = this.filtrosContenido;
     const q = String(f.q ?? '').trim().toLowerCase();
     const wantTipo = String(f.tipo ?? '').trim().toUpperCase();
@@ -649,6 +670,7 @@ export class PaginaInicialUsuario implements OnInit {
       q, wantTipo, wantCat, wantRole, wantRes, ageMode, ageVal
     }));
 
+    // 5) Ordenación
     const dir = f.dir === 'asc' ? 1 : -1;
     const ordenar = f.ordenar;
     out.sort((a, b) => {
@@ -665,10 +687,10 @@ export class PaginaInicialUsuario implements OnInit {
       return score * dir;
     });
 
+    // 6) Salida + reinicio de paginación
     this.filteredCon = out;
     this.page = 1;
   }
-
   private matchesFilter(
     c: Contenido,
     opts: { q: string; wantTipo: string; wantCat: string; wantRole: string; wantRes: string; ageMode: AgeMode; ageVal: number | null }
@@ -746,5 +768,13 @@ export class PaginaInicialUsuario implements OnInit {
 
   private getCurrentAge(): number | null {
     return this.calcAgeFromISO(this.model?.fechaNac || null);
+  }
+  private canSeeByAge(item: { restringidoEdad?: number | null }): boolean {
+    if (this.readOnly && this.fromAdmin && this.isAdmin()) return true;
+    const min = this.toNum(item?.restringidoEdad ?? 0);
+    if (min <= 0) return true;
+    const age = this.getCurrentAge();
+    if (age === null) return false;
+    return age >= min;
   }
 }

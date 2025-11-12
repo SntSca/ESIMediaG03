@@ -1,4 +1,4 @@
-<!-- BANNER MODO LECTURA -->
+
 <div class="ro-banner" *ngIf="readOnly">
   <span>📖 Modo lectura activado — no puedes interactuar con esta página.</span>
   <button
@@ -13,7 +13,7 @@
 
 <div class="ro-wrap" [class.readonly]="readOnly">
 
-  <!-- HEADER USUARIO -->
+
   <div class="usuario-header">
     <div class="usuario-info">
       <div class="ava">
@@ -142,9 +142,7 @@
         <button type="button" class="btn--ghost btn-reset" (click)="resetFiltros()">Limpiar</button>
       </form>
     </aside>
-    <!-- ===== Fin filtros ===== -->
-
-    <!-- ===== Área de contenido (tu catálogo original) ===== -->
+    
     <main class="content-area">
 
       <div *ngIf="contenidosLoading" class="state loading">
@@ -292,15 +290,15 @@
       </div>
 
     </main>
-    <!-- ===== Fin área de contenido ===== -->
+  
 
   </div>
-  <!-- === Fin layout === -->
+ 
 
 </section>
 
 
-  <!-- OVERLAY Y PANEL EDICIÓN PERFIL -->
+  
   <button class="overlay" *ngIf="editOpen" (click)="cancelarEditar()"></button>
   <div class="edit-panel modal" [class.open]="editOpen" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
     <h3>Editar perfil</h3>
@@ -368,7 +366,7 @@
     </form>
   </div>
 
-  <!-- MODAL AVATAR -->
+
   <div
     *ngIf="showAvatarModal"
     class="avatar-modal"
@@ -416,12 +414,12 @@
     </dialog>
   </div>
 
-  <!-- PLAYER MODAL -->
+
 <div *ngIf="playerOpen">
-  <!-- Fondo oscuro semitransparente -->
+  
   <div class="player-overlay" (click)="closePlayer()"></div>
 
-  <!-- Ventana del reproductor -->
+ 
   <div class="player-modal" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">
     <div class="player-header">
       <h3 class="player-title">{{ playingTitle }}</h3>
