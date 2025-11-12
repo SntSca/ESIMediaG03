@@ -11,6 +11,11 @@ import { firstValueFrom, Observable} from 'rxjs';
 import Swal from 'sweetalert2';
 import { FavoritesService } from '../favorites.service';
 
+type RolContenidoFiltro = '' | 'VIP' | 'STANDARD';
+type OrdenContenido = 'fecha' | 'titulo' | 'reproducciones';
+type Direccion = 'asc' | 'desc';
+type AgeMode = '' | 'mayores' | 'menores';
+
 @Component({
   selector: 'app-pagina-inicial-usuario',
   standalone: true,
@@ -23,9 +28,70 @@ export class PaginaInicialUsuario implements OnInit {
   fromAdmin = false;
 
   contenidos: Contenido[] = [];
+  filteredCon: Contenido[] = [];
+
+    // --- Paginación ---
+  pageSize = 12; // 3 filas x 4 columnas
+  page = 1;
+
+  get totalPages(): number {
+    return Math.max(1, Math.ceil(this.filteredCon.length / this.pageSize));
+  }
+
+  get pagedCon(): Contenido[] {
+    const start = (this.page - 1) * this.pageSize;
+    return this.filteredCon.slice(start, start + this.pageSize);
+  }
+
+  goPage(p: number){ 
+    this.page = Math.min(this.totalPages, Math.max(1, p));
+    try{ window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {}
+  }
+  nextPage(){ this.goPage(this.page + 1); }
+  prevPage(){ this.goPage(this.page - 1); }
+
   private catalogBackup: Contenido[] | null = null; 
   contenidosLoading = false;
   contenidosError: string | null = null;
+
+  // === FILTROS DE CATÁLOGO ===
+  filtrosContenido = {
+    q: '',
+    tipo: '',
+    categoria: '',
+    role: '' as '' | 'VIP' | 'STANDARD',
+    ageMode: '' as '' | 'mayores' | 'menores',
+    ageValue: null as number | null,
+    resolucion: '',
+    ordenar: 'fecha' as 'fecha' | 'titulo' | 'reproducciones',
+    dir: 'desc' as 'asc' | 'desc',
+  };
+
+  tiposDisponibles: string[] = [];
+  categoriasDisponibles: string[] = [];
+  resolucionesDisponibles: string[] = [];
+
+  onFiltrosChange(): void {
+    this.applyFilter();
+    this.cdr.markForCheck();
+  }
+
+
+
+  resetFiltros(): void {
+    this.filtrosContenido = {
+      q: '',
+      tipo: '',
+      categoria: '',
+      role: '',
+      ageMode: '',
+      ageValue: null,
+      resolucion: '',
+      ordenar: 'fecha',
+      dir: 'desc',
+    };
+    this.applyFilter();
+  }
 
   private readonly CONTENIDOS_BASE = 'http://localhost:8082/Contenidos';
   private readonly FAVORITOS_URL = `${this.CONTENIDOS_BASE}/favoritos`;
@@ -120,6 +186,12 @@ export class PaginaInicialUsuario implements OnInit {
     private contenidosSvc: ContenidosService,
     private favs: FavoritesService
   ) {}
+
+  private readonly DEFAULT_TIPOS = ['AUDIO','VIDEO'];
+  private readonly DEFAULT_CATEGORIAS = ['Acción', 'Comedia', 'Drama', 'Suspenso', 'Animación', 'Ciencia Ficción', 'Terror', 'Documental', 'Romance', 'Aventura'];
+  private readonly DEFAULT_RESOLUCIONES = ['480p','720p','1080p','4K'];
+
+
 
   
   get isUsuario(): boolean {
@@ -527,7 +599,14 @@ export class PaginaInicialUsuario implements OnInit {
 
         this.catalogBackup = items.slice(0);
         this.contenidos = items;
+        this.tiposDisponibles = this.DEFAULT_TIPOS.slice();
+        this.categoriasDisponibles = this.DEFAULT_CATEGORIAS.slice();
+        this.resolucionesDisponibles = this.DEFAULT_RESOLUCIONES.slice();
+
+
         this.contenidosLoading = false;
+        this.applyFilter();
+
 
         if (this.filterMode === 'favoritos' && !this.favsLoaded) this.loadFavoritos();
 
@@ -724,34 +803,153 @@ filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
     }
     this.applyFilter();
   }
-
   private applyFilter(): void {
     const base: Contenido[] = this.catalogBackup ?? this.contenidos.slice(0);
 
-    let filtered = base;
-
+    let working = base;
     if (this.filterMode === 'favoritos') {
       if (!this.favsLoaded) {
-        this.contenidos = base;
-        this.onlyFavsView = true;
-        this.cdr.markForCheck();
+        this.filteredCon = base.slice(0);
         return;
       }
       const set = this.favIds;
-      filtered = base.filter(c => set.has(c.id));
-      this.onlyFavsView = true;
+      working = base.filter(c => set.has(c.id));
     } else if (this.filterMode === 'historial') {
-      filtered = base.filter(c => (c.reproducciones ?? 0) > 0);
-      this.onlyFavsView = false;
-    } else {
-      filtered = base;
-      this.onlyFavsView = false;
+      working = base.filter(c => (c.reproducciones ?? 0) > 0);
     }
 
-    this.contenidos = filtered;
+    const f = this.filtrosContenido;
+
+    const q        = String(f.q ?? '').trim().toLowerCase();
+    const wantTipo = String(f.tipo ?? '').trim().toUpperCase();
+    const wantCat  = this.normalizeTag(f.categoria);
+    const wantRole = (f.role || '').toUpperCase();
+    const wantRes  = String(f.resolucion ?? '').trim();
+    const ageMode  = f.ageMode;
+    const ageVal   = f.ageValue;
+
+    let out = working.filter(c => {
+      if (q) {
+        const tit = (c.titulo || '').toString().toLowerCase();
+        if (!tit.includes(q)) return false;
+      }
+      if (wantTipo && String(c.tipo || '').toUpperCase() !== wantTipo) return false;
+
+      if (wantRole === 'VIP' && !c.vip) return false;
+      if (wantRole === 'STANDARD' && !!c.vip) return false;
+
+      if (wantCat) {
+        const tags = (c.tags || []).map(x => this.normalizeTag(x));
+        if (!tags.includes(wantCat)) return false;
+      }
+
+      if (wantRes && String(c.resolucion || '').trim() !== wantRes) return false;
+
+
+      if (ageMode && ageVal !== null) {
+        const minAge = Number(c.restringidoEdad ?? 0);
+        if (ageMode === 'mayores' && !(minAge >= ageVal)) return false;
+        if (ageMode === 'menores' && !(minAge <= ageVal)) return false;
+      }
+
+      return true;
+    });
+
+    const dir = f.dir === 'asc' ? 1 : -1;
+    if (f.ordenar === 'fecha') {
+      out.sort((a,b) => {
+        const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
+        const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
+        return (tb - ta) * dir;
+      });
+    } else if (f.ordenar === 'titulo') {
+      out.sort((a,b) => a.titulo.localeCompare(b.titulo) * dir);
+    } else if (f.ordenar === 'reproducciones') {
+      out.sort((a,b) => ((b.reproducciones || 0) - (a.reproducciones || 0)) * dir);
+    }
+
+    this.filteredCon = out;
+    this.page = 1;
+  }
+
+  private normalizeTag(t: unknown): string {
+    return String(t ?? '').trim().toLowerCase();
+  }
+
+  private applyFrontFilters(): void {
+    const base = this.catalogBackup ?? [];
+    const f = this.filtrosContenido;
+
+    const q = String(f.q ?? '').trim().toLowerCase();
+    const wantTipo = String(f.tipo ?? '').trim().toUpperCase();
+    const wantCat = this.normalizeTag(f.categoria);
+    const wantRole = (f.role || '').toUpperCase();
+    const wantRes = String(f.resolucion ?? '').trim();
+
+    const matchesText = (c: Contenido) =>
+      !q || [c.titulo, c.descripcion].some(v => String(v ?? '').toLowerCase().includes(q));
+
+    const matchesTipo = (c: Contenido) =>
+      !wantTipo || String(c.tipo ?? '').toUpperCase() === wantTipo;
+
+    const matchesCategoria = (c: Contenido) => {
+      if (!wantCat) return true;
+      const tags = (c.tags ?? []).map(this.normalizeTag.bind(this));
+      return tags.includes(wantCat);
+    };
+
+    const matchesRole = (c: Contenido) => {
+      if (!wantRole) return true;
+      return wantRole === 'VIP' ? !!c.vip : !c.vip;
+    };
+
+    const matchesEdad = (c: Contenido) => {
+      const minAge = Number(c.restringidoEdad ?? 0);
+      const v = f.ageValue ?? null;
+      if (!f.ageMode || v === null) return true;
+      return f.ageMode === 'mayores' ? minAge >= v : minAge <= v;
+    };
+
+    const matchesResolucion = (c: Contenido) =>
+      !wantRes || String(c.resolucion ?? '').trim() === wantRes;
+
+
+    let out = base
+      .filter(matchesText)
+      .filter(matchesTipo)
+      .filter(matchesCategoria)
+      .filter(matchesRole)
+      .filter(matchesEdad)
+      .filter(matchesResolucion)
+
+    // ordenar
+    const cmp = this.cmpOrden(f.ordenar);
+    out.sort((a,b) => {
+      const s = cmp(a,b);
+      return f.dir === 'asc' ? s : -s;
+    });
+
+    this.contenidos = out;
     this.cdr.markForCheck();
   }
 
+  private cmpOrden(kind: OrdenContenido): (a: Contenido, b: Contenido)=>number {
+    switch (kind) {
+      case 'titulo': return (a,b)=> String(a.titulo||'').localeCompare(String(b.titulo||''));
+      case 'reproducciones': return (a,b)=> (a.reproducciones??0) - (b.reproducciones??0);
+      case 'fecha':
+      default:
+        return (a,b)=> {
+          const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
+          const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
+          return ta - tb;
+        };
+    }
+  }
 
-  
+  private matchesAgeRule(mode: AgeMode, minAge: number, x: number | null): boolean {
+    if (!mode || x === null) return true;
+    return mode === 'mayores' ? minAge >= x : minAge <= x;
+  }
+
 }
