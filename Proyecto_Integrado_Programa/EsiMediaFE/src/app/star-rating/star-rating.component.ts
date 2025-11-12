@@ -26,7 +26,7 @@ export class StarRatingComponent implements OnInit {
   alreadyRated = false;
   errorMsg: string | null = null;
 
-  constructor(private api: ContenidosService) {}
+  constructor(private api: ContenidosService) { }
 
   ngOnInit(): void {
     this.cargarResumen();
@@ -39,12 +39,11 @@ export class StarRatingComponent implements OnInit {
     });
   }
 
-  starFill(index: number): 'full'|'half'|'empty' {
-    const v = this.hoverValue ?? this.avg;
-    const diff = v - index;
-    if (diff >= 1)   return 'full';
-    if (diff >= 0.5) return 'half';
-    return diff > 0 ? 'half' : 'empty';
+  starFill(index: number): 'full' | 'half' | 'empty' {
+    const v = this.hoverValue ?? this.avg; 
+    if (v >= index) return 'full';          
+    if (v >= index - 0.5) return 'half';    
+    return 'empty';
   }
 
   onMove(event: MouseEvent, starIndex: number) {

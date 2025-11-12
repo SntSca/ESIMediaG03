@@ -1,13 +1,13 @@
 import { ChangeDetectorRef, Component, OnInit, ElementRef, ViewChild } from '@angular/core'; // ✅ ElementRef, ViewChild
-import { CommonModule} from '@angular/common';
+import { CommonModule } from '@angular/common';
 import { FormsModule } from '@angular/forms';
 import { ActivatedRoute, Router } from '@angular/router';
 import { AuthService } from '../auth/auth.service';
 import { AppUser, UserDto, Contenido } from '../auth/models';
-import { HttpClient, HttpErrorResponse } from  '@angular/common/http';
+import { HttpClient, HttpErrorResponse } from '@angular/common/http';
 import { ContenidosService, ResolveResult } from '../contenidos.service';
 import { StarRatingComponent } from '../star-rating/star-rating.component';
-import { firstValueFrom, Observable} from 'rxjs';
+import { firstValueFrom, Observable } from 'rxjs';
 import { DomSanitizer, SafeResourceUrl } from '@angular/platform-browser';
 import Swal from 'sweetalert2';
 import { FavoritesService } from '../favorites.service';
@@ -64,7 +64,7 @@ function isDirectMedia(url: string): boolean {
 @Component({
   selector: 'app-pagina-inicial-usuario',
   standalone: true,
-  imports: [CommonModule, FormsModule,StarRatingComponent],
+  imports: [CommonModule, FormsModule, StarRatingComponent],
   templateUrl: './pagina-inicial-usuario.html',
   styleUrls: ['./pagina-inicial-usuario.css'],
 })
@@ -80,14 +80,14 @@ export class PaginaInicialUsuario implements OnInit {
   page = 1;
   get totalPages(): number { return Math.max(1, Math.ceil(this.filteredCon.length / this.pageSize)); }
   get pagedCon(): Contenido[] { const start = (this.page - 1) * this.pageSize; return this.filteredCon.slice(start, start + this.pageSize); }
-  goPage(p: number){ this.page = Math.min(this.totalPages, Math.max(1, p)); try{ window.scrollTo({ top: 0, behavior: 'smooth' }); } catch {} }
-  nextPage(){ this.goPage(this.page + 1); }
-  prevPage(){ this.goPage(this.page - 1); }
+  goPage(p: number) { this.page = Math.min(this.totalPages, Math.max(1, p)); try { window.scrollTo({ top: 0, behavior: 'smooth' }); } catch { } }
+  nextPage() { this.goPage(this.page + 1); }
+  prevPage() { this.goPage(this.page - 1); }
 
   private catalogBackup: Contenido[] | null = null;
   contenidosLoading = false;
   contenidosError: string | null = null;
-  
+
 
   filtrosContenido = {
     q: '',
@@ -105,7 +105,7 @@ export class PaginaInicialUsuario implements OnInit {
   resolucionesDisponibles: string[] = [];
   onFiltrosChange(): void { this.applyFilter(); this.cdr.markForCheck(); }
   resetFiltros(): void {
-    this.filtrosContenido = { q:'', tipo:'', categoria:'', role:'', ageMode:'', ageValue:null, resolucion:'', ordenar:'fecha', dir:'desc' };
+    this.filtrosContenido = { q: '', tipo: '', categoria: '', role: '', ageMode: '', ageValue: null, resolucion: '', ordenar: 'fecha', dir: 'desc' };
     this.applyFilter();
   }
 
@@ -123,14 +123,14 @@ export class PaginaInicialUsuario implements OnInit {
 
   @ViewChild('videoEl') videoRef?: ElementRef<HTMLVideoElement>; // ✅
   @ViewChild('audioEl') audioRef?: ElementRef<HTMLAudioElement>; // ✅
-  iframeKey = 0; 
+  iframeKey = 0;
 
   playingId: string | null = null;
   playingTitle: string | null = null;
 
   avatars: string[] = [
-    'assets/avatars/avatar1.png','assets/avatars/avatar2.png','assets/avatars/avatar3.png',
-    'assets/avatars/avatar4.png','assets/avatars/avatar5.png','assets/avatars/avatar6.png'
+    'assets/avatars/avatar1.png', 'assets/avatars/avatar2.png', 'assets/avatars/avatar3.png',
+    'assets/avatars/avatar4.png', 'assets/avatars/avatar5.png', 'assets/avatars/avatar6.png'
   ];
   foto: string | null = null;
   selectedAvatar: string | null = null;
@@ -164,7 +164,7 @@ export class PaginaInicialUsuario implements OnInit {
   }
   launchingId: string | null = null;
 
-  private startLaunch(id: string){
+  private startLaunch(id: string) {
     this.launchingId = id;
     setTimeout(() => { if (this.launchingId === id) this.launchingId = null; }, 1200);
   }
@@ -204,11 +204,11 @@ export class PaginaInicialUsuario implements OnInit {
     private readonly s: DomSanitizer,
     private contenidosSvc: ContenidosService,
     private favs: FavoritesService
-  ) {}
+  ) { }
 
-  private readonly DEFAULT_TIPOS = ['AUDIO','VIDEO'];
+  private readonly DEFAULT_TIPOS = ['AUDIO', 'VIDEO'];
   private readonly DEFAULT_CATEGORIAS = ['Acción', 'Comedia', 'Drama', 'Suspenso', 'Animación', 'Ciencia Ficción', 'Terror', 'Documental', 'Romance', 'Aventura'];
-  private readonly DEFAULT_RESOLUCIONES = ['480p','720p','1080p','4K'];
+  private readonly DEFAULT_RESOLUCIONES = ['480p', '720p', '1080p', '4K'];
 
   get isUsuario(): boolean {
     const role = (this.loggedUser?.role ?? '').toString().toUpperCase();
@@ -323,7 +323,7 @@ export class PaginaInicialUsuario implements OnInit {
       .then(r => {
         if (!r.isConfirmed) return;
         this.auth.logout?.(); localStorage.removeItem('user');
-        Swal.fire({ title: 'Sesión cerrada correctamente.', icon: 'success', timer: 1500, showConfirmButton: false, willClose: () => { void this.router.navigateByUrl('/auth/login', { replaceUrl: true }); }});
+        Swal.fire({ title: 'Sesión cerrada correctamente.', icon: 'success', timer: 1500, showConfirmButton: false, willClose: () => { void this.router.navigateByUrl('/auth/login', { replaceUrl: true }); } });
       });
   }
   DarDeBaja(): void {
@@ -427,13 +427,13 @@ export class PaginaInicialUsuario implements OnInit {
           reproducciones: c.reproducciones ?? 0,
           fechaEstado: c.fechaEstado,
         }))
-        .filter(item => item.visible)
-        .filter(item => this.canSeeVip() ? true : !item.vip)
-        .sort((a, b) => {
-          const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
-          const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
-          return tb - ta;
-        });
+          .filter(item => item.visible)
+          .filter(item => this.canSeeVip() ? true : !item.vip)
+          .sort((a, b) => {
+            const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
+            const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
+            return tb - ta;
+          });
         this.catalogBackup = items.slice(0);
         this.contenidos = items;
         this.tiposDisponibles = this.DEFAULT_TIPOS.slice();
@@ -483,7 +483,11 @@ export class PaginaInicialUsuario implements OnInit {
 
   async play(c: any) {
     if (this.playingBusy) return;
-    this.startLaunch(c.id); 
+    if (!this.canPlay()) {
+      this.showError('Estás en modo lectura (Administrador). La reproducción está deshabilitada.');
+      return;
+    }
+    this.startLaunch(c.id);
     this.playingBusy = true;
     this.openedExternally = false;
     this.openedInternally = false;
@@ -525,7 +529,7 @@ export class PaginaInicialUsuario implements OnInit {
   // ======= REPRO EXTERNA: YouTube/Vimeo/otros =======
   private handleExternalPlay(url: string, content: any, isUsuario: boolean): void {
     const ytembed = toYouTubeEmbed(url);
-    const vimbed  = toVimeoEmbed(url);
+    const vimbed = toVimeoEmbed(url);
     if (ytembed || vimbed) {
       this.playerKind = 'EMBED';
       const finalUrl = ytembed || vimbed!;
@@ -582,21 +586,21 @@ export class PaginaInicialUsuario implements OnInit {
     // ✅ Pausa y limpia <video>
     const v = this.videoRef?.nativeElement;
     if (v) {
-      try { v.pause(); } catch {}
-      try { v.removeAttribute('src'); v.load(); } catch {}
+      try { v.pause(); } catch { }
+      try { v.removeAttribute('src'); v.load(); } catch { }
     }
     // ✅ Pausa y limpia <audio>
     const a = this.audioRef?.nativeElement;
     if (a) {
-      try { a.pause(); } catch {}
-      try { a.removeAttribute('src'); a.load(); } catch {}
+      try { a.pause(); } catch { }
+      try { a.removeAttribute('src'); a.load(); } catch { }
     }
     // ✅ Desmonta iframe (deja de sonar)
     this.embedUrl = null;
     this.iframeKey++; // fuerza destruir/recrear
 
     // Limpia blob si aplica
-    try { if (this.playerSrc?.startsWith('blob:')) URL.revokeObjectURL(this.playerSrc); } catch {}
+    try { if (this.playerSrc?.startsWith('blob:')) URL.revokeObjectURL(this.playerSrc); } catch { }
 
     this.playerOpen = false;
     this.playerSrc = null;
@@ -633,13 +637,13 @@ export class PaginaInicialUsuario implements OnInit {
     }
 
     const f = this.filtrosContenido;
-    const q        = String(f.q ?? '').trim().toLowerCase();
+    const q = String(f.q ?? '').trim().toLowerCase();
     const wantTipo = String(f.tipo ?? '').trim().toUpperCase();
-    const wantCat  = this.normalizeTag(f.categoria);
+    const wantCat = this.normalizeTag(f.categoria);
     const wantRole = (f.role || '').toUpperCase();
-    const wantRes  = String(f.resolucion ?? '').trim();
-    const ageMode  = f.ageMode;
-    const ageVal   = f.ageValue;
+    const wantRes = String(f.resolucion ?? '').trim();
+    const ageMode = f.ageMode;
+    const ageVal = f.ageValue;
 
     const out = working.filter(c => this.matchesFilter(c, {
       q, wantTipo, wantCat, wantRole, wantRes, ageMode, ageVal
@@ -714,17 +718,17 @@ export class PaginaInicialUsuario implements OnInit {
     const matchesResolucion = (c: Contenido) => !wantRes || String(c.resolucion ?? '').trim() === wantRes;
     let out = base.filter(matchesText).filter(matchesTipo).filter(matchesCategoria).filter(matchesRole).filter(matchesEdad).filter(matchesResolucion);
     const cmp = this.cmpOrden(f.ordenar);
-    out.sort((a,b) => { const s = cmp(a,b); return f.dir === 'asc' ? s : -s; });
+    out.sort((a, b) => { const s = cmp(a, b); return f.dir === 'asc' ? s : -s; });
     this.contenidos = out;
     this.cdr.markForCheck();
   }
-  private cmpOrden(kind: OrdenContenido): (a: Contenido, b: Contenido)=>number {
+  private cmpOrden(kind: OrdenContenido): (a: Contenido, b: Contenido) => number {
     switch (kind) {
-      case 'titulo': return (a,b)=> String(a.titulo||'').localeCompare(String(b.titulo||''));
-      case 'reproducciones': return (a,b)=> (a.reproducciones??0) - (b.reproducciones??0);
+      case 'titulo': return (a, b) => String(a.titulo || '').localeCompare(String(b.titulo || ''));
+      case 'reproducciones': return (a, b) => (a.reproducciones ?? 0) - (b.reproducciones ?? 0);
       case 'fecha':
       default:
-        return (a,b)=> {
+        return (a, b) => {
           const ta = a.fechaEstado ? new Date(a.fechaEstado).getTime() : 0;
           const tb = b.fechaEstado ? new Date(b.fechaEstado).getTime() : 0;
           return ta - tb;
@@ -732,4 +736,15 @@ export class PaginaInicialUsuario implements OnInit {
     }
   }
   private matchesAgeRule(mode: AgeMode, minAge: number, x: number | null): boolean { if (!mode || x === null) return true; return mode === 'mayores' ? minAge >= x : minAge <= x; }
+  private get isAdminReadOnly(): boolean {
+    return this.readOnly && this.fromAdmin && this.isAdmin();
+  }
+
+  public canPlay(): boolean {
+    return !this.isAdminReadOnly;
+  }
+
+  private getCurrentAge(): number | null {
+    return this.calcAgeFromISO(this.model?.fechaNac || null);
+  }
 }

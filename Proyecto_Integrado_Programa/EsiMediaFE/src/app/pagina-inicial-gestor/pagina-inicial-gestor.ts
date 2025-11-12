@@ -177,13 +177,13 @@ export class PaginaInicialGestor implements OnInit {
   selectedAvatar: string | null = null;
   showAvatarModal = false;
   avatars: string[] = [
-    'assets/avatars/avatar1.png','assets/avatars/avatar2.png','assets/avatars/avatar3.png',
-    'assets/avatars/avatar4.png','assets/avatars/avatar5.png','assets/avatars/avatar6.png'
+    'assets/avatars/avatar1.png', 'assets/avatars/avatar2.png', 'assets/avatars/avatar3.png',
+    'assets/avatars/avatar4.png', 'assets/avatars/avatar5.png', 'assets/avatars/avatar6.png'
   ];
 
   availableTags = {
-    video: ['Acción','Comedia','Drama','Suspenso','Animación','Ciencia Ficción','Terror','Documental','Romance','Aventura'],
-    audio: ['Comedia','Podcast','Humor','Música','Entrevista','Relajación','Educativo','Narrativa','Motivacional','Noticias']
+    video: ['Acción', 'Comedia', 'Drama', 'Suspenso', 'Animación', 'Ciencia Ficción', 'Terror', 'Documental', 'Romance', 'Aventura'],
+    audio: ['Comedia', 'Podcast', 'Humor', 'Música', 'Entrevista', 'Relajación', 'Educativo', 'Narrativa', 'Motivacional', 'Noticias']
   };
 
   dropdownOpen = false;
@@ -326,8 +326,8 @@ export class PaginaInicialGestor implements OnInit {
   }
 
   onFormChange() { this.errorMsg = ''; this.successMsg = ''; }
-  abrirCrear()   { this.errorMsg = ''; this.successMsg = ''; this.crearAbierto = true; }
-  cerrarCrear()  { if (!this.loading) this.crearAbierto = false; }
+  abrirCrear() { this.errorMsg = ''; this.successMsg = ''; this.crearAbierto = true; }
+  cerrarCrear() { if (!this.loading) this.crearAbierto = false; }
 
   onSubmit(form: NgForm): void {
     this.formSubmitted = true;
@@ -347,7 +347,7 @@ export class PaginaInicialGestor implements OnInit {
 
   private onUploadSuccess() {
     this.loading = false; this.crearAbierto = false;
-    Object.assign(this.nuevo, { titulo:'', descripcion:'', tipo:'', ficheroAudio:'', urlVideo:'', resolucion:'', tagsStr:'', duracionMinutos:null, vip:'no', visible:'no', restringidoEdad:null, imagen:'' });
+    Object.assign(this.nuevo, { titulo: '', descripcion: '', tipo: '', ficheroAudio: '', urlVideo: '', resolucion: '', tagsStr: '', duracionMinutos: null, vip: 'no', visible: 'no', restringidoEdad: null, imagen: '' });
     this.imgError = false;
     this.loadContenidos();
     setTimeout(() => void showAlert('¡Éxito!', 'Contenido subido correctamente.', 'success'), 0);
@@ -440,8 +440,8 @@ export class PaginaInicialGestor implements OnInit {
 
   validarDisponibleHasta() {
     if (this.nuevo.disponibleHasta) {
-      const fechaSeleccionada = new Date(this.nuevo.disponibleHasta).setHours(0,0,0,0);
-      const hoy = new Date().setHours(0,0,0,0);
+      const fechaSeleccionada = new Date(this.nuevo.disponibleHasta).setHours(0, 0, 0, 0);
+      const hoy = new Date().setHours(0, 0, 0, 0);
       this.disponibleHastaInvalido = fechaSeleccionada < hoy;
       if (this.disponibleHastaInvalido) {
         this.nuevo.disponibleHasta = null;
@@ -454,6 +454,7 @@ export class PaginaInicialGestor implements OnInit {
     this.savingEdit = true;
 
     try {
+      this.ensureResolutionCompatibleWithVip();
       const updated = await firstValueFrom(
         this.contenidos.modificar(this.editing.id, cleanPayload(this.cambios), this.userTipoContenido as TipoContenido)
       );
@@ -603,9 +604,9 @@ export class PaginaInicialGestor implements OnInit {
 
   loadListasPublicas() {
     this.listasPublicasService.listarListas().subscribe({
-      next: (listas) => { 
-        this.listasPublicas = (listas || []).filter(lista => lista.id !== undefined) as { id: any; nombre: string; contenidosIds?: any[] }[]; 
-        this.cdr.markForCheck(); 
+      next: (listas) => {
+        this.listasPublicas = (listas || []).filter(lista => lista.id !== undefined) as { id: any; nombre: string; contenidosIds?: any[] }[];
+        this.cdr.markForCheck();
       },
       error: () => { void showAlert('Error', 'No se pudieron cargar las listas públicas', 'error'); }
     });
@@ -686,152 +687,170 @@ export class PaginaInicialGestor implements OnInit {
       .filter(lista => (lista?.contenidosIds ?? []).map(String).includes(idStr))
       .map(lista => lista.nombre);
   }
-  // ====== FILTROS ======
-filtros: {
-  q: string;
-  tipo: '' | 'AUDIO' | 'VIDEO';
-  visible: '' | boolean;
-  vip: '' | boolean;
-  edadMin: number | null;
-  listaId: string | number;
-  tag: string;
-  ordenar: '' | 'tituloAsc' | 'tituloDesc' | 'autorAsc' | 'autorDesc' | 'ratingAsc' | 'ratingDesc';
-} = {
-  q: '',
-  tipo: '',
-  visible: '',
-  vip: '',
-  edadMin: null,
-  listaId: '',
-  tag: '',
-  ordenar: ''
-};
 
-get allTags(): string[] {
-  // Une los posibles tags del catálogo + los que ya existan en contenidos
-  const base = new Set<string>([
-    ...this.availableTags.video,
-    ...this.availableTags.audio
-  ]);
-  for (const c of (this.contenidosList || [])) {
-    (c.tags || []).forEach(t => base.add((t || '').toString().trim()));
-  }
-  // devuelvo sin vacíos y ordenado alfabéticamente
-  return Array.from(base).filter(Boolean).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
-}
+  filtros: {
+    q: string;
+    tipo: '' | 'AUDIO' | 'VIDEO';
+    visible: '' | boolean;
+    vip: '' | boolean;
+    edadMin: number | null;
+    listaId: string | number;
+    tag: string;
+    ordenar: '' | 'tituloAsc' | 'tituloDesc' | 'autorAsc' | 'autorDesc' | 'ratingAsc' | 'ratingDesc';
+  } = {
+      q: '',
+      tipo: '',
+      visible: '',
+      vip: '',
+      edadMin: null,
+      listaId: '',
+      tag: '',
+      ordenar: ''
+    };
 
-private norm(s: any): string {
-  return (typeof s === 'string' ? s : (s ?? '')).toString().normalize('NFD')
-    .replace(/\p{Diacritic}/gu, '')
-    .toLowerCase()
-    .trim();
-}
+  get allTags(): string[] {
 
-private pasaTexto(c: Contenido, q: string): boolean {
-  if (!q) return true;
-  const needle = this.norm(q);
-  const haystack = [
-    c.titulo,
-    c.descripcion,
-    c.userEmail,
-    ...(c.tags || [])
-  ].map(v => this.norm(v)).join(' | ');
-  return haystack.includes(needle);
-}
-
-private pasaTipo(c: Contenido): boolean {
-  return !this.filtros.tipo || c.tipo === this.filtros.tipo;
-}
-
-private pasaVisible(c: Contenido): boolean {
-  return this.filtros.visible === '' || !!c.visible === this.filtros.visible;
-}
-
-private pasaVip(c: Contenido): boolean {
-  return this.filtros.vip === '' || !!c.vip === this.filtros.vip;
-}
-
-private pasaEdad(c: Contenido): boolean {
-  if (this.filtros.edadMin == null || isNaN(this.filtros.edadMin as any)) return true;
-  const restr = Number(c.restringidoEdad ?? 0);
-  return restr >= Number(this.filtros.edadMin);
-}
-
-private pasaLista(c: Contenido): boolean {
-  if (this.filtros.listaId === '' || !this.listasPublicas?.length) return true;
-  const lista = this.listasPublicas.find(l => String(l.id) === String(this.filtros.listaId));
-  const ids = (lista?.contenidosIds || []).map(String);
-  return ids.includes(String(c.id));
-}
-
-private pasaTag(c: Contenido): boolean {
-  if (!this.filtros.tag) return true;
-  return (c.tags || []).some(t => (t || '').toString().trim() === this.filtros.tag);
-}
-
-get contenidosFiltrados(): Contenido[] {
-  const base = (this.contenidosList || []).filter(c =>
-    this.pasaTexto(c, this.filtros.q) &&
-    this.pasaTipo(c) &&
-    this.pasaVisible(c) &&
-    this.pasaVip(c) &&
-    this.pasaEdad(c) &&
-    this.pasaLista(c) &&
-    this.pasaTag(c)
-  );
-
-  const ordenar = this.filtros.ordenar;
-  if (!ordenar) return base;
-
-  const compareValues = <T>(a: T | null | undefined, b: T | null | undefined, asc: boolean): number => {
-    if (a == null && b == null) return 0;
-    if (a == null) return asc ? 1 : -1;
-    if (b == null) return asc ? -1 : 1;
-
-    if (typeof a === 'string' && typeof b === 'string') {
-      const cmp = a.localeCompare(b, 'es', { sensitivity: 'base' });
-      return asc ? cmp : -cmp;
+    const base = new Set<string>([
+      ...this.availableTags.video,
+      ...this.availableTags.audio
+    ]);
+    for (const c of (this.contenidosList || [])) {
+      (c.tags || []).forEach(t => base.add((t || '').toString().trim()));
     }
 
-    let cmp = 0;
-    if (a < b) cmp = -1;
-    else if (a > b) cmp = 1;
+    return Array.from(base).filter(Boolean).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
+  }
 
-    return asc ? cmp : -cmp;
-  };
+  private norm(s: any): string {
+    return (typeof s === 'string' ? s : (s ?? '')).toString().normalize('NFD')
+      .replace(/\p{Diacritic}/gu, '')
+      .toLowerCase()
+      .trim();
+  }
 
-  const sortBy = <T>(sel: (c: Contenido) => T, asc: boolean) => {
-    const arr = [...base];             
-    arr.sort((a, b) => compareValues(sel(a), sel(b), asc)); 
-    return arr;
-  };
+  private pasaTexto(c: Contenido, q: string): boolean {
+    if (!q) return true;
+    const needle = this.norm(q);
+    const haystack = [
+      c.titulo,
+      c.descripcion,
+      c.userEmail,
+      ...(c.tags || [])
+    ].map(v => this.norm(v)).join(' | ');
+    return haystack.includes(needle);
+  }
 
-  const sorters: Record<string, { sel: (c: Contenido) => any; asc: boolean }> = {
-    tituloAsc:  { sel: c => c.titulo ?? '',     asc: true  },
-    tituloDesc: { sel: c => c.titulo ?? '',     asc: false },
-    autorAsc:   { sel: c => c.userEmail ?? '',  asc: true  },
-    autorDesc:  { sel: c => c.userEmail ?? '',  asc: false },
-    ratingAsc:  { sel: c => Number(c.ratingAvg ?? 0), asc: true  },
-    ratingDesc: { sel: c => Number(c.ratingAvg ?? 0), asc: false },
-  };
+  private pasaTipo(c: Contenido): boolean {
+    return !this.filtros.tipo || c.tipo === this.filtros.tipo;
+  }
 
-  const s = sorters[ordenar];
-  return s ? sortBy(s.sel, s.asc) : base;
-}
+  private pasaVisible(c: Contenido): boolean {
+    return this.filtros.visible === '' || !!c.visible === this.filtros.visible;
+  }
+
+  private pasaVip(c: Contenido): boolean {
+    return this.filtros.vip === '' || !!c.vip === this.filtros.vip;
+  }
+
+  private pasaEdad(c: Contenido): boolean {
+    if (this.filtros.edadMin == null || isNaN(this.filtros.edadMin as any)) return true;
+    const restr = Number(c.restringidoEdad ?? 0);
+    return restr >= Number(this.filtros.edadMin);
+  }
+
+  private pasaLista(c: Contenido): boolean {
+    if (this.filtros.listaId === '' || !this.listasPublicas?.length) return true;
+    const lista = this.listasPublicas.find(l => String(l.id) === String(this.filtros.listaId));
+    const ids = (lista?.contenidosIds || []).map(String);
+    return ids.includes(String(c.id));
+  }
+
+  private pasaTag(c: Contenido): boolean {
+    if (!this.filtros.tag) return true;
+    return (c.tags || []).some(t => (t || '').toString().trim() === this.filtros.tag);
+  }
+
+  get contenidosFiltrados(): Contenido[] {
+    const base = (this.contenidosList || []).filter(c =>
+      this.pasaTexto(c, this.filtros.q) &&
+      this.pasaTipo(c) &&
+      this.pasaVisible(c) &&
+      this.pasaVip(c) &&
+      this.pasaEdad(c) &&
+      this.pasaLista(c) &&
+      this.pasaTag(c)
+    );
+
+    const ordenar = this.filtros.ordenar;
+    if (!ordenar) return base;
+
+    const compareValues = <T>(a: T | null | undefined, b: T | null | undefined, asc: boolean): number => {
+      if (a == null && b == null) return 0;
+      if (a == null) return asc ? 1 : -1;
+      if (b == null) return asc ? -1 : 1;
+
+      if (typeof a === 'string' && typeof b === 'string') {
+        const cmp = a.localeCompare(b, 'es', { sensitivity: 'base' });
+        return asc ? cmp : -cmp;
+      }
+
+      let cmp = 0;
+      if (a < b) cmp = -1;
+      else if (a > b) cmp = 1;
+
+      return asc ? cmp : -cmp;
+    };
+
+    const sortBy = <T>(sel: (c: Contenido) => T, asc: boolean) => {
+      const arr = [...base];
+      arr.sort((a, b) => compareValues(sel(a), sel(b), asc));
+      return arr;
+    };
+
+    const sorters: Record<string, { sel: (c: Contenido) => any; asc: boolean }> = {
+      tituloAsc: { sel: c => c.titulo ?? '', asc: true },
+      tituloDesc: { sel: c => c.titulo ?? '', asc: false },
+      autorAsc: { sel: c => c.userEmail ?? '', asc: true },
+      autorDesc: { sel: c => c.userEmail ?? '', asc: false },
+      ratingAsc: { sel: c => Number(c.ratingAvg ?? 0), asc: true },
+      ratingDesc: { sel: c => Number(c.ratingAvg ?? 0), asc: false },
+    };
+
+    const s = sorters[ordenar];
+    return s ? sortBy(s.sel, s.asc) : base;
+  }
 
 
-resetFiltros() {
-  this.filtros = {
-    q: '',
-    tipo: '',
-    visible: '',
-    vip: '',
-    edadMin: null,
-    listaId: '',
-    tag: '',
-    ordenar: ''
-  };
-}
+  resetFiltros() {
+    this.filtros = {
+      q: '',
+      tipo: '',
+      visible: '',
+      vip: '',
+      edadMin: null,
+      listaId: '',
+      tag: '',
+      ordenar: ''
+    };
+  }
+  private ensureResolutionCompatibleWithVip(): void {
+    if (!this.editing) return;
+    const esVideo = this.editing.tipo === 'VIDEO';
+    const vipFinal = !!this.cambios.vip;                
+    const vipPrev = !!this.editing.vip;                
+    const resolPrev = (this.cambios.resolucion ?? this.editing.resolucion ?? '').toString();
 
-  
+
+    if (esVideo && vipPrev && !vipFinal && resolPrev.toUpperCase() === '4K') {
+      this.cambios.resolucion = '1080p';               
+      Swal.fire({
+        icon: 'info',
+        title: 'Cambio de resolución',
+        text: 'Al quitar VIP en un vídeo 4K, la resolución se ha ajustado automáticamente a 1020p.',
+        timer: 2000,
+        showConfirmButton: false
+      });
+    }
+  }
+
 }
