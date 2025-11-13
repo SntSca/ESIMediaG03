@@ -38,14 +38,18 @@
   height: 26px;
   display: block;
 }
+
 .star-base {
   fill: #3b3b3b;
 }
+
 .star-fill {
   fill: currentColor;
 }
+
+
 .star-fill.half {
-  fill: url(#halfGrad);
+  clip-path: polygon(0 0, 50% 0, 50% 100%, 0 100%);
 }
 
 .numbers {

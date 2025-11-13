@@ -627,7 +627,7 @@ export class PaginaInicialUsuario implements OnInit {
   openDetails(c: { id?: string }): void { if (!c?.id) return; this.detailsOpen.add(c.id); this.cdr.markForCheck(); }
   closeDetails(c: { id?: string }): void { if (!c?.id) return; this.detailsOpen.delete(c.id); this.cdr.markForCheck(); }
 
-  filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
+  filterMode: 'todos' | 'favoritos' | 'historial' | 'todos'= 'todos';
   onFilterChange(): void { if (this.filterMode === 'favoritos' && !this.favsLoaded) this.loadFavoritos(); this.applyFilter(); }
 
   private applyFilter(): void {

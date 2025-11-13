@@ -26,8 +26,9 @@ export class StarRatingComponent implements OnInit {
 
   stars = [1, 2, 3, 4, 5];
 
-  /** valor actual mostrado (hover o promedio) */
-  hoverValue: number | null = null;
+  hoverValue: number | null = null;   
+  userValue: number | null = null;    
+
   avg = 0;
   count = 0;
   loading = false;
@@ -53,12 +54,12 @@ export class StarRatingComponent implements OnInit {
     });
   }
 
-  /** Valor que usamos para pintar las estrellas */
   private get currentValue(): number {
-    return this.hoverValue ?? this.avg ?? 0;
+    if (this.hoverValue != null) return this.hoverValue;
+    if (this.userValue != null) return this.userValue;
+    return this.avg ?? 0;
   }
 
-  /** Devuelve cómo debe verse la estrella i (1..5) según currentValue */
   starFill(index: number): 'full' | 'half' | 'empty' {
     const v = this.currentValue;
     if (v >= index) return 'full';
@@ -66,58 +67,50 @@ export class StarRatingComponent implements OnInit {
     return 'empty';
   }
 
-  /**
-   * Calcula el valor (0.5, 1.0, 1.5, ..., 5.0) según
-   * la posición del ratón DENTRO de la estrella index.
-   */
   private valueFromStar(event: MouseEvent, index: number): number {
-    const target = event.currentTarget as HTMLElement | null;
-    if (!target) return this.currentValue;
+    const el = event.currentTarget as HTMLElement | null;
+    if (!el) return this.currentValue;
 
-    const rect = target.getBoundingClientRect();
-    let relX = event.clientX - rect.left;
+    const rect = el.getBoundingClientRect();
+    let ratio = (event.clientX - rect.left) / rect.width; 
 
-    // limitar a [0, width]
-    if (relX < 0) relX = 0;
-    if (relX > rect.width) relX = rect.width;
+    if (ratio < 0) ratio = 0;
+    if (ratio > 1) ratio = 1;
 
-    const fraction = relX / rect.width; // 0..1 dentro de esa estrella
+    let raw = (index - 1) + ratio;  
 
-    // mitad izquierda => index - 0.5, mitad derecha => index
-    let value = fraction <= 0.5 ? index - 0.5 : index;
+    let snapped = Math.round(raw * 2) / 2; 
 
-    // clamp entre 0.5 y 5
-    if (value < 0.5) value = 0.5;
-    if (value > 5) value = 5;
+    if (snapped < 0.5) snapped = 0.5;
+    if (snapped > 5) snapped = 5;
 
-    return value;
+    console.log('hover', { index, ratio, raw, snapped });
+
+    return snapped;
   }
 
-  /** Hover: mientras te mueves dentro de una estrella concreta */
   onMove(event: MouseEvent, index: number): void {
-    if (!this.enabled || this.alreadyRated) return;
-    const val = this.valueFromStar(event, index);
-    this.hoverValue = val;
+    if (!this.enabled || this.alreadyRated || this.loading) return;
+    this.hoverValue = this.valueFromStar(event, index);
   }
 
   onLeave(): void {
-    if (!this.enabled || this.alreadyRated) return;
+    if (!this.enabled || this.alreadyRated || this.loading) return;
     this.hoverValue = null;
   }
 
-  /** Click: usamos también la posición dentro de la estrella */
-  onClick(event: MouseEvent, index: number): void {
+  onClick(index: number, event: MouseEvent): void {
     if (!this.enabled || this.alreadyRated || this.loading) return;
 
-    // que el click no burbujee y nos líe otros manejadores
     event.preventDefault();
     event.stopPropagation();
 
-    const normalized = this.valueFromStar(event, index);
+    const normalized = this.valueFromStar(event, index); 
     if (normalized < 0.5 || normalized > 5) return;
 
     this.loading = true;
     this.errorMsg = null;
+    this.userValue = normalized;   
 
     this.api
       .valorarContenido(this.contentId, normalized, this.userEmail)

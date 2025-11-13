@@ -73,7 +73,6 @@ public class ContenidoController {
         contenidoService.registrarReproduccionSiUsuario(id, userRole);
         contenidoService.registrarReproductor(id, userEmail);
 
-        // --- NUEVO: si piden meta=1, devolvemos JSON con la info y no redirigimos ni streameamos ---
         if (Boolean.TRUE.equals(meta)) {
             if (target.isExternalRedirect()) {
                 return ResponseEntity.ok(java.util.Map.of(
@@ -89,76 +88,7 @@ public class ContenidoController {
                 ));
             }
         }
-        // --- FIN BLOQUE NUEVO ---
-
-        if (target.isExternalRedirect()) {
-            return ResponseEntity.status(HttpStatus.FOUND)
-                    .header(HttpHeaders.LOCATION, target.externalUrl())
-                    .build();
-        }
-
-        Path file = target.path();
-        long fileSize = target.length();
-        MediaType mediaType = resolveMediaType(target.mimeType(), file);
-
-        List<HttpRange> ranges = headers.getRange();
-        if (ranges.isEmpty()) {
-            HttpHeaders h = commonHeaders(mediaType);
-            h.setContentLength(fileSize);
-            InputStreamResource body = new InputStreamResource(Files.newInputStream(file));
-            return new ResponseEntity<>(body, h, HttpStatus.OK);
-        }
-
-        HttpRange range = ranges.get(0);
-        long start = range.getRangeStart(fileSize);
-        long end = range.getRangeEnd(fileSize);
-
-        if (start >= fileSize || end >= fileSize || start > end) {
-            HttpHeaders h = commonHeaders(mediaType);
-            h.add(HttpHeaders.CONTENT_RANGE, "bytes */" + fileSize);
-            return new ResponseEntity<>(null, h, HttpStatus.REQUESTED_RANGE_NOT_SATISFIABLE);
-        }
-
-        long rangeLength = end - start + 1;
-        long chunk = Math.min(rangeLength, DEFAULT_CHUNK_SIZE);
-
-        try (InputStream is = Files.newInputStream(file)) {
-            long skipped = is.skip(start);
-            while (skipped < start) {
-                long remaining = start - skipped;
-                long additionalSkipped = is.skip(remaining);
-                if (additionalSkipped <= 0) {
-                    throw new java.io.IOException("Unable to skip to the desired position in the stream.");
-                }
-                skipped += additionalSkipped;
-            }
-            InputStreamResource body = new InputStreamResource(new LimitedInputStream(is, chunk));
-
-            HttpHeaders h = commonHeaders(mediaType);
-            h.set(HttpHeaders.CONTENT_RANGE, String.format("bytes %d-%d/%d", start, start + chunk - 1, fileSize));
-            h.setContentLength(chunk);
-
-            return new ResponseEntity<>(body, h, HttpStatus.PARTIAL_CONTENT);
-        }
-    }
-
-
-
-    @GetMapping("/ReproducirContenido1/{id}")
-    public ResponseEntity<Object> stream1(@PathVariable String id,
-                                    @RequestHeader HttpHeaders headers,
-                                    @RequestHeader(value="X-User-Role", required=false) String userRole,
-                                    @RequestHeader(value="X-User-Email", required=false) String userEmail,
-                                    @RequestHeader(value="X-User-Vip", required=false) Boolean userVip,
-                                    @RequestHeader(value="X-User-Birthdate", required=false) String userBirthdateIso,
-                                    @RequestHeader(value="X-User-Age", required=false) Integer userAge
-                                    ) throws Exception {
-        Integer age = resolveAge(userBirthdateIso, userAge);
-
-        StreamingTarget target = contenidoService.resolveStreamingTarget(id, userVip, age);
-
-        contenidoService.registrarReproduccionSiUsuario(id, userRole);
-        contenidoService.registrarReproductor(id, userEmail);
+    
 
         if (target.isExternalRedirect()) {
             return ResponseEntity.status(HttpStatus.FOUND)
