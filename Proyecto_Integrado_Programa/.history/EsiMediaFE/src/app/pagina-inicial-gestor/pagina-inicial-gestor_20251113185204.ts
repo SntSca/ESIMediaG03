@@ -322,9 +322,14 @@ export class PaginaInicialGestor implements OnInit {
       vip: yes(this.nuevo.vip),
       visible: yes(this.nuevo.visible),
       restringidoEdad: this.nuevo.restringidoEdad ?? 0,
+<<<<<<< HEAD
       imagen: trim(this.nuevo.imagen) || null,
       disponibleHasta: ymd ? this.toLdtFromYmd(ymd) : undefined,
     };
+=======
+      imagen: trim(this.nuevo.imagen) || null
+    } as ContenidoCreate;
+>>>>>>> HU17_Estadisticas_Reproduccion
   }
 
   onFormChange() { this.errorMsg = ''; this.successMsg = ''; }
@@ -349,10 +354,14 @@ export class PaginaInicialGestor implements OnInit {
 
   private onUploadSuccess() {
     this.loading = false; this.crearAbierto = false;
+<<<<<<< HEAD
+    Object.assign(this.nuevo, { titulo: '', descripcion: '', tipo: '', ficheroAudio: '', urlVideo: '', resolucion: '', tagsStr: '', duracionMinutos: null, vip: 'no', visible: 'no', restringidoEdad: null, imagen: '' });
+=======
     Object.assign(this.nuevo, {
       titulo:'', descripcion:'', tipo:'', ficheroAudio:'', urlVideo:'', resolucion:'', tagsStr:'',
       duracionMinutos:null, vip:'no', visible:'no', restringidoEdad:null, imagen:'', disponibleHasta:null
     });
+>>>>>>> HU17_Estadisticas_Reproduccion
     this.imgError = false;
     this.loadContenidos();
     setTimeout(() => void showAlert('¡Éxito!', 'Contenido subido correctamente.', 'success'), 0);
@@ -428,7 +437,11 @@ export class PaginaInicialGestor implements OnInit {
         duracionMinutos: c.duracionMinutos,
         vip: !!c.vip,
         visible: !!c.visible,
+<<<<<<< HEAD
+        disponibleHasta: this.toYmdFromLdt(c.disponibleHasta) ?? null,
+=======
         disponibleHasta: (c as any).disponibleHasta ?? null,
+>>>>>>> HU17_Estadisticas_Reproduccion
         restringidoEdad: c.restringidoEdad,
         imagen: c.imagen ?? null
       };
@@ -701,6 +714,10 @@ export class PaginaInicialGestor implements OnInit {
       .map(lista => lista.nombre);
   }
 
+<<<<<<< HEAD
+=======
+  // ====== FILTROS ======
+>>>>>>> HU17_Estadisticas_Reproduccion
   filtros: {
     q: string;
     tipo: '' | 'AUDIO' | 'VIDEO';
@@ -711,6 +728,7 @@ export class PaginaInicialGestor implements OnInit {
     tag: string;
     ordenar: '' | 'tituloAsc' | 'tituloDesc' | 'autorAsc' | 'autorDesc' | 'ratingAsc' | 'ratingDesc';
   } = {
+<<<<<<< HEAD
       q: '',
       tipo: '',
       visible: '',
@@ -723,6 +741,19 @@ export class PaginaInicialGestor implements OnInit {
 
   get allTags(): string[] {
 
+=======
+    q: '',
+    tipo: '',
+    visible: '',
+    vip: '',
+    edadMin: null,
+    listaId: '',
+    tag: '',
+    ordenar: ''
+  };
+
+  get allTags(): string[] {
+>>>>>>> HU17_Estadisticas_Reproduccion
     const base = new Set<string>([
       ...this.availableTags.video,
       ...this.availableTags.audio
@@ -730,6 +761,10 @@ export class PaginaInicialGestor implements OnInit {
     for (const c of (this.contenidosList || [])) {
       (c.tags || []).forEach(t => base.add((t || '').toString().trim()));
     }
+<<<<<<< HEAD
+
+=======
+>>>>>>> HU17_Estadisticas_Reproduccion
     return Array.from(base).filter(Boolean).sort((a, b) => a.localeCompare(b, 'es', { sensitivity: 'base' }));
   }
 
@@ -807,8 +842,13 @@ export class PaginaInicialGestor implements OnInit {
       }
 
       let cmp = 0;
+<<<<<<< HEAD
+      if (a < b) cmp = -1;
+      else if (a > b) cmp = 1;
+=======
       if ((a as any) < (b as any)) cmp = -1;
       else if ((a as any) > (b as any)) cmp = 1;
+>>>>>>> HU17_Estadisticas_Reproduccion
 
       return asc ? cmp : -cmp;
     };
@@ -820,11 +860,19 @@ export class PaginaInicialGestor implements OnInit {
     };
 
     const sorters: Record<string, { sel: (c: Contenido) => any; asc: boolean }> = {
+<<<<<<< HEAD
+      tituloAsc: { sel: c => c.titulo ?? '', asc: true },
+      tituloDesc: { sel: c => c.titulo ?? '', asc: false },
+      autorAsc: { sel: c => c.userEmail ?? '', asc: true },
+      autorDesc: { sel: c => c.userEmail ?? '', asc: false },
+      ratingAsc: { sel: c => Number(c.ratingAvg ?? 0), asc: true },
+=======
       tituloAsc:  { sel: c => c.titulo ?? '',     asc: true  },
       tituloDesc: { sel: c => c.titulo ?? '',     asc: false },
       autorAsc:   { sel: c => c.userEmail ?? '',  asc: true  },
       autorDesc:  { sel: c => c.userEmail ?? '',  asc: false },
       ratingAsc:  { sel: c => Number(c.ratingAvg ?? 0), asc: true  },
+>>>>>>> HU17_Estadisticas_Reproduccion
       ratingDesc: { sel: c => Number(c.ratingAvg ?? 0), asc: false },
     };
 
@@ -832,7 +880,10 @@ export class PaginaInicialGestor implements OnInit {
     return s ? sortBy(s.sel, s.asc) : base;
   }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> HU17_Estadisticas_Reproduccion
   resetFiltros() {
     this.filtros = {
       q: '',
@@ -844,6 +895,7 @@ export class PaginaInicialGestor implements OnInit {
       tag: '',
       ordenar: ''
     };
+<<<<<<< HEAD
     this.pageIndex = 1; 
   }
   private ensureResolutionCompatibleWithVip(): void {
@@ -929,10 +981,15 @@ export class PaginaInicialGestor implements OnInit {
     const end = this.pageIndex * this.pageSize;
     return end > this.totalItems ? this.totalItems : end;
   }
-  goToStats() {
-    this.router.navigate(['/stats']);
-  }
 
 
 
 }
+=======
+  }
+
+  goToStats() {
+    this.router.navigate(['/stats']);
+  }
+}
+>>>>>>> HU17_Estadisticas_Reproduccion

@@ -832,18 +832,14 @@ export class PaginaInicialGestor implements OnInit {
     return s ? sortBy(s.sel, s.asc) : base;
   }
 
-
   resetFiltros() {
     this.filtros = {
       q: '',
       tipo: '',
-      visible: '',
-      vip: '',
-      edadMin: null,
-      listaId: '',
       tag: '',
       ordenar: ''
     };
+<<<<<<< HEAD
     this.pageIndex = 1; 
   }
   private ensureResolutionCompatibleWithVip(): void {
@@ -929,10 +925,15 @@ export class PaginaInicialGestor implements OnInit {
     const end = this.pageIndex * this.pageSize;
     return end > this.totalItems ? this.totalItems : end;
   }
-  goToStats() {
-    this.router.navigate(['/stats']);
-  }
 
 
 
 }
+=======
+  }
+
+  goToStats() {
+    this.router.navigate(['/stats']);
+  }
+}
+>>>>>>> HU17_Estadisticas_Reproduccion

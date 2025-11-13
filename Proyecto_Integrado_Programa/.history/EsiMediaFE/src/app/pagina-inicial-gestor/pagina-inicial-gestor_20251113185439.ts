@@ -929,9 +929,6 @@ export class PaginaInicialGestor implements OnInit {
     const end = this.pageIndex * this.pageSize;
     return end > this.totalItems ? this.totalItems : end;
   }
-  goToStats() {
-    this.router.navigate(['/stats']);
-  }
 
 
 

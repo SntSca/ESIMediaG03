@@ -832,107 +832,16 @@ export class PaginaInicialGestor implements OnInit {
     return s ? sortBy(s.sel, s.asc) : base;
   }
 
-
   resetFiltros() {
     this.filtros = {
       q: '',
       tipo: '',
-      visible: '',
-      vip: '',
-      edadMin: null,
-      listaId: '',
       tag: '',
       ordenar: ''
     };
-    this.pageIndex = 1; 
-  }
-  private ensureResolutionCompatibleWithVip(): void {
-    if (!this.editing) return;
-    const esVideo = this.editing.tipo === 'VIDEO';
-    const vipFinal = !!this.cambios.vip;                
-    const vipPrev = !!this.editing.vip;                
-    const resolPrev = (this.cambios.resolucion ?? this.editing.resolucion ?? '').toString();
-
-
-    if (esVideo && vipPrev && !vipFinal && resolPrev.toUpperCase() === '4K') {
-      this.cambios.resolucion = '1080p';               
-      Swal.fire({
-        icon: 'info',
-        title: 'Cambio de resolución',
-        text: 'Al quitar VIP en un vídeo 4K, la resolución se ha ajustado automáticamente a 1020p.',
-        timer: 2000,
-        showConfirmButton: false
-      });
-    }
   }
 
-  private toYmdFromLdt(v: any): string | null {
-    if (!v) return null;
-    const s = String(v).trim();
-    const DATE_RE = /^(\d{4}-\d{2}-\d{2})(?:T.*)?$/;
-    const m = DATE_RE.exec(s);
-    return m ? m[1] : null;
-  }
-
-  private toLdtFromYmd(ymd?: string | null): string | null {
-    if (!ymd) return null;
-    return /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? `${ymd}T00:00:00` : ymd;
-  }
-
-  pageIndex = 1;
-  pageSize = 4;
-  pageSizes: number[] = [4, 8, 16, 32, 64, 100, 200];
-
-  get totalItems(): number {
-    return this.contenidosFiltrados.length;
-  }
-
-  get totalPages(): number {
-    return this.totalItems ? Math.ceil(this.totalItems / this.pageSize) : 1;
-  }
-
-  get contenidosPaginados(): Contenido[] {
-    const filtered = this.contenidosFiltrados;
-    if (!filtered.length) return [];
-
-    const safePage = Math.min(Math.max(this.pageIndex, 1), this.totalPages);
-    const start = (safePage - 1) * this.pageSize;
-    const end = start + this.pageSize;
-
-    return filtered.slice(start, end);
-  }
-
-  nextPage(): void {
-    if (this.pageIndex < this.totalPages) {
-      this.pageIndex++;
-    }
-  }
-
-  prevPage(): void {
-    if (this.pageIndex > 1) {
-      this.pageIndex--;
-    }
-  }
-
-  onPageSizeChange(size: number): void {
-    this.pageSize = Number(size) || 10;
-    this.pageIndex = 1; 
-  }
-
-  get startIndex(): number {
-  if (!this.totalItems) return 0;
-  return (this.pageIndex - 1) * this.pageSize + 1;
-  }
-
-  get endIndex(): number {
-    if (!this.totalItems) return 0;
-    const end = this.pageIndex * this.pageSize;
-    return end > this.totalItems ? this.totalItems : end;
-  }
   goToStats() {
     this.router.navigate(['/stats']);
   }
-
-
-
 }

@@ -832,15 +832,10 @@ export class PaginaInicialGestor implements OnInit {
     return s ? sortBy(s.sel, s.asc) : base;
   }
 
-
   resetFiltros() {
     this.filtros = {
       q: '',
       tipo: '',
-      visible: '',
-      vip: '',
-      edadMin: null,
-      listaId: '',
       tag: '',
       ordenar: ''
     };
@@ -928,9 +923,6 @@ export class PaginaInicialGestor implements OnInit {
     if (!this.totalItems) return 0;
     const end = this.pageIndex * this.pageSize;
     return end > this.totalItems ? this.totalItems : end;
-  }
-  goToStats() {
-    this.router.navigate(['/stats']);
   }
 
 

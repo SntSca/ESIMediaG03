@@ -844,9 +844,9 @@ export class PaginaInicialGestor implements OnInit {
       tag: '',
       ordenar: ''
     };
+<<<<<<< HEAD
     this.pageIndex = 1; 
   }
-  private ensureResolutionCompatibleWithVip(): void {
     if (!this.editing) return;
     const esVideo = this.editing.tipo === 'VIDEO';
     const vipFinal = !!this.cambios.vip;                
@@ -929,10 +929,10 @@ export class PaginaInicialGestor implements OnInit {
     const end = this.pageIndex * this.pageSize;
     return end > this.totalItems ? this.totalItems : end;
   }
-  goToStats() {
-    this.router.navigate(['/stats']);
-  }
 
 
 
 }
+=======
+  }
+

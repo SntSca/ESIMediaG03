@@ -820,11 +820,19 @@ export class PaginaInicialGestor implements OnInit {
     };
 
     const sorters: Record<string, { sel: (c: Contenido) => any; asc: boolean }> = {
+<<<<<<< HEAD
+      tituloAsc: { sel: c => c.titulo ?? '', asc: true },
+      tituloDesc: { sel: c => c.titulo ?? '', asc: false },
+      autorAsc: { sel: c => c.userEmail ?? '', asc: true },
+      autorDesc: { sel: c => c.userEmail ?? '', asc: false },
+      ratingAsc: { sel: c => Number(c.ratingAvg ?? 0), asc: true },
+=======
       tituloAsc:  { sel: c => c.titulo ?? '',     asc: true  },
       tituloDesc: { sel: c => c.titulo ?? '',     asc: false },
       autorAsc:   { sel: c => c.userEmail ?? '',  asc: true  },
       autorDesc:  { sel: c => c.userEmail ?? '',  asc: false },
       ratingAsc:  { sel: c => Number(c.ratingAvg ?? 0), asc: true  },
+>>>>>>> HU17_Estadisticas_Reproduccion
       ratingDesc: { sel: c => Number(c.ratingAvg ?? 0), asc: false },
     };
 
@@ -832,7 +840,10 @@ export class PaginaInicialGestor implements OnInit {
     return s ? sortBy(s.sel, s.asc) : base;
   }
 
+<<<<<<< HEAD
 
+=======
+>>>>>>> HU17_Estadisticas_Reproduccion
   resetFiltros() {
     this.filtros = {
       q: '',
@@ -844,6 +855,7 @@ export class PaginaInicialGestor implements OnInit {
       tag: '',
       ordenar: ''
     };
+<<<<<<< HEAD
     this.pageIndex = 1; 
   }
   private ensureResolutionCompatibleWithVip(): void {
@@ -929,10 +941,15 @@ export class PaginaInicialGestor implements OnInit {
     const end = this.pageIndex * this.pageSize;
     return end > this.totalItems ? this.totalItems : end;
   }
-  goToStats() {
-    this.router.navigate(['/stats']);
-  }
 
 
 
 }
+=======
+  }
+
+  goToStats() {
+    this.router.navigate(['/stats']);
+  }
+}
+>>>>>>> HU17_Estadisticas_Reproduccion
