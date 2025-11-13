@@ -2,6 +2,8 @@ package com.example.usersbe.model;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.List;
 import java.util.UUID;
 
 import org.springframework.data.annotation.Id;
@@ -71,7 +73,8 @@ public class User {
     private String adminApprovalToken;
     private LocalDateTime adminApprovalExpires;
     private AdminApprovalStatus adminApprovalStatus = AdminApprovalStatus.NONE;
-
+    private LocalDateTime pwdChangedAt;
+    private List<String> pwdHistory = new ArrayList<>();
     public User() { this.id = UUID.randomUUID().toString(); }
 
     public String getId() { return id; }
@@ -163,4 +166,8 @@ public class User {
     public void setAdminApprovalStatus(AdminApprovalStatus adminApprovalStatus) { this.adminApprovalStatus = adminApprovalStatus; }
     public String getDepartamento() { return departamento; }
     public void setDepartamento(String departamento) { this.departamento = departamento; }
-}
+    public List<String> getPwdHistory() { return pwdHistory; }
+    public void setPwdHistory(List<String> pwdHistory) { this.pwdHistory = pwdHistory; }
+    public LocalDateTime getPwdChangedAt() { return pwdChangedAt; }
+    public void setPwdChangedAt(LocalDateTime pwdChangedAt) { this.pwdChangedAt = pwdChangedAt; }
+}   

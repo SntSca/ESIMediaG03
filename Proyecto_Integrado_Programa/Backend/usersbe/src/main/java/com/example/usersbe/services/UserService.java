@@ -30,7 +30,7 @@ import jakarta.mail.MessagingException;
 
 @Service
 public class UserService {
-    
+
     private static final String TOKEN_NOT_PROVIDED = "Token no proporcionado";
     private static final String INVALID_TOKEN = "Token inválido";
     private static final String EXPIRED_TOKEN = "Token caducado";
@@ -74,22 +74,9 @@ public class UserService {
     public void registrar(String nombre, String apellidos, String alias, String email,
                           String fechaNac, String pwd, boolean vip, String foto,
                           User.Role role,
-                          String descripcion, String especialidad, User.TipoContenido tipoContenido) {
-        registrar(nombre, apellidos, alias, email, fechaNac, pwd, vip, foto, role,
-                descripcion, especialidad, tipoContenido, null);
-    }
-
-    public boolean isEmailAvailable(String emailNormalizado) {
-        if (emailNormalizado == null || emailNormalizado.trim().isEmpty()) return false;
-        String email = emailNormalizado.trim().toLowerCase();
-        return userDao.findByEmail(email) == null;
-    }
-
-    public void registrar(String nombre, String apellidos, String alias, String email,
-                          String fechaNac, String pwd, boolean vip, String foto,
-                          User.Role role,
                           String descripcion, String especialidad, User.TipoContenido tipoContenido,
-                          String departamento) {
+                          String departamento,
+                          String mfaPreferred) {
 
         final String emailN = normalizeEmail(email);
 
@@ -98,7 +85,33 @@ public class UserService {
                 descripcion, especialidad, tipoContenido, departamento
         );
 
+        // Aplica preferencia MFA solo para USUARIO
+        applyMfaPreference(user, mfaPreferred);
+
         userDao.save(user);
+    }
+
+    public void registrar(String nombre, String apellidos, String alias, String email,
+                          String fechaNac, String pwd, boolean vip, String foto,
+                          User.Role role,
+                          String descripcion, String especialidad, User.TipoContenido tipoContenido,
+                          String departamento) {
+        registrar(nombre, apellidos, alias, email, fechaNac, pwd, vip, foto, role,
+                  descripcion, especialidad, tipoContenido, departamento, null);
+    }
+
+    public void registrar(String nombre, String apellidos, String alias, String email,
+                          String fechaNac, String pwd, boolean vip, String foto,
+                          User.Role role,
+                          String descripcion, String especialidad, User.TipoContenido tipoContenido) {
+        registrar(nombre, apellidos, alias, email, fechaNac, pwd, vip, foto, role,
+                  descripcion, especialidad, tipoContenido, null, null);
+    }
+
+    public boolean isEmailAvailable(String emailNormalizado) {
+        if (emailNormalizado == null || emailNormalizado.trim().isEmpty()) return false;
+        String email = emailNormalizado.trim().toLowerCase();
+        return userDao.findByEmail(email) == null;
     }
 
     private User buildUser(String nombre, String apellidos, String alias, String email,
@@ -240,16 +253,21 @@ public class UserService {
                 """.formatted(nombre != null ? nombre : "usuario", link);
     }
 
-
     public void resetPassword(String token, String newPassword) {
         User user = getUserByValidToken(token);
-        validateNewPassword(newPassword, user.getPwd());
+
+        validateNewPassword(newPassword, user);
+
+        String oldHash = user.getPwd();
+        pushPasswordToHistory(user, oldHash);
 
         user.setPwd(hashPassword(newPassword));
         user.setResetPasswordToken(null);
         user.setResetPasswordExpires(null);
+
         userDao.save(user);
     }
+
 
     private User getUserByValidToken(String token) {
         if (token == null || token.trim().isEmpty()) {
@@ -265,14 +283,37 @@ public class UserService {
         return user;
     }
 
-    private void validateNewPassword(String newPassword, String oldPasswordHash) {
+    private void validateNewPassword(String newPassword, User user) {
         if (newPassword == null || newPassword.length() < 8) {
             throw new InvalidPasswordException("La nueva contraseña debe tener al menos 8 caracteres");
         }
-        if (org.mindrot.jbcrypt.BCrypt.checkpw(newPassword, oldPasswordHash)) {
+
+        if (org.mindrot.jbcrypt.BCrypt.checkpw(newPassword, user.getPwd())) {
             throw new InvalidPasswordException("La nueva contraseña no puede ser igual a la anterior");
         }
+        List<String> hist = user.getPwdHistory();
+        if (hist != null) {
+            for (String oldHash : hist) {
+                if (org.mindrot.jbcrypt.BCrypt.checkpw(newPassword, oldHash)) {
+                    throw new InvalidPasswordException(
+                        "La nueva contraseña ya fue utilizada recientemente (últimas 5)."
+                    );
+                }
+            }
+        }
     }
+    private void pushPasswordToHistory(User user, String oldHash) {
+        if (oldHash == null || oldHash.isBlank()) return;
+        List<String> hist = user.getPwdHistory();
+        if (hist == null) hist = new java.util.ArrayList<>();
+        hist.add(0, oldHash);
+        if (hist.size() > 5) {
+            hist = hist.subList(0, 5);
+        }
+        user.setPwdHistory(hist);
+        user.setPwdChangedAt(LocalDateTime.now());
+    }
+
 
     public List<User> listarUsuarios() {
         return userDao.findAll();
@@ -290,7 +331,6 @@ public class UserService {
             return userDao.findByRoleAndBlocked(User.Role.GESTOR_CONTENIDO, blocked);
         }
     }
-
 
     public User getUserByEmail(String email) {
         User user = userDao.findByEmail(email);
@@ -409,7 +449,8 @@ public class UserService {
         }
         return superAdminEmail.trim().equalsIgnoreCase(u.getEmail());
     }
-    public User actualizarAdmin(String id,String nombre,
+
+    public User actualizarAdmin(String id, String nombre,
                                 String apellidos, String email, String foto,
                                 String departamento) {
 
@@ -523,5 +564,40 @@ public class UserService {
         User user = userDao.findByEmail(email);
         if (user == null) throw new UserNotFoundException("Usuario no encontrado");
         userDao.deleteByEmail(email);
+    }
+
+
+    private void applyMfaPreference(User user, String mfaPreferredRaw) {
+        if (user.getRole() != User.Role.USUARIO) {
+            return;
+        }
+        String pref = (mfaPreferredRaw == null ? "" : mfaPreferredRaw.trim().toUpperCase(Locale.ROOT));
+        switch (pref) {
+            case "EMAIL_OTP" -> {
+                user.setMfaEnabled(true);
+                user.setMfaMethod(User.MfaMethod.EMAIL_OTP);
+                user.setTotpSecret(null);
+            }
+            case "TOTP" -> {
+                user.setMfaEnabled(true);
+                user.setMfaMethod(User.MfaMethod.TOTP);
+                user.setTotpSecret(generateTotpSecretBase32());
+            }
+            default -> {
+                user.setMfaEnabled(false);
+                user.setMfaMethod(User.MfaMethod.NONE);
+                user.setTotpSecret(null);
+            }
+        }
+    }
+
+    private String generateTotpSecretBase32() {
+        byte[] buf = new byte[20]; 
+        new SecureRandom().nextBytes(buf);
+        try {
+            return new org.apache.commons.codec.binary.Base32().encodeToString(buf);
+        } catch (NoClassDefFoundError e) {
+            return Base64.getUrlEncoder().withoutPadding().encodeToString(buf);
+        }
     }
 }

@@ -76,7 +76,7 @@ class ContenidoControllerTest {
         when(contenidoService.resolveStreamingTarget(anyString(), any(), any()))
                 .thenReturn(ext);
 
-        ResponseEntity<Object> resp = controller.stream("vid123", new HttpHeaders(), null, null, null, null, null);
+        ResponseEntity<Object> resp = controller.stream("vid123", new HttpHeaders(), null, null, null, null, null,true);
 
         assertEquals(HttpStatus.FOUND, resp.getStatusCode());
         assertEquals("https://cdn.example.com/video.mp4", resp.getHeaders().getFirst(HttpHeaders.LOCATION));

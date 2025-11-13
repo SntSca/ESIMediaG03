@@ -26,6 +26,7 @@ interface ContenidoCreate {
   vip: boolean;
   visible: boolean;
   restringidoEdad: number;
+  disponibleHasta?:string | null;
   imagen?: string | null;
 }
 
@@ -144,7 +145,7 @@ export class PaginaInicialGestor implements OnInit {
     visible: 'no' as 'si' | 'no',
     restringidoEdad: null as number | null,
     imagen: '',
-    disponibleHasta: null as number | null
+    disponibleHasta: null as string | null
   };
 
   canManage = (c: Contenido | null | undefined): boolean =>
@@ -308,6 +309,7 @@ export class PaginaInicialGestor implements OnInit {
   private buildContenidoPayload(): ContenidoCreate {
     const tipo = (this.userTipoContenido || '').toString() as TipoContenido;
     const isA = tipo === 'AUDIO', isV = tipo === 'VIDEO';
+    const ymd = this.nuevo.disponibleHasta;
     return {
       userEmail: this.userEmail,
       titulo: trim(this.nuevo.titulo),
@@ -321,7 +323,8 @@ export class PaginaInicialGestor implements OnInit {
       vip: yes(this.nuevo.vip),
       visible: yes(this.nuevo.visible),
       restringidoEdad: this.nuevo.restringidoEdad ?? 0,
-      imagen: trim(this.nuevo.imagen) || null
+      imagen: trim(this.nuevo.imagen) || null,
+      disponibleHasta: ymd ? this.toLdtFromYmd(ymd) : undefined,
     };
   }
 
@@ -423,7 +426,7 @@ export class PaginaInicialGestor implements OnInit {
         duracionMinutos: c.duracionMinutos,
         vip: !!c.vip,
         visible: !!c.visible,
-        disponibleHasta: c.disponibleHasta ?? null,
+        disponibleHasta: this.toYmdFromLdt(c.disponibleHasta) ?? null,
         restringidoEdad: c.restringidoEdad,
         imagen: c.imagen ?? null
       };
@@ -440,14 +443,16 @@ export class PaginaInicialGestor implements OnInit {
 
   validarDisponibleHasta() {
     if (this.nuevo.disponibleHasta) {
-      const fechaSeleccionada = new Date(this.nuevo.disponibleHasta).setHours(0, 0, 0, 0);
+      const [y, m, d] = this.nuevo.disponibleHasta.split('-').map(Number);
+      const fechaSeleccionada = new Date(y, m - 1, d).setHours(0, 0, 0, 0);
       const hoy = new Date().setHours(0, 0, 0, 0);
       this.disponibleHastaInvalido = fechaSeleccionada < hoy;
       if (this.disponibleHastaInvalido) {
         this.nuevo.disponibleHasta = null;
       }
     }
-  }
+}
+
 
   async saveEdit() {
     if (!this.editing) return;
@@ -455,6 +460,12 @@ export class PaginaInicialGestor implements OnInit {
 
     try {
       this.ensureResolutionCompatibleWithVip();
+
+      const body = { ...cleanPayload(this.cambios) } as any;
+      if (body.disponibleHasta) {
+        body.disponibleHasta = this.toLdtFromYmd(body.disponibleHasta); // "YYYY-MM-DDT00:00:00"
+      }
+
       const updated = await firstValueFrom(
         this.contenidos.modificar(this.editing.id, cleanPayload(this.cambios), this.userTipoContenido as TipoContenido)
       );
@@ -852,5 +863,21 @@ export class PaginaInicialGestor implements OnInit {
       });
     }
   }
+
+  /** LDT -> "YYYY-MM-DD" para <input type="date"> */
+  private toYmdFromLdt(v: any): string | null {
+    if (!v) return null;
+    const s = String(v).trim();
+    // "YYYY-MM-DDTHH:mm[:ss[.SSS]]" o "YYYY-MM-DD"
+    const m = s.match(/^(\d{4}-\d{2}-\d{2})(?:T.*)?$/);
+    return m ? m[1] : null;
+  }
+
+  /** "YYYY-MM-DD" -> "YYYY-MM-DDT00:00:00" (LDT local sin zona) */
+  private toLdtFromYmd(ymd?: string | null): string | null {
+    if (!ymd) return null;
+    return /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? `${ymd}T00:00:00` : ymd;
+  }
+
 
 }

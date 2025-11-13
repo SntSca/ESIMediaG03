@@ -16,6 +16,8 @@ type UniqueKind = 'alias' | 'email';
 const MAX = { alias: 12, nombre: 100, apellidos: 120, email: 120, especialidad: 60, descripcion: 500, departamento: 120 } as const;
 const ALIAS_MIN = 3;
 const EMAIL_RE = /^[a-zA-Z0-9._%+-]+@[a-zA-Z0-9.-]+\.[a-zA-Z]{2,}$/;
+type MfaChoice = 'NONE' | 'EMAIL_OTP' | 'TOTP';
+
 
 const trim = (s: string) => (s || '').trim();
 const lower = (s: string) => trim(s).toLowerCase();
@@ -68,6 +70,10 @@ export class Registro implements OnInit, OnDestroy {
   @Input() modoAdminCreador = false;
   @Output() creado = new EventEmitter<void>();
 
+  // MFA
+  mfaChoice: MfaChoice = 'NONE';
+  showMfaModal = false;
+
   readonly MAX = MAX;
   readonly emailPattern = EMAIL_RE;
 
@@ -80,9 +86,7 @@ export class Registro implements OnInit, OnDestroy {
   showPwd = false; showPwd2 = false; isLoading = false;
   private lastSubmitAt = 0; mensajeError = ''; rolSeleccionado = false;
 
-
   pwnedCount: number | null = null; pwnedCheckedFor = ''; isCheckingPwned = false;
-  
   aliasUnique: boolean | null = null; aliasCheckedFor = ''; isCheckingAlias = false;
   emailUnique: boolean | null = null; emailCheckedFor = ''; isCheckingEmail = false;
 
@@ -209,7 +213,10 @@ export class Registro implements OnInit, OnDestroy {
   onRoleChange(val: string) {
     if (this.rolFijo) return;
     this.role = val as RoleUi; this.rolSeleccionado = true;
-    if (val !== 'usuario') this.vip = false;
+    if (val !== 'usuario') {
+      this.vip = false;
+      this.mfaChoice = 'NONE';
+    }
     if (val === 'Administrador' || val === 'Gestor de Contenido') this.fechaNac = '';
   }
 
@@ -339,9 +346,14 @@ export class Registro implements OnInit, OnDestroy {
     return null;
   }
 
-  private resolveRole() {
-    return this.esAltaAdmin ? 'Administrador' : this.esAltaCreador ? 'Gestor de Contenido' : this.role;
+  private resolveRole(): RoleUi {
+    return this.esAltaAdmin
+      ? 'Administrador'
+      : this.esAltaCreador
+        ? 'Gestor de Contenido'
+        : this.role;
   }
+
   private buildPayload(): any {
     const base: any = {
       nombre: this.nombre,
@@ -356,8 +368,15 @@ export class Registro implements OnInit, OnDestroy {
     if (this.isGestor) { base.descripcion = trim(this.descripcion) || null; base.especialidad = trim(this.especialidad); base.tipoContenido = this.tipoContenido; }
     if (this.esAltaAdmin) { base.departamento = trim(this.departamento); base.alias = null; }
     if (this.showPasswordFields) { base.pwd = this.pwd; base.pwd2 = this.pwd2; }
+
+    // 👉 Solo usuarios: añadir mfaPreferred
+    if (this.resolveRole().toLowerCase() === 'usuario') {
+      base.mfaPreferred = this.mfaChoice; // 'NONE' | 'EMAIL_OTP' | 'TOTP'
+    }
+
     return base;
   }
+
   private handleHttpError(error: any) {
     this.isLoading = false;
     const raw = error?.error;
@@ -369,6 +388,7 @@ export class Registro implements OnInit, OnDestroy {
     this.mensajeError = msg;
     showAlert('Error', msg, 'error');
   }
+
   private submitByRole(base: any): void {
     const ok = () => { this.isLoading = false; showAlert('¡Éxito!', 'Registro correcto.', 'success'); this.router.navigate(['/auth']); };
     const creador = () => this.usersService.crearCreadorComoAdmin(base).subscribe({
@@ -384,12 +404,35 @@ export class Registro implements OnInit, OnDestroy {
     (this.esAltaCreador ? creador : this.esAltaAdmin ? admin : usuario)();
   }
 
+
   async onSubmit(form: NgForm) {
     const now = Date.now();
     const msg = await this.preflightValidate(form, now);
     if (msg) { this.handleFormError(msg); return; }
+
+    const isUsuario = !this.esAltaAdmin && !this.esAltaCreador && this.resolveRole().toLowerCase() === 'usuario';
+    if (isUsuario) {
+      this.showMfaModal = true;
+      return;
+    }
+
+    this.registrarCuenta(now);
+  }
+
+  confirmMfaSelection() {
+    this.showMfaModal = false;
+    this.registrarCuenta(Date.now());
+  }
+
+  cancelMfaSelection() {
+    this.showMfaModal = false;
+    this.mfaChoice = 'NONE';
+  }
+
+  private registrarCuenta(now: number) {
     const base = this.buildPayload();
-    this.isLoading = true; this.lastSubmitAt = now;
+    this.isLoading = true;
+    this.lastSubmitAt = now;
     this.submitByRole(base);
   }
 

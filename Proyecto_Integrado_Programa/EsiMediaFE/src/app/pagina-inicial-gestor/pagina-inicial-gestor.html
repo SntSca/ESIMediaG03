@@ -267,9 +267,9 @@
               </div>
 
               <div *ngIf="userTipoContenido === 'AUDIO'" class="form-row">
-                <label for="ficheroAudio">Fichero de audio <span class="req">*</span></label>
+                <label for="ficheroAudio">Url o Fichero de audio <span class="req">*</span></label>
                 <input id="ficheroAudio" type="text" name="ficheroAudio"
-                       [(ngModel)]="nuevo.ficheroAudio" required placeholder="/ruta/audio.mp3" />
+                       [(ngModel)]="nuevo.ficheroAudio" required placeholder="https://...  o /ruta/audio.mp3" />
               </div>
 
               <div *ngIf="userTipoContenido === 'VIDEO'">
