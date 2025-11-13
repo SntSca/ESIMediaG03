@@ -101,8 +101,6 @@ function validateAdminFormModel(f: any, taken: boolean) {
   return { errors:e, valid:Object.keys(e).length===0 };
 }
 
-
-
 @Component({
   selector: 'app-pagina-inicial-admin',
   standalone: true,
@@ -160,7 +158,6 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
 
   private readonly searchChanged$ = new Subject<void>();
   private readonly aliasCheck$ = new Subject<string>();
-  private readonly adminAliasCheck$ = new Subject<string>();
   private readonly destroy$ = new Subject<void>();
 
   private readonly MAX = { nombre:100, apellidos:100, alias:12, descripcion:90, especialidad:60 };
@@ -180,7 +177,6 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
         const exists = !!this.users.find(u => (u.alias || '').toLowerCase() === v.trim().toLowerCase() && u.id !== id);
         this.aliasTaken = exists;
       });
-
   }
 
   ngOnInit(): void {
@@ -290,17 +286,27 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
     if (u.role!=='ADMINISTRADOR' || this.isSuperAdmin(u)) return;
     this.editingAdmin=u;
     this.adminEditModel={nombre:u.nombre??'', apellidos:u.apellidos??'', email:u.email??'', foto:u.fotoUrl??null, fotoPreviewUrl:u.fotoUrl??null, departamento:(u as any).departamento??'' };
-    const r = validateAdminFormModel(this.adminEditModel, false); this.adminFieldErrors = r.errors; this.isAdminFormValid = r.valid; this.showEditAdminModal = true;
+    const r = validateAdminFormModel(this.adminEditModel, false);
+    this.adminFieldErrors = r.errors;
+    this.isAdminFormValid = r.valid;
+    this.showEditAdminModal = true;
   }
-  onAdminApellidosInput(v: string)   { this.adminEditModel.apellidos   = v; }
-  onAdminDepartamentoInput(v: string){ this.adminEditModel.departamento = v; }
-  onAdminNameInput(v: string)        { this.adminEditModel.nombre      = v; }
-  onAdminEmailInput(v: string)       { this.adminEditModel.email       = v; }
+
+  /** Recalcula errores/validez al escribir en cualquiera de los campos del admin */
+  private recomputeAdminValidity() {
+    const r = validateAdminFormModel(this.adminEditModel, this.adminAliasTaken);
+    this.adminFieldErrors = r.errors;
+    this.isAdminFormValid = r.valid;
+  }
+  onAdminApellidosInput(v: string)   { this.adminEditModel.apellidos   = v; this.recomputeAdminValidity(); }
+  onAdminDepartamentoInput(v: string){ this.adminEditModel.departamento = v; this.recomputeAdminValidity(); }
+  onAdminNameInput(v: string)        { this.adminEditModel.nombre      = v; this.recomputeAdminValidity(); }
+  onAdminEmailInput(v: string)       { this.adminEditModel.email       = v; this.recomputeAdminValidity(); }
+
   cancelEditAdmin() {
     this.showEditAdminModal = false;
     this.editingAdmin = null;
   }
-
 
   saveAdminEdit(form: NgForm) {
     const u=this.editingAdmin; if (!u || u.role!=='ADMINISTRADOR' || this.isSuperAdmin(u) || form.invalid || !this.isAdminFormValid) return;
@@ -414,5 +420,8 @@ export class PaginaInicialAdmin implements OnInit, OnDestroy {
         Swal.fire({ title:'Sesión cerrada correctamente.', icon:'success', timer:1500, showConfirmButton:false });
         this.router.navigateByUrl('/auth/login', { replaceUrl: true });
       });
+  }
+  goToStats() {
+    this.router.navigate(['/stats']);
   }
 }

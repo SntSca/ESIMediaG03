@@ -1,6 +1,7 @@
 export type Role = 'USUARIO' | 'GESTOR_CONTENIDO' | 'ADMINISTRADOR';
 
 export interface UserDto {
+  alias: string;
   id: string;
   email: string;
   nombre?: string;

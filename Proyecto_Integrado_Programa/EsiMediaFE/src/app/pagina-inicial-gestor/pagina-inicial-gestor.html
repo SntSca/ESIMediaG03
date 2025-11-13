@@ -134,7 +134,9 @@
           <h2 class="page-title">Contenidos</h2>
           <div class="toolbar-actions">
             <button class="secondary-btn" type="button" (click)="loadContenidos()">⟳ Recargar</button>
-              <button class="secondary-btn" type="button" (click)="abrirCrearLista()" aria-label="Crear lista pública">🗂️ Crear lista pública</button>
+            <!-- Cambiado para usar click y Router -->
+            <button class="secondary-btn" type="button" (click)="goToStats()" aria-label="Consultar estadísticas">📈 Estadísticas</button>
+            <button class="secondary-btn" type="button" (click)="abrirCrearLista()" aria-label="Crear lista pública">🗂️ Crear lista pública</button>
             <button class="primary-btn" type="button" (click)="abrirCrear()">➕ Añadir contenido</button>
           </div>
         </div>
@@ -142,7 +144,7 @@
         <section>
           <div *ngIf="loadingList" class="helper-text">Cargando contenidos…</div>
 
-          <table class="content-table" *ngIf="!loadingList && contenidosList?.length; else emptyList">
+          <table class="content-table" *ngIf="!loadingList && contenidosList.length > 0; else emptyList">
             <caption class="sr-only">
               Listado de contenidos con título, autor, descripción, tags, tipo, visibilidad y acciones
             </caption>
@@ -460,7 +462,7 @@
                         aria-haspopup="listbox"
                         [attr.aria-expanded]="dropdownOpen"
                         aria-controls="tagsListbox">
-                  {{ tagsArray.length ? tagsArray.join(', ') : 'Selecciona tags' }}
+                  {{ (cambios.tags?.length ?? 0) ? (cambios.tags || []).join(', ') : 'Selecciona tags' }}
                   <span class="arrow">▼</span>
                 </button>
 
@@ -602,7 +604,7 @@
                           required
                           placeholder="Describe brevemente el propósito de la lista"></textarea>
                 <small class="field-msg hint">
-                  {{ 300 - (descripcionListaNueva?.length || 0) }} caracteres restantes
+                  {{ 300 - (descripcionListaNueva.length || 0) }} caracteres restantes
                 </small>
               </div>
 
@@ -691,7 +693,7 @@
                     </div>
                   </div>
 
-                  <div class="meta-item tags-section" *ngIf="listasDelContenido?.length">
+                  <div class="meta-item tags-section" *ngIf="listasDelContenido.length">
                     <span class="meta-label">Listas:</span>
                     <div class="viewer__tags">
                       <span class="tag" *ngFor="let listaNombre of listasDelContenido">{{ listaNombre }}</span>

@@ -31,6 +31,7 @@ export function roleGuard(allowed: Role[]): CanActivateFn {
     return router.createUrlTree([roleHome(user.role)]);
   };
 }
+
 export const userOrReadOnlyGuard: CanActivateFn = (): boolean | UrlTree => {
   const router = inject(Router);
   const auth   = inject(AuthService);

@@ -1,0 +1,124 @@
+<div class="full-screen-wrapper">
+  <!-- CABECERA -->
+  <header class="page-header">
+    <h1 class="title">📈 Estadísticas</h1>
+
+    <!-- Panel compacto de usuario (solo visual) -->
+    <div class="user-panel">
+      <div class="user-photo" [title]="panelTitle">
+        <img *ngIf="userAvatarUrl; else initialsTpl"
+             [src]="userAvatarUrl"
+             alt="Avatar de {{ panelTitle }}"
+             (error)="onAvatarError()" />
+        <ng-template #initialsTpl>
+          <span class="user-photo-fallback">{{ userInitials }}</span>
+        </ng-template>
+      </div>
+
+      <div class="user-info">
+        <div class="user-name">{{ panelTitle }}</div>
+        <div class="user-email">{{ userEmail }}</div>
+        <div class="user-role">🛡️ {{ userRoleText }}</div>
+      </div>
+    </div>
+  </header>
+
+  <!-- GRID PRINCIPAL -->
+  <main class="page-grid">
+    <!-- FILTROS -->
+    <aside class="card filters-card">
+      <h2 class="card-title">Filtros</h2>
+
+      <div class="form-row">
+        <label for="tipoSelect">Tipo</label>
+        <select id="tipoSelect" [(ngModel)]="tipo" (ngModelChange)="onFilterChange()">
+          <option value="TODOS">Todos</option>
+          <option value="AUDIO">Audio</option>
+          <option value="VIDEO">Vídeo</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="topKindSelect">Top a mostrar</label>
+        <select id="topKindSelect" [(ngModel)]="topKind" (ngModelChange)="onFilterChange()">
+          <option value="repro">Top 5 reproducciones</option>
+          <option value="valor">Top 5 valoraciones</option>
+          <option value="cat">Top 5 categorías</option>
+        </select>
+      </div>
+
+      <div class="form-row">
+        <label for="chartKindSelect">Tipo de gráfica</label>
+        <select id="chartKindSelect" [(ngModel)]="chartKind" (ngModelChange)="renderChart()">
+          <option value="tarta">Tarta</option>
+          <option value="barras">Barras</option>
+          <option value="lineas">Líneas</option>
+        </select>
+      </div>
+    </aside>
+
+    <!-- TABLA -->
+    <section class="card table-card">
+      <h2 class="card-title">{{ currentTableTitle }}</h2>
+
+      <!-- Tabla: Top Reproducciones -->
+      <table *ngIf="topKind==='repro'">
+        <thead>
+          <tr>
+            <th>#</th><th>Título</th><th>Tipo</th><th>Reproducciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let x of topRepro; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ x.titulo }}</td>
+            <td>{{ x.tipo || '-' }}</td>
+            <td class="num">{{ x.reproducciones }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Tabla: Top Valoraciones -->
+      <table *ngIf="topKind==='valor'">
+        <thead>
+          <tr>
+            <th>#</th><th>Título</th><th>Tipo</th><th>Media</th><th>Nº valoraciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let x of topValor; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ x.titulo }}</td>
+            <td>{{ x.tipo || '-' }}</td>
+            <td class="num">{{ x.avg.toFixed(1) }} ★</td>
+            <td class="num">{{ x.count }}</td>
+          </tr>
+        </tbody>
+      </table>
+
+      <!-- Tabla: Top Categorías -->
+      <table *ngIf="topKind==='cat'">
+        <thead>
+          <tr>
+            <th>#</th><th>Especialidad</th><th>Reproducciones</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr *ngFor="let x of topCat; let i = index">
+            <td>{{ i + 1 }}</td>
+            <td>{{ x.especialidad }}</td>
+            <td class="num">{{ x.reproducciones }}</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- GRÁFICA -->
+    <section class="card chart-card">
+      <h2 class="card-title">{{ currentChartTitle }}</h2>
+      <div class="chart-wrapper" [ngClass]="{ 'pie-right': chartKind==='tarta' }">
+        <canvas #chartCanvas></canvas>
+      </div>
+    </section>
+  </main>
+</div>

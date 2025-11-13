@@ -482,7 +482,7 @@ public class ContenidoService {
             m.put("titulo", c.getTitulo());
             m.put("tipo", c.getTipo() != null ? c.getTipo().name() : null);
             m.put("avg", c.getRatingAvg());
-            m.put("FIELD_COUNT", c.getRatingCount());
+            m.put(FIELD_COUNT, c.getRatingCount()); 
             return m;
         }).toList();
     }
