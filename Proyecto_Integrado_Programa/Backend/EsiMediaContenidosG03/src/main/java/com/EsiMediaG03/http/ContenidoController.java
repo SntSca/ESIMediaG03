@@ -197,7 +197,10 @@ public class ContenidoController {
                 String probe = Files.probeContentType(file);
                 if (probe != null) return MediaType.parseMediaType(probe);
             }
-        } catch (Exception ignored) {}
+        } catch (Exception ignored) {
+            // No se ha podido determinar el tipo; se devolverá APPLICATION_OCTET_STREAM
+
+        }
         return MediaType.APPLICATION_OCTET_STREAM;
     }
 

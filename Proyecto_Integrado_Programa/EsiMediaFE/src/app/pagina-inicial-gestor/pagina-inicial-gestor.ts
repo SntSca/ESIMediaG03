@@ -864,16 +864,14 @@ export class PaginaInicialGestor implements OnInit {
     }
   }
 
-  /** LDT -> "YYYY-MM-DD" para <input type="date"> */
   private toYmdFromLdt(v: any): string | null {
     if (!v) return null;
     const s = String(v).trim();
-    // "YYYY-MM-DDTHH:mm[:ss[.SSS]]" o "YYYY-MM-DD"
-    const m = s.match(/^(\d{4}-\d{2}-\d{2})(?:T.*)?$/);
+    const DATE_RE = /^(\d{4}-\d{2}-\d{2})(?:T.*)?$/;
+    const m = DATE_RE.exec(s);
     return m ? m[1] : null;
   }
 
-  /** "YYYY-MM-DD" -> "YYYY-MM-DDT00:00:00" (LDT local sin zona) */
   private toLdtFromYmd(ymd?: string | null): string | null {
     if (!ymd) return null;
     return /^\d{4}-\d{2}-\d{2}$/.test(ymd) ? `${ymd}T00:00:00` : ymd;

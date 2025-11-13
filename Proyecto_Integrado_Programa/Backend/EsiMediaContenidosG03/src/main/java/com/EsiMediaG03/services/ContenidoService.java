@@ -129,34 +129,30 @@ public class ContenidoService {
 
     private final TipoOps audioOps = new TipoOps() {
         @Override public void patch(Contenido actual, ModificarContenidoRequest c) {
-            // Permitir configurar EITHER urlAudio OR ficheroAudio
+            
             setIfText(actual::setUrlAudio, c.urlAudio);
             setIfText(actual::setFicheroAudio, c.ficheroAudio);
 
-            // Reglas de coherencia: audio no admite campos de vídeo
             assertBlank(c.urlVideo, "No puedes establecer campos de VIDEO en un contenido AUDIO.");
             assertBlank((c.resolucion != null && !c.resolucion.isBlank()) ? c.resolucion : null,
                     "No puedes establecer campos de VIDEO en un contenido AUDIO.");
-
-            // (Opcional) Evitar ambigüedad: si el parche trae ambas fuentes, forzar error
             if (hasText(c.urlAudio) && hasText(c.ficheroAudio)) {
                 throw new IllegalArgumentException("Para AUDIO, indica solo una fuente: urlAudio (remota) o ficheroAudio (local).");
             }
         }
 
         @Override public StreamingTarget buildTarget(Contenido c) throws StreamingTargetException {
-            // Elegir fuente: primero URL remota si existe; si no, fichero local
             String source = hasText(c.getUrlAudio()) ? c.getUrlAudio() : c.getFicheroAudio();
             if (isBlank(source)) {
                 throw new StreamingTargetException("AUDIO sin fuente: falta urlAudio o ficheroAudio.");
             }
 
             if (isHttp(source)) {
-                // NO tocar Paths.get() con http(s)
+                
                 return StreamingTarget.external(source, AUDIO_DEFAULT);
             }
 
-            // Local file
+        
             java.nio.file.Path path = java.nio.file.Path.of(source);
             ensureReadableFile(path, "Fichero de audio no accesible");
             long length;
@@ -228,7 +224,7 @@ public class ContenidoService {
 
     private String guessMimeFromExt(String path, String fallback) {
         String l = path.toLowerCase();
-        if (l.endsWith(".mp3")) return "audio/mpeg";
+        if (l.endsWith(".mp3")) return AUDIO_DEFAULT;
         if (l.endsWith(".wav")) return "audio/wav";
         if (l.endsWith(".m4a")) return "audio/mp4";
         if (l.endsWith(".flac")) return "audio/flac";

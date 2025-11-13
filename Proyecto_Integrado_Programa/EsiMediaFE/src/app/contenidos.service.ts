@@ -98,19 +98,19 @@ export class ContenidosService {
     const headers = this.buildHeaders(opts);
     const base = `${this.BASE}/ReproducirContenido/${encodeURIComponent(opts.id)}`;
 
-    // 1) Pedimos meta=1 para evitar 302 cross-origin (opaqueredirect)
+    
     const metaRes = await fetch(`${base}?meta=1`, { method: 'GET', headers });
     if (!metaRes.ok) {
       throw new Error(await this.extractMessage(metaRes, `No disponible (HTTP ${metaRes.status})`));
     }
     const meta = await metaRes.json() as { kind: 'external'|'local'; url?: string; mime?: string; length?: number };
 
-    // 2) Si es EXTERNAL, devolvemos la URL sin seguir redirecciones con fetch
+    
     if (meta.kind === 'external' && meta.url) {
       return { kind: 'external', url: this.normalizeLocation(meta.url) };
     }
 
-    // 3) Si es LOCAL, descargamos normalmente (con rangos o completo)
+    
     const res = await fetch(base, { method: 'GET', headers, redirect: 'follow' });
     if (!res.ok) {
       throw new Error(await this.extractMessage(res, `No se pudo reproducir (HTTP ${res.status})`));

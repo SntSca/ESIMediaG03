@@ -72,37 +72,28 @@ export class Contenidos {
     );
   }
 
-  /** Convierte "YYYY-MM-DD" a "YYYY-MM-DDT00:00:00".
- *  También acepta "YYYY-MM-DDTHH:mm" y le añade ":00".
- */
   private coerceLocalDateTimeIso(value?: string | null, defaultTime = '00:00:00'): string | null {
     if (!value) return null;
 
-    // Solo fecha
+    
     if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
       return `${value}T${defaultTime}`;
     }
 
-    // Fecha + hora sin segundos
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
       return `${value}:00`;
     }
 
-    // Fecha + hora con segundos -> tal cual
     if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) {
       return value;
     }
 
-    // Si llega en otro formato, devuélvelo igual (o lanza error si prefieres)
     return value;
   }
 
   subirContenido(payload: Partial<Contenido>): Observable<Contenido> {
-  // Normaliza fechas que el backend espera como LocalDateTime
     const body: any = { ...payload };
 
-    // Si en el form usas un campo solo-fecha (ej. "disponibilidadContenido"),
-    // conviértelo a disponibleHasta (LDT) y quita el campo solo-fecha
     if (body.disponibilidadContenido) {
       body.disponibleHasta = this.coerceLocalDateTimeIso(body.disponibilidadContenido);
       delete body.disponibilidadContenido;
@@ -110,16 +101,12 @@ export class Contenidos {
       body.disponibleHasta = this.coerceLocalDateTimeIso(body.disponibleHasta);
     }
 
-    // (Opcional) Si tienes más campos fecha → LDT, normalízalos igual:
-    // if (body.fechaEstado) body.fechaEstado = this.coerceLocalDateTimeIso(body.fechaEstado);
-
     return this.http.post<Contenido>(`${this.BASE}/AnadirContenido`, body);
   }
 
   modificar(id: string, cambios: ModificarContenidoRequest, creatorTipo: TipoContenido): Observable<Contenido> {
     const headers = new HttpHeaders({ 'X-Creator-Tipo': creatorTipo });
 
-    // Igual que en subir: normalizamos antes de enviar
     const body: any = { ...cambios };
 
     if (body.disponibilidadContenido) {
@@ -129,22 +116,10 @@ export class Contenidos {
       body.disponibleHasta = this.coerceLocalDateTimeIso(body.disponibleHasta);
     }
 
-    // (Opcional) otros campos fecha → LDT:
-    // if (body.fechaEstado) body.fechaEstado = this.coerceLocalDateTimeIso(body.fechaEstado);
 
     return this.http.put<Contenido>(`${this.BASE}/ModificarContenido/${encodeURIComponent(id)}`, body, { headers });
   }
 
-
- 
-  subirContenido1(payload: Partial<Contenido>): Observable<Contenido> {
-    return this.http.post<Contenido>(`${this.BASE}/AnadirContenido`, payload);
-  }
- 
-  modificar2(id: string, cambios: ModificarContenidoRequest, creatorTipo: TipoContenido): Observable<Contenido> {
-    const headers = new HttpHeaders({ 'X-Creator-Tipo': creatorTipo });
-    return this.http.put<Contenido>(`${this.BASE}/ModificarContenido/${encodeURIComponent(id)}`, cambios, { headers });
-  }
   eliminar(id: string, creatorTipo: TipoContenido): Observable<void> {
     const headers = new HttpHeaders({ 'X-Creator-Tipo': creatorTipo });
     return this.http.delete<void>(`${this.BASE}/EliminarContenido/${encodeURIComponent(id)}`, { headers });

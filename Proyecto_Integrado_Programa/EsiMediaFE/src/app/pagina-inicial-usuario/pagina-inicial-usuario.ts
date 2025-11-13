@@ -75,7 +75,7 @@ export class PaginaInicialUsuario implements OnInit {
   contenidos: Contenido[] = [];
   filteredCon: Contenido[] = [];
 
-  // --- Paginación ---
+  
   pageSize = 12;
   page = 1;
   get totalPages(): number { return Math.max(1, Math.ceil(this.filteredCon.length / this.pageSize)); }
@@ -222,7 +222,7 @@ export class PaginaInicialUsuario implements OnInit {
     this.cargarContenidos();
   }
 
-  // ===== Favoritos =====
+  
   private apiListFavIds(): Observable<string[]> { return this.favs.loadFavoritosIds(); }
   private apiAddFav(id: string): Observable<any> { return this.favs.addFavorito(id); }
   private apiRemoveFav(id: string): Observable<any> { return this.favs.removeFavorito(id); }
@@ -257,7 +257,6 @@ export class PaginaInicialUsuario implements OnInit {
     }
   }
 
-  // ===== Usuario/Perfil =====
   private computeReadOnlyFlags(): void {
     const qp = this.route.snapshot.queryParamMap;
     const qModo = (qp.get('modoLectura') || '').toLowerCase();
@@ -530,7 +529,7 @@ export class PaginaInicialUsuario implements OnInit {
     }
   }
 
-  // ======= REPRO EXTERNA: YouTube/Vimeo/otros =======
+  
   private handleExternalPlay(url: string, content: any, isUsuario: boolean): void {
     const ytembed = toYouTubeEmbed(url);
     const vimbed = toVimeoEmbed(url);
@@ -539,7 +538,7 @@ export class PaginaInicialUsuario implements OnInit {
       const finalUrl = ytembed || vimbed!;
       this.embedUrl = this.s.bypassSecurityTrustResourceUrl(finalUrl);
       this.playerSrc = null;
-      this.iframeKey++; // ✅ resetea iframe siempre que lo abrimos
+      this.iframeKey++;
     } else if (isDirectMedia(url)) {
       this.playerKind = 'VIDEO';
       this.playerSrc = url;
@@ -570,11 +569,11 @@ export class PaginaInicialUsuario implements OnInit {
     this.cdr.markForCheck();
   }
 
-  // ======= REPRO LOCAL (blob) =======
+  
   private handleInternalPlay(blobUrl: string, content: any, isUsuario: boolean): void {
     this.playerKind = String(content.tipo).toUpperCase() === 'AUDIO' ? 'AUDIO' : 'VIDEO';
     this.playerSrc = blobUrl;
-    this.embedUrl = null; // ✅ por si veníamos de un iframe
+    this.embedUrl = null; 
     this.playingId = content.id;
     this.playingTitle = content.titulo || null;
     this.playerOpen = true;
@@ -585,25 +584,23 @@ export class PaginaInicialUsuario implements OnInit {
 
   private incrementViews(content: any): void { content.reproducciones = this.toNum(content.reproducciones) + 1; }
 
-  // ===== CERRAR PLAYER — SIEMPRE PARAR =====
+
   closePlayer() {
-    // ✅ Pausa y limpia <video>
+    
     const v = this.videoRef?.nativeElement;
     if (v) {
       try { v.pause(); } catch { }
       try { v.removeAttribute('src'); v.load(); } catch { }
     }
-    // ✅ Pausa y limpia <audio>
+
     const a = this.audioRef?.nativeElement;
     if (a) {
       try { a.pause(); } catch { }
       try { a.removeAttribute('src'); a.load(); } catch { }
     }
-    // ✅ Desmonta iframe (deja de sonar)
     this.embedUrl = null;
-    this.iframeKey++; // fuerza destruir/recrear
+    this.iframeKey++; 
 
-    // Limpia blob si aplica
     try { if (this.playerSrc?.startsWith('blob:')) URL.revokeObjectURL(this.playerSrc); } catch { }
 
     this.playerOpen = false;
@@ -614,7 +611,6 @@ export class PaginaInicialUsuario implements OnInit {
     this.cdr.markForCheck();
   }
 
-  // ===== Rating / detalles / filtros =====
   private ratingOpen = new Set<string>();
   isRatingOpen(c: { id: string }): boolean { return !!c?.id && this.ratingOpen.has(c.id); }
   toggleRating(c: { id: string }): void { if (!c?.id) return; this.ratingOpen.has(c.id) ? this.ratingOpen.delete(c.id) : this.ratingOpen.add(c.id); }
@@ -631,21 +627,18 @@ export class PaginaInicialUsuario implements OnInit {
   onFilterChange(): void { if (this.filterMode === 'favoritos' && !this.favsLoaded) this.loadFavoritos(); this.applyFilter(); }
 
   private applyFilter(): void {
-    // 1) Base del catálogo (backup si existe)
+    
     const base0: Contenido[] = this.catalogBackup ?? this.contenidos.slice(0);
 
-    // 2) Normalización previa SIEMPRE: visibilidad VIP y rango de edad
-    //    - Admin en modo lectura ve todo porque canSeeVip()/canSeeByAge() ya lo contemplan
     const base = base0
       .filter(item => this.canSeeVip() ? true : !item.vip)
       .filter(item => this.canSeeByAge(item));
 
-    // 3) Capas de filtro "vista" (favoritos / historial)
     let working = base;
 
     if (this.filterMode === 'favoritos') {
       if (!this.favsLoaded) {
-        // mientras se cargan los favoritos, mostramos la base ya normalizada
+      
         this.filteredCon = base.slice(0);
         this.page = 1;
         return;
@@ -656,7 +649,6 @@ export class PaginaInicialUsuario implements OnInit {
       working = base.filter(c => (c.reproducciones ?? 0) > 0);
     }
 
-    // 4) Filtros avanzados (texto, tipo, categoría, rol, resolución, edad avanzada UI…)
     const f = this.filtrosContenido;
     const q = String(f.q ?? '').trim().toLowerCase();
     const wantTipo = String(f.tipo ?? '').trim().toUpperCase();
@@ -670,7 +662,6 @@ export class PaginaInicialUsuario implements OnInit {
       q, wantTipo, wantCat, wantRole, wantRes, ageMode, ageVal
     }));
 
-    // 5) Ordenación
     const dir = f.dir === 'asc' ? 1 : -1;
     const ordenar = f.ordenar;
     out.sort((a, b) => {
@@ -687,7 +678,6 @@ export class PaginaInicialUsuario implements OnInit {
       return score * dir;
     });
 
-    // 6) Salida + reinicio de paginación
     this.filteredCon = out;
     this.page = 1;
   }

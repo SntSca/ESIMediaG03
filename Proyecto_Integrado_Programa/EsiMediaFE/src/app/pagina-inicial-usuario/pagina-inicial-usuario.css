@@ -134,7 +134,7 @@
 }
 @keyframes spin { to { transform: rotate(360deg); } }
 .catalog-wrap{
-  padding: 0;              /* o el valor que quieras realmente */
+  padding: 0;             
 }
 
 .catalog-frame{
@@ -155,7 +155,7 @@
   --thumb-play-left: 12px;
   padding: var(--frame-pad);
 
-  min-height: unset;        /* o simplemente elimina la línea */
+  min-height: unset;        
   height: auto;
 
   position: relative;
@@ -255,7 +255,7 @@
 .heart{ width:22px; height:22px; fill:none; stroke: currentColor; stroke-width:2px; }
 .ctrl-btn.fav.is-fav .heart{ fill: currentColor; }
 
-/* Botones sueltos alternativos (si no usas .controls) */
+
 .play-btn{
   left:12px; width:44px; height:44px; display:grid; place-items:center;
   background: rgba(0,0,0,.6); color:#fff; border:1px solid rgba(255,255,255,.25); font-weight:800;
@@ -295,7 +295,7 @@
   transition: opacity .25s ease !important;
   z-index: 80 !important;
 }
-/* Pop-card base oculta (no por hover) */
+
 .pop-card{
   position: fixed !important;
   left: 50% !important;
@@ -345,13 +345,9 @@
 }
 .pop-card__close:hover{ background: rgba(0,0,0,.55); transform: translateY(-1px); box-shadow: 0 6px 16px rgba(0,0,0,.35); }
 
-/* Panel de valoración */
 .rate-panel { margin-top: 8px; padding: 8px; border: 1px dashed rgba(255,255,255,.12); border-radius: 12px; background: rgba(255,255,255,.05); }
 .rate-actions { display: flex; justify-content: flex-end; }
 
-/* =========================
-   RESPONSIVE & ACCESSIBILITY
-   ========================= */
 @media (max-width: 640px) {
   .catalog-frame{ --pop-w-perc: 96cqw; }
   .pop-card { top: 8px !important; max-height: 80vh; }
@@ -399,7 +395,6 @@
 .filter-select:hover{ transform: translateY(-1px); }
 .filter-select:focus{ outline:none; box-shadow: 0 0 0 3px rgba(14,165,233,.25), 0 8px 20px rgba(14,165,233,.25); }
 
-/* Layout principal tipo Admin */
 .main-container {
   display: flex;
   flex: 1;
@@ -467,7 +462,7 @@
   font-size: 0.9em; 
   padding-left: 4px;
 }
-/* === Layout 2 columnas === */
+
 .layout-2col{
   display:grid;
   grid-template-columns: 320px 1fr;
@@ -475,11 +470,11 @@
   align-items: start;
 }
 
-/* Sidebar de filtros */
+
 .filters-sidebar{
   position: sticky;
   top: 12px;
-  background: #111827;           /* fondo oscuro tipo admin */
+  background: #111827;         
   border: 1px solid #1f2937;
   border-radius: 14px;
   padding: 16px 16px 20px;
@@ -491,7 +486,7 @@
   margin: 6px 0 14px;
   font-size: 18px;
   font-weight: 700;
-  color: #f87171;                 /* acento como admin */
+  color: #f87171;            
 }
 
 .filters-form .fgroup{
@@ -529,7 +524,7 @@
   gap: 10px;
 }
 
-/* Chips de tags */
+
 .chips{
   display: flex;
   flex-wrap: wrap;
@@ -550,7 +545,7 @@
   border-color:#2563eb;
 }
 
-/* Acciones */
+
 .filters-actions{
   display:flex;
   justify-content:flex-end;
@@ -620,7 +615,7 @@
   min-height: calc(3 * var(--row-h) + 2 * var(--row-gap) + 2 * var(--frame-pad));
 }
 
-/* Grid SIN height fija */
+
 .catalog-frame .grid{
   grid-row: 2;
   display: grid;
