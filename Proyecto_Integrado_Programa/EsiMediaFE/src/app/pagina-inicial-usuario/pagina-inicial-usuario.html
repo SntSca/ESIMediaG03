@@ -417,7 +417,14 @@
 
 <div *ngIf="playerOpen">
   
-  <div class="player-overlay" (click)="closePlayer()"></div>
+  <button
+    type="button"
+    class="player-overlay"
+    (click)="closePlayer()"
+    aria-label="Cerrar reproductor">
+  </button>
+
+
 
  
   <div class="player-modal" (click)="$event.stopPropagation()" (keydown)="handleKeyDown($event)">

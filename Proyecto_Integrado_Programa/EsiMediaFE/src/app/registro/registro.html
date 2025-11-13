@@ -245,9 +245,14 @@
     <label class="chkline" *ngIf="!esAltaCreador && !esAltaAdmin && role === 'usuario'">
       <input type="checkbox" [(ngModel)]="vip" name="vip"> ¿Quiere ser VIP?
     </label>
-    <!-- Modal de selección MFA -->
+
     <div class="mfa-modal" *ngIf="showMfaModal">
-      <div class="mfa-modal__overlay" (click)="cancelMfaSelection()"></div>
+      <button
+        type="button"
+        class="mfa-modal__overlay"
+        (click)="cancelMfaSelection()"
+        aria-label="Cerrar selector de segundo factor">
+      </button>
 
       <div class="mfa-modal__content">
         <h3>Elige una opción de seguridad adicional</h3>

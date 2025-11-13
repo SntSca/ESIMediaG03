@@ -582,8 +582,8 @@ export class PaginaInicialUsuario implements OnInit {
     this.cdr.markForCheck();
   }
 
-  private incrementViews(content: any): void { content.reproducciones = this.toNum(content.reproducciones) + 1; }
 
+  private incrementViews(content: any): void { content.reproducciones = this.toNum(content.reproducciones) + 1; }
 
   closePlayer() {
     
@@ -623,7 +623,7 @@ export class PaginaInicialUsuario implements OnInit {
   openDetails(c: { id?: string }): void { if (!c?.id) return; this.detailsOpen.add(c.id); this.cdr.markForCheck(); }
   closeDetails(c: { id?: string }): void { if (!c?.id) return; this.detailsOpen.delete(c.id); this.cdr.markForCheck(); }
 
-  filterMode: 'todos' | 'favoritos' | 'historial' | 'todos'= 'todos';
+  filterMode: 'todos' | 'favoritos' | 'historial' = 'todos';
   onFilterChange(): void { if (this.filterMode === 'favoritos' && !this.favsLoaded) this.loadFavoritos(); this.applyFilter(); }
 
   private applyFilter(): void {
