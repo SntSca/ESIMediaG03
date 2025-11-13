@@ -85,6 +85,7 @@ public class UserService {
                 descripcion, especialidad, tipoContenido, departamento
         );
 
+        // Aplica preferencia MFA solo para 
         applyMfaPreference(user, mfaPreferred);
 
         userDao.save(user);

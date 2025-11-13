@@ -29,7 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
-        
 
     @Mock
     private UserService userService;
@@ -58,7 +57,6 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true));
     }
-    
 
     @Test
     @DisplayName("registrar USUARIO ok")
@@ -72,7 +70,7 @@ class UserControllerTest {
                 "pwd2", "Aa1!aaaa",
                 "alias", "ali",
                 "fechaNac", "2001-01-02",
-                "foto", "f.png"
+                "foto", "f.png", isNull(), isNull
         );
 
         mvc.perform(post("/users/Registrar")
@@ -128,28 +126,22 @@ class UserControllerTest {
                 .andExpect(status().reason(containsString("Las contraseñas no coinciden")));
     }
 
-        @Test
-        void forgot_and_reset_password_ok() throws Exception {
-                
+    @Test
+    void forgot_and_reset_password_ok() throws Exception {
         doNothing().when(userService).sendPasswordRecoveryEmail("user@mail.com");
-        doNothing().when(userService).resetPassword("tok", "NewPass1!");
-
         mvc.perform(post("/users/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(Map.of("email", "user@mail.com"))))
-                .andExpect(status().isOk()) 
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").exists());
 
+        doNothing().when(userService).resetPassword("tok", "NewPass1!");
         mvc.perform(post("/users/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
-                        .content(om.writeValueAsString(Map.of(
-                                "token", "tok",
-                                "newPassword", "NewPass1!"
-                        ))))
-                .andExpect(status().isOk()) // debe devolver 200 OK
+                        .content(om.writeValueAsString(Map.of("token", "tok", "newPassword", "NewPass1!"))))
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Contraseña actualizada correctamente"));
-        }
-
+    }
 
     @Test
     void listar_y_getUser() throws Exception {

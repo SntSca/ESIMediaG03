@@ -159,7 +159,7 @@ public class ContenidoController {
         return new ResponseEntity<>(h, HttpStatus.OK);
     }
 
-    public HttpHeaders commonHeaders(MediaType mediaType) {
+    private HttpHeaders commonHeaders(MediaType mediaType) {
         HttpHeaders h = new HttpHeaders();
         h.setContentType(mediaType);
         h.set(HttpHeaders.ACCEPT_RANGES, "bytes");
@@ -283,7 +283,7 @@ public class ContenidoController {
     }
 
 
-    public String resolveEmail(String headerEmail) {
+    private String resolveEmail(String headerEmail) {
         var ctx = org.springframework.security.core.context.SecurityContextHolder.getContext();
         var auth = ctx != null ? ctx.getAuthentication() : null;
         String scEmail = (auth != null && auth.isAuthenticated() && !"anonymousUser".equals(auth.getName()))

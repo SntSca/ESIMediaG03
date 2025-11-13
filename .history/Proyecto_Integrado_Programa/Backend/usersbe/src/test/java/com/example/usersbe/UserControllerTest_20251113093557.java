@@ -130,7 +130,12 @@ class UserControllerTest {
 
         @Test
         void forgot_and_reset_password_ok() throws Exception {
-                
+                // Limpiar logs antes del test
+if (logFile.exists()) logFile.delete();
+
+// Leer contenido
+List<String> lines = Files.readAllLines(logFile.toPath());
+
         doNothing().when(userService).sendPasswordRecoveryEmail("user@mail.com");
         doNothing().when(userService).resetPassword("tok", "NewPass1!");
 

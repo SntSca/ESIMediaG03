@@ -153,32 +153,4 @@ class ContenidoControllerTest {
         assertEquals("header@mail.com", email);
     }
 
-
-   
-    @Test
-    void testStreamExternalRedirect() throws Exception {
-        StreamingTarget target = mock(StreamingTarget.class);
-        when(target.isExternalRedirect()).thenReturn(true);
-        when(target.externalUrl()).thenReturn("https://cdn.example.com/video.mp4");
-        when(contenidoService.resolveStreamingTarget(any(), any(), any())).thenReturn(target);
-
-        ResponseEntity<Object> resp = controller.stream("id", new HttpHeaders(), null, null, null, null, null, null);
-        assertEquals(302, resp.getStatusCodeValue());
-        assertEquals("https://cdn.example.com/video.mp4", resp.getHeaders().getLocation().toString());
-    }
-
-    @Test
-    void testHeadLocal() throws Exception {
-        StreamingTarget target = mock(StreamingTarget.class);
-        when(target.isExternalRedirect()).thenReturn(false);
-        when(target.path()).thenReturn(Files.createTempFile("video", ".bin"));
-        when(target.length()).thenReturn(100L);
-        when(target.mimeType()).thenReturn("video/mp4");
-        when(contenidoService.resolveStreamingTarget(any(), any(), any())).thenReturn(target);
-
-        ResponseEntity<Void> resp = controller.head("id", null, null, null);
-        assertEquals(200, resp.getStatusCodeValue());
-        assertEquals("bytes", resp.getHeaders().getFirst(HttpHeaders.ACCEPT_RANGES));
-    }
-
 }

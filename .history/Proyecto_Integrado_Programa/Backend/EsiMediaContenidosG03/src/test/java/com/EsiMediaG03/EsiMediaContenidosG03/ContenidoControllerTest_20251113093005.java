@@ -154,7 +154,26 @@ class ContenidoControllerTest {
     }
 
 
-   
+    @Test
+    void testStreamLocalPartialContent() throws Exception {
+        Path tmp = Files.createTempFile("video", ".bin");
+        Files.write(tmp, new byte[1024]);
+        StreamingTarget target = mock(StreamingTarget.class);
+        when(target.isExternalRedirect()).thenReturn(false);
+        when(target.path()).thenReturn(tmp);
+        when(target.length()).thenReturn(1024L);
+        when(target.mimeType()).thenReturn("application/octet-stream");
+        when(contenidoService.resolveStreamingTarget(any(), any(), any())).thenReturn(target);
+
+        HttpHeaders headers = new HttpHeaders();
+
+        ResponseEntity<Object> resp = controller.stream("id", headers, null, null, null, null, null, null);
+        assertEquals(206, resp.getStatusCodeValue());
+        assertTrue(resp.getBody() instanceof InputStreamResource);
+
+        Files.delete(tmp);
+    }
+
     @Test
     void testStreamExternalRedirect() throws Exception {
         StreamingTarget target = mock(StreamingTarget.class);

@@ -29,7 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
-        
 
     @Mock
     private UserService userService;
@@ -58,7 +57,6 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true));
     }
-    
 
     @Test
     @DisplayName("registrar USUARIO ok")
@@ -128,25 +126,27 @@ class UserControllerTest {
                 .andExpect(status().reason(containsString("Las contraseñas no coinciden")));
     }
 
-        @Test
+    @Test
         void forgot_and_reset_password_ok() throws Exception {
-                
+        // Mockear el servicio para que no haga nada real
         doNothing().when(userService).sendPasswordRecoveryEmail("user@mail.com");
         doNothing().when(userService).resetPassword("tok", "NewPass1!");
 
+        // POST /forgot-password
         mvc.perform(post("/users/forgot-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(Map.of("email", "user@mail.com"))))
-                .andExpect(status().isOk()) 
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").exists());
 
+        // POST /reset-password
         mvc.perform(post("/users/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(Map.of(
                                 "token", "tok",
                                 "newPassword", "NewPass1!"
                         ))))
-                .andExpect(status().isOk()) // debe devolver 200 OK
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Contraseña actualizada correctamente"));
         }
 

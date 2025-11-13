@@ -159,7 +159,7 @@ public class ContenidoController {
         return new ResponseEntity<>(h, HttpStatus.OK);
     }
 
-    public HttpHeaders commonHeaders(MediaType mediaType) {
+    private HttpHeaders commonHeaders(MediaType mediaType) {
         HttpHeaders h = new HttpHeaders();
         h.setContentType(mediaType);
         h.set(HttpHeaders.ACCEPT_RANGES, "bytes");

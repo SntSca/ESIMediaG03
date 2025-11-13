@@ -29,7 +29,6 @@ import static org.springframework.test.web.servlet.result.MockMvcResultMatchers.
 
 @ExtendWith(MockitoExtension.class)
 class UserControllerTest {
-        
 
     @Mock
     private UserService userService;
@@ -58,7 +57,6 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true));
     }
-    
 
     @Test
     @DisplayName("registrar USUARIO ok")
@@ -130,7 +128,6 @@ class UserControllerTest {
 
         @Test
         void forgot_and_reset_password_ok() throws Exception {
-                
         doNothing().when(userService).sendPasswordRecoveryEmail("user@mail.com");
         doNothing().when(userService).resetPassword("tok", "NewPass1!");
 
@@ -140,6 +137,7 @@ class UserControllerTest {
                 .andExpect(status().isOk()) 
                 .andExpect(jsonPath("$.message").exists());
 
+        // Ejecutar reset-password
         mvc.perform(post("/users/reset-password")
                         .contentType(MediaType.APPLICATION_JSON)
                         .content(om.writeValueAsString(Map.of(

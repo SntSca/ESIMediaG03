@@ -58,7 +58,6 @@ class UserControllerTest {
                 .andExpect(status().isOk())
                 .andExpect(jsonPath("$.available").value(true));
     }
-    
 
     @Test
     @DisplayName("registrar USUARIO ok")
@@ -130,7 +129,6 @@ class UserControllerTest {
 
         @Test
         void forgot_and_reset_password_ok() throws Exception {
-                
         doNothing().when(userService).sendPasswordRecoveryEmail("user@mail.com");
         doNothing().when(userService).resetPassword("tok", "NewPass1!");
 
