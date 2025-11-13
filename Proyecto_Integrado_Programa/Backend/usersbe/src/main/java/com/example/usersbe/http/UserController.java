@@ -45,6 +45,7 @@ public class UserController {
         this.userService = userService;
     }
 
+    private static final String FIELD_MFA_PREFERRED = "mfaPreferred";
     private static final String FIELD_EMAIL = "email";
     private static final String FIELD_MESSAGE = "message";
     private static final String FIELD_NOMBRE = "nombre";
@@ -81,64 +82,67 @@ public class UserController {
         return Map.of("available", available);
     }
 
-    @PostMapping("/Registrar")
-    public void registrar(@RequestBody Map<String, String> info) {
-        final String roleStr = trim(info.get(FIELD_ROLE));
-        final User.Role role = parseRole(roleStr);
-        validarCamposObligatorios(
-                info,
-                FIELD_NOMBRE, FIELD_APELLIDOS, FIELD_EMAIL,
-                FIELD_PWD, FIELD_PWD2, FIELD_ROLE, FIELD_FOTO
-        );
-        String alias = null;
-        String fechaNac = null;
-        String descripcion = null;
-        String especialidad = null;
-        User.TipoContenido tipoContenido = null;
-        String departamento = null;
 
-        switch (role) {
-            case USUARIO:
-                validarCamposObligatorios(info, FIELD_ALIAS, FIELD_FECHA_NAC);
-                alias = trim(info.get(FIELD_ALIAS));
-                fechaNac = trim(info.get(FIELD_FECHA_NAC));
-                break;
+@PostMapping("/Registrar")
+public void registrar(@RequestBody Map<String, String> info) {
+    final String mfaPreferred = trimOrNull(info.get(FIELD_MFA_PREFERRED));
+    final String roleStr = trim(info.get(FIELD_ROLE));
+    final User.Role role = parseRole(roleStr);
+    validarCamposObligatorios(
+            info,
+            FIELD_NOMBRE, FIELD_APELLIDOS, FIELD_EMAIL,
+            FIELD_PWD, FIELD_PWD2
+    );
 
-            case GESTOR_CONTENIDO:
-                validarCamposObligatorios(info, FIELD_ALIAS, FIELD_ESPECIALIDAD, FIELD_TIPO_CONTENIDO);
-                alias = trim(info.get(FIELD_ALIAS));
-                descripcion = trimOrNull(info.get(FIELD_DESCRIPCION));
-                especialidad = trim(info.get(FIELD_ESPECIALIDAD));
-                tipoContenido = parseTipoContenido(trim(info.get(FIELD_TIPO_CONTENIDO)));
-                break;
+    String alias = null;
+    String fechaNac = null;
+    String descripcion = null;
+    String especialidad = null;
+    User.TipoContenido tipoContenido = null;
+    String departamento = null;
 
-            case ADMINISTRADOR:
-                validarCamposObligatorios(info, FIELD_DEPARTAMENTO);
-                departamento = trimOrNull(info.get(FIELD_DEPARTAMENTO));
-                alias = trimOrNull(info.get(FIELD_ALIAS));
-                break;
+    switch (role) {
+        case USUARIO -> {
+            validarCamposObligatorios(info, FIELD_ALIAS, FIELD_FECHA_NAC);
+            alias = trim(info.get(FIELD_ALIAS));
+            fechaNac = trim(info.get(FIELD_FECHA_NAC));
         }
-
-        final String nombre = trim(info.get(FIELD_NOMBRE));
-        final String apellidos = trim(info.get(FIELD_APELLIDOS));
-        final String email = trim(info.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
-        final String pwd = info.get(FIELD_PWD);
-        final String pwd2 = info.get(FIELD_PWD2);
-        final boolean vip = Boolean.parseBoolean(info.getOrDefault("vip", "false"));
-        final String foto = trim(info.get(FIELD_FOTO));
-        validarEmail(email);
-        validarContrasena(pwd, pwd2);
-
-        try {
-            userService.registrar(
-                    nombre, apellidos, alias, email, fechaNac, pwd, vip, foto, role,
-                    descripcion, especialidad, tipoContenido,
-                    departamento
-            );
-        } catch (Exception e) {
-            throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
+        case GESTOR_CONTENIDO -> {
+            validarCamposObligatorios(info, FIELD_ALIAS,FIELD_FOTO, FIELD_ESPECIALIDAD, FIELD_TIPO_CONTENIDO,FIELD_ROLE);
+            alias = trim(info.get(FIELD_ALIAS));
+            descripcion = trimOrNull(info.get(FIELD_DESCRIPCION));
+            especialidad = trim(info.get(FIELD_ESPECIALIDAD));
+            tipoContenido = parseTipoContenido(trim(info.get(FIELD_TIPO_CONTENIDO)));
+        }
+        case ADMINISTRADOR -> {
+            validarCamposObligatorios(info, FIELD_DEPARTAMENTO);
+            departamento = trimOrNull(info.get(FIELD_DEPARTAMENTO));
+            alias = trimOrNull(info.get(FIELD_ALIAS));
         }
     }
+
+    final String nombre = trim(info.get(FIELD_NOMBRE));
+    final String apellidos = trim(info.get(FIELD_APELLIDOS));
+    final String email = trim(info.get(FIELD_EMAIL)).toLowerCase(Locale.ROOT);
+    final String pwd = info.get(FIELD_PWD);
+    final String pwd2 = info.get(FIELD_PWD2);
+    final boolean vip = Boolean.parseBoolean(info.getOrDefault("vip", "false"));
+    final String foto = trim(info.get(FIELD_FOTO));
+    validarEmail(email);
+    validarContrasena(pwd, pwd2);
+
+    try {
+        userService.registrar(
+                nombre, apellidos, alias, email, fechaNac, pwd, vip, foto, role,
+                descripcion, especialidad, tipoContenido,
+                departamento,
+                mfaPreferred 
+        );
+    } catch (Exception e) {
+        throw new ResponseStatusException(HttpStatus.FORBIDDEN, e.getMessage());
+    }
+}
+
 
 
 

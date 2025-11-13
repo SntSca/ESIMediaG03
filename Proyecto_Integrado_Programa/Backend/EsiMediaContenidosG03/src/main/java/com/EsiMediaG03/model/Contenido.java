@@ -1,5 +1,6 @@
 package com.EsiMediaG03.model;
 
+import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.HashMap;
 import java.util.HashSet;
@@ -22,6 +23,7 @@ public class Contenido {
     private String titulo;
     private String descripcion;
     private String ficheroAudio;
+    private String urlAudio;
     private String urlVideo;
     private List<String> tags;
     private int duracionMinutos;
@@ -30,6 +32,7 @@ public class Contenido {
     private boolean visible;
     private LocalDateTime fechaEstado = LocalDateTime.now();
     private LocalDateTime disponibleHasta;
+    private LocalDate disponibilidadContenido;
     private int restringidoEdad;
     private Tipo tipo;
     private String imagen;
@@ -74,6 +77,14 @@ public class Contenido {
 
     public void setFicheroAudio(String ficheroAudio) {
         this.ficheroAudio = ficheroAudio;
+    }
+
+    public String getUrlAudio() {
+        return urlAudio;
+    }
+
+    public void setUrlAudio(String urlAudio) {
+        this.urlAudio = urlAudio;
     }
 
     public String getUrlVideo() {
@@ -183,4 +194,12 @@ public class Contenido {
 
     public double getRatingAvg() { return ratingAvg; }
     public void setRatingAvg(double ratingAvg) { this.ratingAvg = ratingAvg; }
+
+    public LocalDate getDisponibilidadContenido() {
+        return disponibilidadContenido;
+    }
+    
+    public void setDisponibilidadContenido(LocalDate disponibilidadContenido) {
+        this.disponibilidadContenido = disponibilidadContenido;
+    }
 }

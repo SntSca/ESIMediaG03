@@ -11,19 +11,20 @@ import java.util.List;
 import java.util.Map;
 import java.util.Set;
 
+import org.springframework.data.domain.Sort;
 import org.springframework.data.mongodb.core.MongoTemplate;
+import org.springframework.data.mongodb.core.query.Criteria;
 import static org.springframework.data.mongodb.core.query.Criteria.where;
+import org.springframework.data.mongodb.core.query.Query;
+import org.springframework.data.mongodb.core.query.Update;
 import org.springframework.security.access.AccessDeniedException;
 import org.springframework.security.authentication.AnonymousAuthenticationToken;
 import org.springframework.security.core.Authentication;
-import org.springframework.data.mongodb.core.query.Criteria;
-import org.springframework.data.mongodb.core.query.Query;
-import org.springframework.data.mongodb.core.query.Update;
-import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 
 import com.EsiMediaG03.dao.ContenidoDAO;
+import com.EsiMediaG03.dao.ListaPublicaDAO;
 import com.EsiMediaG03.dto.ModificarContenidoRequest;
 import com.EsiMediaG03.dto.StreamingTarget;
 import com.EsiMediaG03.exceptions.ContenidoAddException;
@@ -34,7 +35,6 @@ import com.EsiMediaG03.exceptions.StreamingTargetException;
 import com.EsiMediaG03.exceptions.StreamingTargetResolutionException;
 import com.EsiMediaG03.model.Contenido;
 import com.EsiMediaG03.model.ListaPublica;
-import com.EsiMediaG03.dao.ListaPublicaDAO;
 @Service
 public class ContenidoService {
 
@@ -118,27 +118,56 @@ public class ContenidoService {
         StreamingTarget buildTarget(Contenido c) throws StreamingTargetException;
     }
 
+    private static boolean isHttp(String s) {
+        if (s == null) return false;
+        String l = s.toLowerCase();
+        return l.startsWith("http://") || l.startsWith("https://");
+    }
+
+    private static boolean hasText(String s){ return s != null && !s.isBlank(); }
+    private static final String AUDIO_DEFAULT = "audio/mpeg";
+
     private final TipoOps audioOps = new TipoOps() {
         @Override public void patch(Contenido actual, ModificarContenidoRequest c) {
+            
+            setIfText(actual::setUrlAudio, c.urlAudio);
             setIfText(actual::setFicheroAudio, c.ficheroAudio);
+
             assertBlank(c.urlVideo, "No puedes establecer campos de VIDEO en un contenido AUDIO.");
-            assertBlank((c.resolucion != null && !c.resolucion.isBlank()) ? c.resolucion : null, "No puedes establecer campos de VIDEO en un contenido AUDIO.");
+            assertBlank((c.resolucion != null && !c.resolucion.isBlank()) ? c.resolucion : null,
+                    "No puedes establecer campos de VIDEO en un contenido AUDIO.");
+            if (hasText(c.urlAudio) && hasText(c.ficheroAudio)) {
+                throw new IllegalArgumentException("Para AUDIO, indica solo una fuente: urlAudio (remota) o ficheroAudio (local).");
+            }
         }
+
         @Override public StreamingTarget buildTarget(Contenido c) throws StreamingTargetException {
-            String pathStr = c.getFicheroAudio();
-            if (isBlank(pathStr)) throw new StreamingTargetException("AUDIO sin ficheroAudio.");
-            Path path = Path.of(pathStr);
+            String source = hasText(c.getUrlAudio()) ? c.getUrlAudio() : c.getFicheroAudio();
+            if (isBlank(source)) {
+                throw new StreamingTargetException("AUDIO sin fuente: falta urlAudio o ficheroAudio.");
+            }
+
+            if (isHttp(source)) {
+                
+                return StreamingTarget.external(source, AUDIO_DEFAULT);
+            }
+
+        
+            java.nio.file.Path path = java.nio.file.Path.of(source);
             ensureReadableFile(path, "Fichero de audio no accesible");
             long length;
             try {
-                length = Files.size(path);
-            } catch (IOException e) {
+                length = java.nio.file.Files.size(path);
+            } catch (java.io.IOException e) {
                 throw new StreamingTargetException("Error al obtener el tamaño del archivo: " + e.getMessage());
             }
-            String mime = guessMimeFromExt(pathStr, "audio/mpeg");
+            String mime = guessMimeFromExt(source, AUDIO_DEFAULT);
             return StreamingTarget.local(path, length, mime);
         }
     };
+
+
+
 
     private final TipoOps videoOps = new TipoOps() {
         private boolean isHttp(String s) {
@@ -195,7 +224,7 @@ public class ContenidoService {
 
     private String guessMimeFromExt(String path, String fallback) {
         String l = path.toLowerCase();
-        if (l.endsWith(".mp3")) return "audio/mpeg";
+        if (l.endsWith(".mp3")) return AUDIO_DEFAULT;
         if (l.endsWith(".wav")) return "audio/wav";
         if (l.endsWith(".m4a")) return "audio/mp4";
         if (l.endsWith(".flac")) return "audio/flac";
@@ -213,6 +242,7 @@ public class ContenidoService {
         if (c.getDisponibleHasta() != null && !c.getDisponibleHasta().isAfter(now)) {
             throw new ContenidoException("Este contenido ha dejado de estar disponible.");
         }
+
         if (c.isVip() && !Boolean.TRUE.equals(isVip)) {
             throw new ContenidoException("Contenido VIP — necesitas una suscripción VIP para reproducirlo.");
         }

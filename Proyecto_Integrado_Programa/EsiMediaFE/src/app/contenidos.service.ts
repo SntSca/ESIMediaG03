@@ -93,7 +93,41 @@ export class ContenidosService {
     }
   }
 
+
   async resolveAndCount(opts: HeaderOpts): Promise<ResolveResult> {
+    const headers = this.buildHeaders(opts);
+    const base = `${this.BASE}/ReproducirContenido/${encodeURIComponent(opts.id)}`;
+
+    
+    const metaRes = await fetch(`${base}?meta=1`, { method: 'GET', headers });
+    if (!metaRes.ok) {
+      throw new Error(await this.extractMessage(metaRes, `No disponible (HTTP ${metaRes.status})`));
+    }
+    const meta = await metaRes.json() as { kind: 'external'|'local'; url?: string; mime?: string; length?: number };
+
+    
+    if (meta.kind === 'external' && meta.url) {
+      return { kind: 'external', url: this.normalizeLocation(meta.url) };
+    }
+
+    
+    const res = await fetch(base, { method: 'GET', headers, redirect: 'follow' });
+    if (!res.ok) {
+      throw new Error(await this.extractMessage(res, `No se pudo reproducir (HTTP ${res.status})`));
+    }
+    const ct = res.headers.get('content-type') || '';
+    if (!/(audio|video)\//i.test(ct)) {
+      const text = await res.clone().text().catch(() => '');
+      const plain = text ? text.replace(/<[^>]{0,1000}>/g, ' ').replace(/\s+/g, ' ').trim() : '';
+      throw new Error(plain || 'El origen no devolvió un flujo multimedia reproducible.');
+    }
+    const blob = await res.blob();
+    const blobUrl = URL.createObjectURL(blob);
+    return { kind: 'local', blobUrl, mime: ct || 'application/octet-stream' };
+  }
+
+
+  async resolveAndCount1(opts: HeaderOpts): Promise<ResolveResult> {
     const headers = this.buildHeaders(opts);
     const url = `${this.BASE}/ReproducirContenido/${encodeURIComponent(opts.id)}`;
     const resManual = await fetch(url, {

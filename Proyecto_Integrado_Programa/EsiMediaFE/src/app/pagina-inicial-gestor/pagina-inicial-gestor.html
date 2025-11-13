@@ -171,7 +171,7 @@
             </thead>
 
             <tbody>
-              <tr *ngFor="let c of contenidosFiltrados; trackBy: trackContenido">
+              <tr *ngFor="let c of contenidosPaginados; trackBy: trackContenido">
                 <td>
                   <div class="thumb">
                     <img *ngIf="c.imagen; else noImg"
@@ -227,6 +227,51 @@
               </tr>
             </tbody>
           </table>
+          <div class="pagination" *ngIf="!loadingList && contenidosFiltrados.length">
+            <div class="pagination-info">
+              Mostrando
+              <strong>{{ startIndex }}</strong>
+              –
+              <strong>{{ endIndex }}</strong>
+              de
+              <strong>{{ totalItems }}</strong>
+              contenido(s)
+            </div>
+
+            <div class="pagination-controls">
+              <button
+                type="button"
+                class="secondary-btn"
+                (click)="prevPage()"
+                [disabled]="pageIndex === 1"
+              >
+                ‹ Anterior
+              </button>
+
+              <span class="pagination-page">
+                Página {{ pageIndex }} / {{ totalPages }}
+              </span>
+
+              <button
+                type="button"
+                class="secondary-btn"
+                (click)="nextPage()"
+                [disabled]="pageIndex === totalPages"
+              >
+                Siguiente ›
+              </button>
+
+              <label class="pagination-size">
+                por página:
+                <select [(ngModel)]="pageSize" (ngModelChange)="onPageSizeChange($event)">
+                  <option *ngFor="let size of pageSizes" [value]="size">
+                    {{ size }}
+                  </option>
+                </select>
+              </label>
+            </div>
+          </div>
+
 
           <ng-template #emptyList>
             <div class="placeholder-content">
@@ -267,9 +312,9 @@
               </div>
 
               <div *ngIf="userTipoContenido === 'AUDIO'" class="form-row">
-                <label for="ficheroAudio">Fichero de audio <span class="req">*</span></label>
+                <label for="ficheroAudio">Url o Fichero de audio <span class="req">*</span></label>
                 <input id="ficheroAudio" type="text" name="ficheroAudio"
-                       [(ngModel)]="nuevo.ficheroAudio" required placeholder="/ruta/audio.mp3" />
+                       [(ngModel)]="nuevo.ficheroAudio" required placeholder="https://...  o /ruta/audio.mp3" />
               </div>
 
               <div *ngIf="userTipoContenido === 'VIDEO'">

@@ -54,7 +54,7 @@ class ContenidoControllerErrorPathsTest {
                 .thenThrow(new StreamingTargetResolutionException("no se puede resolver"));
 
         assertThrows(StreamingTargetResolutionException.class, () ->
-                controller.stream("id-x", new HttpHeaders(), null, null, null, null, null));
+                controller.stream("id-x", new HttpHeaders(), null, null,null, null, null, true));
 
         verify(contenidoService, never()).registrarReproduccionSiUsuario(anyString(), any());
     }

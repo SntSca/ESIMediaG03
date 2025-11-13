@@ -246,6 +246,49 @@
       <input type="checkbox" [(ngModel)]="vip" name="vip"> ¿Quiere ser VIP?
     </label>
 
+    <div class="mfa-modal" *ngIf="showMfaModal">
+      <button
+        type="button"
+        class="mfa-modal__overlay"
+        (click)="cancelMfaSelection()"
+        aria-label="Cerrar selector de segundo factor">
+      </button>
+
+      <div class="mfa-modal__content">
+        <h3>Elige una opción de seguridad adicional</h3>
+        <p>Tu cuenta puede protegerse con un <b>segundo factor</b> al iniciar sesión:</p>
+        <ul>
+          <li><b>Sin segundo factor</b> – más cómodo, menos seguro.</li>
+          <li><b>Código por email (OTP)</b> – recibirás un código por correo.</li>
+        </ul>
+
+        <div class="mfa-options">
+          <label class="mfa-option">
+            <input type="radio" name="mfaChoice" [(ngModel)]="mfaChoice" value="NONE"> Sin segundo factor
+          </label>
+          <label class="mfa-option">
+            <input type="radio" name="mfaChoice" [(ngModel)]="mfaChoice" value="EMAIL_OTP"> Código por email (OTP)
+          </label>
+          <label class="mfa-option">
+            <input type="radio" name="mfaChoice" [(ngModel)]="mfaChoice" value="TOTP"> App autenticadora (TOTP)
+          </label>
+        </div>
+
+        <div class="mfa-help" *ngIf="mfaChoice !== 'NONE'">
+          <small *ngIf="mfaChoice === 'EMAIL_OTP'">
+            Recibirás un código temporal en tu correo cada vez que inicies sesión.
+          </small>
+        </div>
+
+        <div class="mfa-modal__actions">
+          <button type="button" class="btn btn--secondary" (click)="cancelMfaSelection()">Cancelar</button>
+          <button type="button" class="btn" (click)="confirmMfaSelection()">Confirmar y registrar</button>
+        </div>
+      </div>
+    </div>
+
+
+
     <div class="footnote">* Campos obligatorios</div>
     <button class="btn" type="submit" [disabled]="isLoading || f.invalid || validationSummary.length > 0">
       <span *ngIf="!isLoading">{{ esAltaAdmin || esAltaCreador ? 'Crear' : 'Registrar' }}</span>

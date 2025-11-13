@@ -11,6 +11,7 @@ export interface Contenido {
   titulo: string;
   descripcion?: string;
   ficheroAudio?: string | null;
+  urlAudio?: string | null;
   urlVideo?: string | null;
   tags: string[];
   duracionMinutos: number;
@@ -70,15 +71,55 @@ export class Contenidos {
       }) as Contenido))
     );
   }
- 
-  subirContenido(payload: Partial<Contenido>): Observable<Contenido> {
-    return this.http.post<Contenido>(`${this.BASE}/AnadirContenido`, payload);
+
+  private coerceLocalDateTimeIso(value?: string | null, defaultTime = '00:00:00'): string | null {
+    if (!value) return null;
+
+    
+    if (/^\d{4}-\d{2}-\d{2}$/.test(value)) {
+      return `${value}T${defaultTime}`;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}$/.test(value)) {
+      return `${value}:00`;
+    }
+
+    if (/^\d{4}-\d{2}-\d{2}T\d{2}:\d{2}:\d{2}$/.test(value)) {
+      return value;
+    }
+
+    return value;
   }
- 
+
+  subirContenido(payload: Partial<Contenido>): Observable<Contenido> {
+    const body: any = { ...payload };
+
+    if (body.disponibilidadContenido) {
+      body.disponibleHasta = this.coerceLocalDateTimeIso(body.disponibilidadContenido);
+      delete body.disponibilidadContenido;
+    } else if (body.disponibleHasta) {
+      body.disponibleHasta = this.coerceLocalDateTimeIso(body.disponibleHasta);
+    }
+
+    return this.http.post<Contenido>(`${this.BASE}/AnadirContenido`, body);
+  }
+
   modificar(id: string, cambios: ModificarContenidoRequest, creatorTipo: TipoContenido): Observable<Contenido> {
     const headers = new HttpHeaders({ 'X-Creator-Tipo': creatorTipo });
-    return this.http.put<Contenido>(`${this.BASE}/ModificarContenido/${encodeURIComponent(id)}`, cambios, { headers });
+
+    const body: any = { ...cambios };
+
+    if (body.disponibilidadContenido) {
+      body.disponibleHasta = this.coerceLocalDateTimeIso(body.disponibilidadContenido);
+      delete body.disponibilidadContenido;
+    } else if (body.disponibleHasta) {
+      body.disponibleHasta = this.coerceLocalDateTimeIso(body.disponibleHasta);
+    }
+
+
+    return this.http.put<Contenido>(`${this.BASE}/ModificarContenido/${encodeURIComponent(id)}`, body, { headers });
   }
+
   eliminar(id: string, creatorTipo: TipoContenido): Observable<void> {
     const headers = new HttpHeaders({ 'X-Creator-Tipo': creatorTipo });
     return this.http.delete<void>(`${this.BASE}/EliminarContenido/${encodeURIComponent(id)}`, { headers });

@@ -4,6 +4,8 @@ import { Observable } from 'rxjs';
 
 export type RoleUI = 'usuario' | 'Gestor de Contenido' | 'Administrador';
 export type TipoContenido = 'Audio' | 'Video';
+export type MfaPreferred = 'NONE' | 'EMAIL_OTP' | 'TOTP';
+
 
 export interface RegistroDatos {
   nombre: string;
@@ -19,6 +21,7 @@ export interface RegistroDatos {
   descripcion?: string;
   especialidad?: string;
   tipoContenido?: TipoContenido;
+  mfaPreferred?: MfaPreferred
 }
 
 const trim = (s?: string) => (s ?? '').trim();
@@ -75,6 +78,10 @@ export class UsersService {
   registrar(datos: RegistroDatos): Observable<string> {
     const payload: any = basePayload(datos);
 
+    if (datos.role === 'usuario') {
+      payload.mfaPreferred = (datos.mfaPreferred ?? 'NONE').toUpperCase();
+    }
+
     if (datos.role === 'Gestor de Contenido') {
       payload.descripcion  = trim(datos.descripcion);
       payload.especialidad = trim(datos.especialidad);
@@ -84,6 +91,7 @@ export class UsersService {
 
     return this.http.post(this.registrarUrl, payload, { responseType: 'text' });
   }
+
 
   crearCreadorComoAdmin(dto: Partial<RegistroDatos>): Observable<any> {
     const payload: any = {
