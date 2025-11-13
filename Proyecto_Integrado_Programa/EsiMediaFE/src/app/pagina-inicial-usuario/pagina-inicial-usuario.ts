@@ -17,7 +17,6 @@ type OrdenContenido = 'fecha' | 'titulo' | 'reproducciones';
 type Direccion = 'asc' | 'desc';
 type AgeMode = '' | 'mayores' | 'menores';
 
-// ==== helpers YouTube/Vimeo/medios directos =====
 function ytIdFrom(url: string): string | null {
   try {
     const u = new URL(url);

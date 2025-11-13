@@ -91,7 +91,7 @@ public void registrar(@RequestBody Map<String, String> info) {
     validarCamposObligatorios(
             info,
             FIELD_NOMBRE, FIELD_APELLIDOS, FIELD_EMAIL,
-            FIELD_PWD, FIELD_PWD2, FIELD_ROLE, FIELD_FOTO
+            FIELD_PWD, FIELD_PWD2
     );
 
     String alias = null;
@@ -108,7 +108,7 @@ public void registrar(@RequestBody Map<String, String> info) {
             fechaNac = trim(info.get(FIELD_FECHA_NAC));
         }
         case GESTOR_CONTENIDO -> {
-            validarCamposObligatorios(info, FIELD_ALIAS, FIELD_ESPECIALIDAD, FIELD_TIPO_CONTENIDO);
+            validarCamposObligatorios(info, FIELD_ALIAS,FIELD_FOTO, FIELD_ESPECIALIDAD, FIELD_TIPO_CONTENIDO,FIELD_ROLE);
             alias = trim(info.get(FIELD_ALIAS));
             descripcion = trimOrNull(info.get(FIELD_DESCRIPCION));
             especialidad = trim(info.get(FIELD_ESPECIALIDAD));
