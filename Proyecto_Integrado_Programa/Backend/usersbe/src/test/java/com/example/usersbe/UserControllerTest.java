@@ -146,7 +146,7 @@ class UserControllerTest {
                                 "token", "tok",
                                 "newPassword", "NewPass1!"
                         ))))
-                .andExpect(status().isOk()) // debe devolver 200 OK
+                .andExpect(status().isOk())
                 .andExpect(jsonPath("$.message").value("Contraseña actualizada correctamente"));
         }
 

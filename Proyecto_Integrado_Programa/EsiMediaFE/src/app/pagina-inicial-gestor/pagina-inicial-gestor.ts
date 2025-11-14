@@ -593,6 +593,7 @@ export class PaginaInicialGestor implements OnInit {
   }
 
   async DarDeBaja() {
+    this.cancelarEditar();
     const r = await showConfirm('¿Seguro que deseas darte de baja de la plataforma?', 'Esta acción no se puede deshacer.');
     if (!r.isConfirmed) return;
     this.auth.darseBaja(this.userEmail).subscribe({

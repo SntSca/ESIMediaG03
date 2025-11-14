@@ -1,134 +1,183 @@
 <div class="full-screen-wrapper">
   <div class="page-wrapper">
-    <nav class="navbar">
-      <ul class="navbar-options">
-          <a routerLink="/admin/contenidos"
-             routerLinkActive="active"
-             role="tab"
-             aria-current="page"
-             aria-selected="true">Gestión de Contenidos</a>
-      </ul>
+    <header class="topbar">
+      <div class="topbar-left">
+        <span class="topbar-section-label">Panel de control</span>
 
-      <div class="user-panel">
-        <div class="user-photo" [title]="userName">
-          <img *ngIf="userAvatarUrl; else initialsTpl"
-               [src]="userAvatarUrl"
-               alt="Avatar de {{ userName }}"
-               loading="lazy"
-               decoding="async"
-               referrerpolicy="no-referrer"
-               (error)="onAvatarError()" />
-          <ng-template #initialsTpl>
-            <span class="user-photo-fallback">{{ userInitials }}</span>
-          </ng-template>
+        <div class="topbar-title-row">
+          <h1 class="topbar-title">
+            🎬 Gestión de contenidos
+          </h1>
+          <span class="topbar-pill">Catálogo</span>
         </div>
 
-        <div class="user-info">
-          <div class="user-name-row">
-            <div class="user-name">{{ userName }}</div>
-            <button class="edit-inline" type="button" (click)="toggleEditar()" title="Editar perfil" aria-label="Editar perfil">✏️</button>
-          </div>
-          <div class="user-email">{{ userEmail }}</div>
-          <div class="user-role">{{ userRole }} de {{ userTipoContenido || '—' }}</div>
-        </div>
-
-        <button class="logout-btn" (click)="cerrarSesion()">Cerrar Sesión</button>
+        <p class="topbar-subtitle">
+          Gestiona visibilidad, VIP, listas públicas y detalles de todos los contenidos.
+        </p>
       </div>
-    </nav>
 
-    <div class="main-container">
-      <aside class="filter-panel">
-        <h3>Filtros</h3>
-        <form class="filters-form" (ngSubmit)="$event.preventDefault()">
-          <div class="form-row">
-            <label for="q">🔎 Buscar</label>
-            <input id="q"
-                  type="search"
-                  [(ngModel)]="filtros.q"
-                  name="q"
-                  placeholder="Título, autor, descripción o tag…" />
-            <small class="hint-muted">Enter limpia/actualiza resultados.</small>
+      <div class="topbar-right">
+        <nav class="topbar-nav">
+          <button type="button" class="topbar-nav-btn" (click)="goToStats()">
+            📈 Estadísticas
+          </button>
+        </nav>
+
+        <div class="topbar-user">
+          <div class="user-panel">
+            <div class="user-photo" [title]="userName">
+              <img *ngIf="userAvatarUrl; else initialsTpl"
+                   [src]="userAvatarUrl"
+                   alt="Avatar de {{ userName }}"
+                   loading="lazy"
+                   decoding="async"
+                   referrerpolicy="no-referrer"
+                   (error)="onAvatarError()" />
+              <ng-template #initialsTpl>
+                <span class="user-photo-fallback">{{ userInitials }}</span>
+              </ng-template>
+            </div>
+
+            <div class="user-info">
+              <div class="user-name-row">
+                <div class="user-name">{{ userName }}</div>
+                <button class="edit-inline"
+                        type="button"
+                        (click)="toggleEditar()"
+                        title="Editar perfil"
+                        aria-label="Editar perfil">✏️</button>
+              </div>
+              <div class="user-email">{{ userEmail }}</div>
+              <div class="user-role">
+                {{ userRole }} de {{ userTipoContenido || '—' }}
+              </div>
+            </div>
+
+            <button class="logout-btn" (click)="cerrarSesion()">Cerrar sesión</button>
+          </div>
+        </div>
+      </div>
+    </header>
+
+    <!-- LAYOUT PRINCIPAL -->
+    <main class="layout">
+      <!-- SIDEBAR FILTROS -->
+      <aside class="sidebar">
+        <div class="sidebar-inner">
+          <div class="sidebar-header">
+            <h2 class="sidebar-title">Filtros</h2>
+            <span class="sidebar-badge">
+              {{ contenidosFiltrados.length || 0 }} resultado(s)
+            </span>
           </div>
 
-          <div class="form-row">
-            <label for="tipo">📹/🎼 Tipo</label>
-            <select id="tipo" [(ngModel)]="filtros.tipo" name="tipo">
-              <option value="">Todos</option>
-              <option value="VIDEO">VIDEO</option>
-              <option value="AUDIO">AUDIO</option>
-            </select>
-          </div>
+          <form class="filters-form" (ngSubmit)="$event.preventDefault()">
+            <section class="filters-card">
+              <div class="form-row">
+                <label for="q">🔎 Buscar</label>
+                <input id="q"
+                      type="search"
+                      [(ngModel)]="filtros.q"
+                      name="q"
+                      placeholder="Título, autor, descripción o tag…" />
+                <small class="hint-muted">Enter limpia/actualiza resultados.</small>
+              </div>
 
-          <div class="form-row">
-            <label for="visible">👁️ Visibilidad</label>
-            <select id="visible" [(ngModel)]="filtros.visible" name="visible">
-              <option value="">Todos</option>
-              <option [ngValue]="true">Visible</option>
-              <option [ngValue]="false">Oculto</option>
-            </select>
-          </div>
+              <div class="form-row">
+                <label for="tipo">📹/🎼 Tipo</label>
+                <select id="tipo" [(ngModel)]="filtros.tipo" name="tipo">
+                  <option value="">Todos</option>
+                  <option value="VIDEO">VIDEO</option>
+                  <option value="AUDIO">AUDIO</option>
+                </select>
+              </div>
 
-          <div class="form-row">
-            <label for="vip">👑 VIP</label>
-            <select id="vip" [(ngModel)]="filtros.vip" name="vip">
-              <option value="">Todos</option>
-              <option [ngValue]="true">VIP</option>
-              <option [ngValue]="false">No VIP</option>
-            </select>
-          </div>
+              <div class="form-row">
+                <label for="visible">👁️ Visibilidad</label>
+                <select id="visible" [(ngModel)]="filtros.visible" name="visible">
+                  <option value="">Todos</option>
+                  <option [ngValue]="true">Visible</option>
+                  <option [ngValue]="false">Oculto</option>
+                </select>
+              </div>
 
-          <div class="form-row">
-            <label for="edadMin">🔞 Edad mínima</label>
-            <input id="edadMin"
-                  type="number"
-                  min="0"
-                  step="1"
-                  [(ngModel)]="filtros.edadMin"
-                  name="edadMin"
-                  placeholder="p. ej., 16" />
-            <small class="hint-muted">Muestra contenidos con restricción ≥ edad indicada.</small>
-          </div>
+              <div class="form-row">
+                <label for="vip">👑 VIP</label>
+                <select id="vip" [(ngModel)]="filtros.vip" name="vip">
+                  <option value="">Todos</option>
+                  <option [ngValue]="true">VIP</option>
+                  <option [ngValue]="false">No VIP</option>
+                </select>
+              </div>
 
-          <div class="form-row">
-            <label for="lista">🗂️ Lista</label>
-            <select id="lista" [(ngModel)]="filtros.listaId" name="lista">
-              <option value="">Todas</option>
-              <option *ngFor="let l of listasPublicas" [ngValue]="l.id">{{ l.nombre }}</option>
-            </select>
-          </div>
+              <div class="form-row">
+                <label for="edadMin">🔞 Edad mínima</label>
+                <input id="edadMin"
+                      type="number"
+                      min="0"
+                      step="1"
+                      [(ngModel)]="filtros.edadMin"
+                      name="edadMin"
+                      placeholder="p. ej., 16" />
+                <small class="hint-muted">Muestra contenidos con restricción ≥ edad indicada.</small>
+              </div>
 
-          <div class="form-row">
-            <label for="tag">🏷️ Tag</label>
-            <select id="tag" [(ngModel)]="filtros.tag" name="tag">
-              <option value="">Todos</option>
-              <option *ngFor="let t of allTags" [value]="t">{{ t }}</option>
-            </select>
-          </div>
+              <div class="form-row">
+                <label for="lista">🗂️ Lista</label>
+                <select id="lista" [(ngModel)]="filtros.listaId" name="lista">
+                  <option value="">Todas</option>
+                  <option *ngFor="let l of listasPublicas" [ngValue]="l.id">{{ l.nombre }}</option>
+                </select>
+              </div>
 
-          <div class="form-row">
-            <label for="ordenar">↕️ Ordenar por</label>
-            <select id="ordenar" [(ngModel)]="filtros.ordenar" name="ordenar">
-              <option value="">—</option>
-              <option value="tituloAsc">Título (A–Z)</option>
-              <option value="tituloDesc">Título (Z–A)</option>
-              <option value="autorAsc">Autor (A–Z)</option>
-              <option value="autorDesc">Autor (Z–A)</option>
-              <option value="ratingDesc">Rating (alto→bajo)</option>
-              <option value="ratingAsc">Rating (bajo→alto)</option>
-            </select>
-          </div>
+              <div class="form-row">
+                <label for="tag">🏷️ Tag</label>
+                <select id="tag" [(ngModel)]="filtros.tag" name="tag">
+                  <option value="">Todos</option>
+                  <option *ngFor="let t of allTags" [value]="t">{{ t }}</option>
+                </select>
+              </div>
 
-          <div class="filters-actions">
-            <button type="button" class="secondary-btn" (click)="resetFiltros()">Limpiar</button>
-          </div>
+              <div class="form-row">
+                <label for="ordenar">↕️ Ordenar por</label>
+                <select id="ordenar" [(ngModel)]="filtros.ordenar" name="ordenar">
+                  <option value="">—</option>
+                  <option value="tituloAsc">Título (A–Z)</option>
+                  <option value="tituloDesc">Título (Z–A)</option>
+                  <option value="autorAsc">Autor (A–Z)</option>
+                  <option value="autorDesc">Autor (Z–A)</option>
+                  <option value="ratingDesc">Rating (alto→bajo)</option>
+                  <option value="ratingAsc">Rating (bajo→alto)</option>
+                </select>
+              </div>
+            </section>
 
-          <div class="filters-result hint-muted" *ngIf="!loadingList">
-            {{ contenidosFiltrados.length }} resultado(s)
-          </div>
-        </form>
+            <div class="filters-footer">
+              <button type="button"
+                      class="secondary-btn full-width"
+                      (click)="resetFiltros()">
+                Limpiar filtros
+              </button>
+            </div>
+          </form>
+        </div>
       </aside>
 
+      <!-- CONTENIDO PRINCIPAL -->
+      <section class="layout-main">
+        <!-- CABECERA DE ACCIONES -->
+        <section class="card card-toolbar">
+          <div class="card-toolbar-inner">
+            <div class="card-toolbar-text">
+              <h2 class="card-title">
+                Contenidos
+              </h2>
+              <p class="card-subtitle">
+                Gestiona el catálogo actual, cambia visibilidad y actualiza información.
+              </p>
+            </div>
 
+<<<<<<< Updated upstream
       <main class="content-area">
         <div class="toolbar">
           <h2 class="page-title">Contenidos</h2>
@@ -136,13 +185,25 @@
             <button class="secondary-btn" type="button" (click)="loadContenidos()">⟳ Recargar</button>
               <button class="secondary-btn" type="button" (click)="abrirCrearLista()" aria-label="Crear lista pública">🗂️ Crear lista pública</button>
             <button class="primary-btn" type="button" (click)="abrirCrear()">➕ Añadir contenido</button>
+=======
+            <div class="toolbar-actions">
+              <button class="secondary-btn" type="button" (click)="loadContenidos()">⟳ Recargar</button>
+              <button class="secondary-btn" type="button" (click)="abrirCrearLista()" aria-label="Crear lista pública">🗂️ Crear lista pública</button>
+              <button class="primary-btn" type="button" (click)="abrirCrear()">➕ Añadir contenido</button>
+            </div>
+>>>>>>> Stashed changes
           </div>
-        </div>
+        </section>
 
-        <section>
+        <section class="card table-card">
           <div *ngIf="loadingList" class="helper-text">Cargando contenidos…</div>
 
+<<<<<<< Updated upstream
           <table class="content-table" *ngIf="!loadingList && contenidosList?.length; else emptyList">
+=======
+          <table class="content-table"
+                 *ngIf="!loadingList && contenidosList.length > 0; else emptyList">
+>>>>>>> Stashed changes
             <caption class="sr-only">
               Listado de contenidos con título, autor, descripción, tags, tipo, visibilidad y acciones
             </caption>
@@ -161,7 +222,6 @@
                 <th scope="col" style="width: 84px;">🖼️ Foto</th>
                 <th scope="col">📝 Nombre</th>
                 <th scope="col">👤 Autor</th>
-
                 <th scope="col">🏷️ Tags</th>
                 <th scope="col" style="width: 90px;">📹/🎼 Tipo</th>
                 <th scope="col" style="width: 120px;">🫣Visible</th>
@@ -180,7 +240,9 @@
                          loading="lazy"
                          decoding="async"
                          referrerpolicy="no-referrer" />
-                    <ng-template #noImg><div class="thumb-fallback" aria-hidden="true">—</div></ng-template>
+                    <ng-template #noImg>
+                      <div class="thumb-fallback" aria-hidden="true">—</div>
+                    </ng-template>
                   </div>
                 </td>
 
@@ -227,6 +289,7 @@
               </tr>
             </tbody>
           </table>
+
           <div class="pagination" *ngIf="!loadingList && contenidosFiltrados.length">
             <div class="pagination-info">
               Mostrando
@@ -272,12 +335,12 @@
             </div>
           </div>
 
-
           <ng-template #emptyList>
             <div class="placeholder-content">
               <p>No hay contenidos todavía. Crea el primero con “Añadir contenido”.</p>
             </div>
           </ng-template>
+        </section>
         </section>
 
         <dialog *ngIf="crearAbierto" class="modal" aria-modal="true" aria-labelledby="crearTitulo">
@@ -893,4 +956,7 @@
       </div>
     </dialog>
   </div>
+<<<<<<< Updated upstream
 </div>
+=======
+>>>>>>> Stashed changes
