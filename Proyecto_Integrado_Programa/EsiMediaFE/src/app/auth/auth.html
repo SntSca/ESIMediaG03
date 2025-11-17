@@ -1,28 +1,32 @@
 <div class="auth-fullscreen">
 
-  <header class="mobile-header">
-    <button class="hamburger" type="button"
-            aria-label="Abrir menú"
-            [class.open]="menuOpen"
-            (click)="toggleMenu()">
-      <span></span><span></span><span></span>
-    </button>
-
+  <header class="auth-header">
+    <img src="assets/EsiMedia_Logo.png" class="header-logo" alt="Logo ESIMedia" />
   </header>
 
   <div class="auth-box-wrapper">
     <div class="auth-left">
-      <div class="title-wrapper">
-        <img class="logo" src="assets/EsiMedia_Logo.png" alt="Logo ESIMedia" />
-      </div>
+
+
 
       <div class="auth-left-content">
+
+       
+        <h1 class="hero-title">
+          Tu Universo de Streaming.<br>
+          <span>Sin límites.</span>
+        </h1>
+
         <p>
-          La experiencia de streaming definitiva: disfruta de películas, series, documentales, música y pódcasts en un mismo lugar. 
-          Accede a un catálogo variado de contenidos multimedia con la mejor calidad de imagen y sonido, disponible en cualquier 
-          dispositivo y en cualquier momento. Personaliza tu experiencia, descubre nuevas recomendaciones y comparte tus favoritos 
-          con amigos y comunidad. Todo el entretenimiento que te gusta, ahora en una sola plataforma.
+          <span class="highlight">Películas, series, documentales, música y pódcasts</span> reunidos en una plataforma
+          única.
+          Disfruta de contenidos en <span class="highlight">alta calidad</span> y en <span class="highlight">cualquier
+            momento</span>.
+          Personaliza tu experiencia, descubre <span class="highlight">nuevas recomendaciones</span> y comparte tus
+          <span class="highlight">favoritos</span> con tu comunidad.
         </p>
+
+
 
         <div class="carousel-container">
           <button class="carousel-btn left" (click)="prev()">‹</button>
@@ -33,6 +37,7 @@
           </div>
           <button class="carousel-btn right" (click)="next()">›</button>
         </div>
+
       </div>
     </div>
 
@@ -42,12 +47,18 @@
 
         <div class="login-links">
           <a routerLink="login" routerLinkActive="active" [routerLinkActiveOptions]="{ exact: true }">Iniciar sesión</a>
+
           <span class="sep">·</span>
+
           <a routerLink="register" routerLinkActive="active">Crear cuenta</a>
+
           <span class="sep">·</span>
+
           <a routerLink="recover-password" routerLinkActive="active">Recuperar contraseña</a>
         </div>
       </div>
     </div>
+
   </div>
+
 </div>

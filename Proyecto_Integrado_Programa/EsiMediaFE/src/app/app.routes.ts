@@ -8,6 +8,7 @@ import { PaginaInicialAdmin } from './pagina-inicial-admin/pagina-inicial-admin'
 import { PaginaInicialUsuario } from './pagina-inicial-usuario/pagina-inicial-usuario';
 import { PaginaInicialGestor } from './pagina-inicial-gestor/pagina-inicial-gestor';
 import { roleGuard, userOrReadOnlyGuard } from './auth/auth.guard';
+import { StatsPageComponent } from './stats/stats-page.component';
 
 export const routes: Routes = [
   {
@@ -23,6 +24,12 @@ export const routes: Routes = [
   },
 
   {
+    path: 'stats',
+    component: StatsPageComponent,
+    canActivate: [roleGuard(['ADMINISTRADOR', 'GESTOR_CONTENIDO'])],
+  },
+
+  {
     path: 'admin',
     canActivate: [roleGuard(['ADMINISTRADOR'])],
     component: PaginaInicialAdmin,
@@ -33,7 +40,11 @@ export const routes: Routes = [
     canActivate: [roleGuard(['USUARIO'])],
     component: PaginaInicialUsuario,
   },
-  { path: 'usuarioReadOnly', canActivate: [userOrReadOnlyGuard], component: PaginaInicialUsuario },
+  {
+    path: 'usuarioReadOnly',
+    canActivate: [userOrReadOnlyGuard],
+    component: PaginaInicialUsuario,
+  },
 
   {
     path: 'gestor',
