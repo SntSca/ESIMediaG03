@@ -1,1 +1,18 @@
+@if (warningVisible$ | async) {
+  <div class="session-timeout-backdrop">
+    <div class="session-timeout-modal">
+      <h2>¿Sigues ahí?</h2>
+      <p>Tu sesión ha estado inactiva durante unos minutos.</p>
+      <p>
+        Se cerrará automáticamente en
+        <strong>{{ (countdown$ | async) ?? 300 }}</strong>
+        segundos si no realizas ninguna acción.
+      </p>
+      <p class="session-timeout-hint">
+        Mueve el ratón, haz clic o escribe algo para mantener la sesión activa.
+      </p>
+    </div>
+  </div>
+}
+
 <router-outlet></router-outlet>
