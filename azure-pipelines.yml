@@ -225,39 +225,34 @@ stages:
             -D sonar.javascript.lcov.reportPaths=coverage/lcov.info
         displayName: "Run Sonar Frontend"
 # =========
-# STAGE: Deploy
+# STAGE: Sync to GitHub (para Render)
 # =========
-- stage: DeployRender
-  displayName: "Deploy to Render"
+- stage: SyncToGitHub
+  displayName: "Sync Azure Repo → GitHub"
   dependsOn: Build
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
   variables:
-    - group: Despliegue 
+    - group: GitHubSync
+
   jobs:
-  - job: DeployRenderJob
-    displayName: "Deploy Backend + Frontend to Render"
+  - job: GitHubPush
+    displayName: "Push code to GitHub"
+    pool:
+      vmImage: ubuntu-latest
+
     steps:
       - checkout: self
         persistCredentials: true
 
-      - script: curl -L https://cli.render.com/install.sh | bash
-        displayName: "Install Render CLI"
-
       - script: |
-          echo "Deploying backend..."
-          render login --api-key $(RENDER_API_KEY)
+          echo "Configuring Git credentials..."
+          git config user.email "azuredevops@pipeline.com"
+          git config user.name "Azure DevOps Pipeline"
 
-          echo "Deploy backend..."
-          render deploy web-service esimedia-backend \
-            --repo https://SantiagoSanchez12@dev.azure.com/SantiagoSanchez12/GPS_EsiMedia_G03/_git/GPS_EsiMedia_G03 \
-            --branch development \
-            --build-command "mvn clean install -DskipTests" \
-            --start-command "java -jar Proyecto_Integrado_Programa/Backend/usersbe/target/*.jar"
+          echo "Adding GitHub remote..."
+          git remote remove github || true
+          git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git
 
-          echo "Deploy frontend..."
-          render deploy static-site esimedia-frontend \
-            --repo https://SantiagoSanchez12@dev.azure.com/SantiagoSanchez12/GPS_EsiMedia_G03/_git/GPS_EsiMedia_G03 \
-            --branch development \
-            --build-command "npm ci && npm run build" \
-            --publish-dir "Proyecto_Integrado_Programa/EsiMediaFE/dist"
-        displayName: "Deploy to Render"
+          echo "Pushing to GitHub..."
+          git push github HEAD:main --force
+        displayName: "Push repository to GitHub"
