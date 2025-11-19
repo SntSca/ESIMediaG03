@@ -249,22 +249,17 @@ stages:
           inputs:
             targetType: 'inline'
             script: |
-              # Configurar Git
               echo "Configuring Git credentials..."
               git config user.email "azuredevops@pipeline.com"
               git config user.name "Azure DevOps Pipeline"
 
-              # Verificar variables (parcial)
-              echo "GH_USER=${GH_USER}"
-              echo "GH_TOKEN=${GH_TOKEN:0:4}****"
-
-              # Configurar remote de GitHub
+              echo "Adding GitHub remote..."
               git remote remove github || true
-              git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git
+              git remote add github https://x-access-token:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git
 
-              # Añadir cambios y commitear solo si hay cambios
+              echo "Adding changes..."
               git add .
               git diff-index --quiet HEAD || git commit -m "Sync from Azure DevOps"
 
-              # Push forzado a main
+              echo "Pushing to GitHub..."
               git push github HEAD:main --force
