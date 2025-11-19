@@ -224,16 +224,15 @@ stages:
             -D sonar.sources=src `
             -D sonar.javascript.lcov.reportPaths=coverage/lcov.info
         displayName: "Run Sonar Frontend"
-
 # =========
 # STAGE: Deploy
 # =========
 - stage: DeployRender
-  displayName: "Deploy to Render"
-  dependsOn: Build
+  displayName: "Deploy to Render (Development)"
+  dependsOn: Sonar
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
   variables:
-    - group: Despliegue 
+    - group: Despliegue
   jobs:
   - job: DeployRenderJob
     displayName: "Deploy Backend + Frontend to Render"
@@ -245,15 +244,15 @@ stages:
         displayName: "Install Render CLI"
 
       - script: |
+          echo "Deploying backend..."
           render login --api-key $(RENDER_API_KEY)
-          # Deploy backend
           render deploy web-service esimedia-backend \
             --repo https://SantiagoSanchez12@dev.azure.com/SantiagoSanchez12/GPS_EsiMedia_G03/_git/GPS_EsiMedia_G03 \
             --branch development \
             --build-command "mvn clean install -DskipTests" \
             --start-command "java -jar Proyecto_Integrado_Programa/Backend/usersbe/target/*.jar"
-          
-          # Deploy frontend
+
+          echo "Deploying frontend..."
           render deploy static-site esimedia-frontend \
             --repo https://SantiagoSanchez12@dev.azure.com/SantiagoSanchez12/GPS_EsiMedia_G03/_git/GPS_EsiMedia_G03 \
             --branch development \
