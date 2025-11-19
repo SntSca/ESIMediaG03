@@ -232,7 +232,7 @@ stages:
   dependsOn: Build
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
   variables:
-    - group: GitHubSync   
+    - group: GitHubSync   # Debe contener GH_TOKEN (secret) y, si quieres, GH_USERNAME
 
   jobs:
     - job: GitHubPush
@@ -242,14 +242,14 @@ stages:
 
       steps:
         - checkout: self
-          persistCredentials: false  
-          fetchDepth: 0               
+          persistCredentials: false
+          fetchDepth: 0     # Historia completa (buena práctica para pushes)
 
         - task: Bash@3
           displayName: "Push repository to GitHub"
           env:
             GH_TOKEN: $(GH_TOKEN)
-            GH_USERNAME: $(GH_USERNAME) # opcional: si no lo quieres, quítalo y usa solo el token en la URL
+            GH_USERNAME: $(GH_USERNAME)   # opcional, pero cómodo
           inputs:
             targetType: 'inline'
             script: |
@@ -258,18 +258,18 @@ stages:
               git config user.name "Azure DevOps Pipeline"
 
               echo "Adding GitHub remote..."
-              git remote remove github || true
-
-              # Opción con usuario + token (recomendada)
+              git remote remove github >/dev/null 2>&1 || true
               git remote add github "https://${GH_USERNAME}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git"
 
               echo "Current branch:"
               git branch --show-current || echo "Detached HEAD"
 
+              echo "Creating local 'main' branch from current commit..."
+              git checkout -B main
+
               echo "Adding changes..."
               git add .
               git diff-index --quiet HEAD || git commit -m "Sync from Azure DevOps"
 
-              echo "Pushing to GitHub..."
-              # Cambia 'main' por la rama que quieras en el repo de GitHub
-              git push github HEAD:main --force
+              echo "Pushing to GitHub (main)..."
+              git push github main --force
