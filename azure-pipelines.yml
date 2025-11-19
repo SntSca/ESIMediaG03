@@ -235,28 +235,36 @@ stages:
     - group: GitHubSync
 
   jobs:
-  - job: GitHubPush
-    displayName: "Push code to GitHub"
-    pool:
-      vmImage: ubuntu-latest
+    - job: GitHubPush
+      displayName: "Push code to GitHub"
+      pool:
+        vmImage: ubuntu-latest
 
-    steps:
-      - checkout: self
-        persistCredentials: true
+      steps:
+        - checkout: self
+          persistCredentials: true
 
-      - script: |
-          echo "Configuring Git..."
-          git config user.email "azuredevops@pipeline.com"
-          git config user.name "Azure DevOps Pipeline"
+        - task: Bash@3
+          displayName: "Push repository to GitHub"
+          inputs:
+            targetType: 'inline'
+            script: |
+              # Configurar Git
+              echo "Configuring Git credentials..."
+              git config user.email "azuredevops@pipeline.com"
+              git config user.name "Azure DevOps Pipeline"
 
-          echo "Adding GitHub remote..."
-          git remote remove github || true
-          git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git
+              # Verificar variables (parcial)
+              echo "GH_USER=${GH_USER}"
+              echo "GH_TOKEN=${GH_TOKEN:0:4}****"
 
-          echo "Adding changes..."
-          git add .
-          git diff-index --quiet HEAD || git commit -m "Sync from Azure DevOps"
+              # Configurar remote de GitHub
+              git remote remove github || true
+              git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git
 
-          echo "Pushing to GitHub..."
-          git push github HEAD:main --force
-        displayName: "Push repository to GitHub"
+              # Añadir cambios y commitear solo si hay cambios
+              git add .
+              git diff-index --quiet HEAD || git commit -m "Sync from Azure DevOps"
+
+              # Push forzado a main
+              git push github HEAD:main --force
