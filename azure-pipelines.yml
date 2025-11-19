@@ -231,7 +231,7 @@ stages:
 - stage: Deploy
   displayName: "Deploy (solo main/release)"
   dependsOn: Sonar
-  condition: and(succeeded(), eq(variables.IsMainOrRelease, 'True'))
+  condition: and(succeeded(), or(eq(variables['Build.SourceBranch'], 'refs/heads/main'), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/')))
   jobs:
   - job: DeployJob
     steps:
