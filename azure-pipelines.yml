@@ -228,20 +228,36 @@ stages:
 # =========
 # STAGE: Deploy
 # =========
-- stage: Deploy
-  displayName: "Deploy artifacts"
-  dependsOn: Sonar
-  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
+- stage: DeployRender
+  displayName: "Deploy to Render"
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/release/1.0.0'))
+  variables:
+    - group: Despliegue 
   jobs:
-  - job: DeployJob
-    displayName: "Deploy artifacts"
+  - job: DeployRenderJob
+    displayName: "Deploy Backend + Frontend to Render"
     steps:
+      - checkout: self
+        persistCredentials: true
+
+      - script: curl -L https://cli.render.com/install.sh | bash
+        displayName: "Install Render CLI"
+
       - script: |
-          echo "Contenido de usersbe:"
-          ls -la "$(Build.ArtifactStagingDirectory)/usersbe"
-          echo "Contenido de contenidos:"
-          ls -la "$(Build.ArtifactStagingDirectory)/contenidos"
-          echo "Contenido de frontend:"
-          ls -la "$(Build.ArtifactStagingDirectory)/frontend"
-          echo "DEPLOY SIMULADO"
-        displayName: "Deploy script"
+          render login --api-key $(RENDER_API_KEY)
+          # Deploy backend
+          render deploy web-service esimedia-backend \
+            --repo https://SantiagoSanchez12@dev.azure.com/SantiagoSanchez12/GPS_EsiMedia_G03/_git/GPS_EsiMedia_G03 \
+            --branch release/1.0.0 \
+            --build-command "mvn clean install -DskipTests" \
+            --start-command "java -jar Proyecto_Integrado_Programa/Backend/usersbe/target/*.jar"
+          
+          # Deploy frontend
+          render deploy static-site esimedia-frontend \
+            --repo https://SantiagoSanchez12@dev.azure.com/SantiagoSanchez12/GPS_EsiMedia_G03/_git/GPS_EsiMedia_G03 \
+            --branch release/1.0.0 \
+            --build-command "npm ci && npm run build" \
+            --publish-dir "Proyecto_Integrado_Programa/EsiMediaFE/dist"
+        displayName: "Deploy to Render"
+
