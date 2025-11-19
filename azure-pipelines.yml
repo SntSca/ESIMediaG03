@@ -232,7 +232,7 @@ stages:
   dependsOn: Build
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
   variables:
-    - group: GitHubSync
+    - group: GitHubSync   
 
   jobs:
     - job: GitHubPush
@@ -242,10 +242,14 @@ stages:
 
       steps:
         - checkout: self
-          persistCredentials: true
+          persistCredentials: false  
+          fetchDepth: 0               
 
         - task: Bash@3
           displayName: "Push repository to GitHub"
+          env:
+            GH_TOKEN: $(GH_TOKEN)
+            GH_USERNAME: $(GH_USERNAME) # opcional: si no lo quieres, quítalo y usa solo el token en la URL
           inputs:
             targetType: 'inline'
             script: |
@@ -255,11 +259,17 @@ stages:
 
               echo "Adding GitHub remote..."
               git remote remove github || true
-              git remote add github https://x-access-token:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git
+
+              # Opción con usuario + token (recomendada)
+              git remote add github "https://${GH_USERNAME}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git"
+
+              echo "Current branch:"
+              git branch --show-current || echo "Detached HEAD"
 
               echo "Adding changes..."
               git add .
               git diff-index --quiet HEAD || git commit -m "Sync from Azure DevOps"
 
               echo "Pushing to GitHub..."
+              # Cambia 'main' por la rama que quieras en el repo de GitHub
               git push github HEAD:main --force
