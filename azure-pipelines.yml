@@ -224,28 +224,52 @@ stages:
             -D sonar.sources=src `
             -D sonar.javascript.lcov.reportPaths=coverage/lcov.info
         displayName: "Run Sonar Frontend"
+# =========
+# STAGE: Sync to GitHub (para Render)
+# =========
+- stage: SyncToGitHub
+  displayName: "Sync Azure Repo → GitHub"
+  dependsOn: Build
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
+  variables:
+    - group: GitHubSync   # Debe contener GH_TOKEN (secret) y, si quieres, GH_USERNAME
 
-# =========
-# STAGE: Deploy (solo main/release)
-# =========
-- stage: Deploy
-  displayName: "Deploy (solo main/release)"
-  dependsOn: Sonar
-  condition: and(succeeded(), eq(variables.IsMainOrRelease, 'True'))
   jobs:
-  - job: DeployJob
-    steps:
-    - download: current
-      artifact: usersbe
-    - download: current
-      artifact: contenidos
-    - download: current
-      artifact: frontend
+    - job: GitHubPush
+      displayName: "Push code to GitHub"
+      pool:
+        vmImage: ubuntu-latest
 
-    - script: |
-        echo "Deploying..."
-        ls -la "$(Pipeline.Workspace)/usersbe"
-        ls -la "$(Pipeline.Workspace)/contenidos"
-        ls -la "$(Pipeline.Workspace)/frontend"
-        echo "DEPLOY SIMULADO"
-      displayName: "Deploy script"
+      steps:
+        - checkout: self
+          persistCredentials: false
+          fetchDepth: 0     # Historia completa (buena práctica para pushes)
+
+        - task: Bash@3
+          displayName: "Push repository to GitHub"
+          env:
+            GH_TOKEN: $(GH_TOKEN)
+            GH_USERNAME: $(GH_USERNAME)   # opcional, pero cómodo
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "Configuring Git credentials..."
+              git config user.email "azuredevops@pipeline.com"
+              git config user.name "Azure DevOps Pipeline"
+
+              echo "Adding GitHub remote..."
+              git remote remove github >/dev/null 2>&1 || true
+              git remote add github "https://${GH_USERNAME}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git"
+
+              echo "Current branch:"
+              git branch --show-current || echo "Detached HEAD"
+
+              echo "Creating local 'main' branch from current commit..."
+              git checkout -B main
+
+              echo "Adding changes..."
+              git add .
+              git diff-index --quiet HEAD || git commit -m "Sync from Azure DevOps"
+
+              echo "Pushing to GitHub (main)..."
+              git push github main --force
