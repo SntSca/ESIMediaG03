@@ -14,8 +14,8 @@ export class App implements OnInit {
   protected readonly title = signal('EsiMediaFE');
 
   constructor(
-    private sessionTimeout: SessionTimeoutService,
-    private router: Router
+    private readonly sessionTimeout: SessionTimeoutService,
+    private readonly router: Router
   ) {}
 
   get warningVisible$() {
@@ -26,11 +26,17 @@ export class App implements OnInit {
     return this.sessionTimeout.countdown$;
   }
 
+  get absoluteWarningVisible$() {
+    return this.sessionTimeout.absoluteWarningVisible$;
+  }
+
+  get absoluteCountdown$() {
+    return this.sessionTimeout.absoluteCountdown$;
+  }
+
   ngOnInit(): void {
-    
     this.sessionTimeout.start();
 
-    
     this.router.events
       .pipe(filter(event => event instanceof NavigationEnd))
       .subscribe(() => {
@@ -43,7 +49,6 @@ export class App implements OnInit {
       });
   }
 
-  
   @HostListener('document:click')
   @HostListener('document:mousemove')
   @HostListener('document:keydown')
@@ -52,12 +57,19 @@ export class App implements OnInit {
     this.sessionTimeout.userActivity();
   }
 
-  
   onStayConnectedClick(): void {
     this.sessionTimeout.stayConnectedFromModal();
   }
 
   onLogoutClick(): void {
+    this.sessionTimeout.logoutFromModal();
+  }
+
+  onContinueAbsoluteClick(): void {
+    this.sessionTimeout.continueAbsoluteSession();
+  }
+
+  onAbsoluteLogoutClick(): void {
     this.sessionTimeout.logoutFromModal();
   }
 }
