@@ -7,8 +7,8 @@ import { AuthService } from './auth.service';
 export class SessionTimeoutService {
 
 
-  private readonly WARNING_MS = 5_000;
-  private readonly EXTRA_MS = 10_000;
+  private readonly WARNING_MS = 5_00000;
+  private readonly EXTRA_MS = 10_00000;
 
   private warningTimeoutId: any = null;
   private logoutTimeoutId: any = null;
