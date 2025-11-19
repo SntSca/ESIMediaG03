@@ -226,55 +226,22 @@ stages:
         displayName: "Run Sonar Frontend"
 
 # =========
-# STAGE: Deploy (solo release/*)
+# STAGE: Deploy
 # =========
 - stage: Deploy
-  displayName: "Deploy artifacts (solo release/*)"
+  displayName: "Deploy artifacts"
   dependsOn: Sonar
-  condition: and(succeeded(), startsWith(variables['Build.SourceBranch'], 'refs/heads/release/'))
+  condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
   jobs:
   - job: DeployJob
     displayName: "Deploy artifacts"
     steps:
-      # Usersbe
-      - task: DownloadPipelineArtifact@2
-        inputs:
-          buildType: 'specific'
-          project: 'GPS_EsiMedia_G03'       
-          pipeline: 1                
-          buildVersionToDownload: 'latest'  
-          branchName: 'development'         
-          artifact: 'usersbe'
-          targetPath: '$(Pipeline.Workspace)/usersbe'
-
-      # Contenidos
-      - task: DownloadPipelineArtifact@2
-        inputs:
-          buildType: 'specific'
-          project: 'GPS_EsiMedia_G03'
-          pipeline: 1
-          buildVersionToDownload: 'latest'
-          branchName: 'development'
-          artifact: 'contenidos'
-          targetPath: '$(Pipeline.Workspace)/contenidos'
-
-      # Frontend
-      - task: DownloadPipelineArtifact@2
-        inputs:
-          buildType: 'specific'
-          project: 'GPS_EsiMedia_G03'
-          pipeline: 1
-          buildVersionToDownload: 'latest'
-          branchName: 'development'
-          artifact: 'frontend'
-          targetPath: '$(Pipeline.Workspace)/frontend'
-
       - script: |
           echo "Contenido de usersbe:"
-          ls -la "$(Pipeline.Workspace)/usersbe"
+          ls -la "$(Build.ArtifactStagingDirectory)/usersbe"
           echo "Contenido de contenidos:"
-          ls -la "$(Pipeline.Workspace)/contenidos"
+          ls -la "$(Build.ArtifactStagingDirectory)/contenidos"
           echo "Contenido de frontend:"
-          ls -la "$(Pipeline.Workspace)/frontend"
+          ls -la "$(Build.ArtifactStagingDirectory)/frontend"
           echo "DEPLOY SIMULADO"
         displayName: "Deploy script"
