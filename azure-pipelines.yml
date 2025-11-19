@@ -232,27 +232,44 @@ stages:
   dependsOn: Build
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
   variables:
-    - group: GitHubSync
+    - group: GitHubSync   # Debe contener GH_TOKEN (secret) y, si quieres, GH_USERNAME
 
   jobs:
-  - job: GitHubPush
-    displayName: "Push code to GitHub"
-    pool:
-      vmImage: ubuntu-latest
+    - job: GitHubPush
+      displayName: "Push code to GitHub"
+      pool:
+        vmImage: ubuntu-latest
 
-    steps:
-      - checkout: self
-        persistCredentials: true
+      steps:
+        - checkout: self
+          persistCredentials: false
+          fetchDepth: 0     # Historia completa (buena práctica para pushes)
 
-      - script: |
-          echo "Configuring Git credentials..."
-          git config user.email "azuredevops@pipeline.com"
-          git config user.name "Azure DevOps Pipeline"
+        - task: Bash@3
+          displayName: "Push repository to GitHub"
+          env:
+            GH_TOKEN: $(GH_TOKEN)
+            GH_USERNAME: $(GH_USERNAME)   # opcional, pero cómodo
+          inputs:
+            targetType: 'inline'
+            script: |
+              echo "Configuring Git credentials..."
+              git config user.email "azuredevops@pipeline.com"
+              git config user.name "Azure DevOps Pipeline"
 
-          echo "Adding GitHub remote..."
-          git remote remove github || true
-          git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git
+              echo "Adding GitHub remote..."
+              git remote remove github >/dev/null 2>&1 || true
+              git remote add github "https://${GH_USERNAME}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git"
 
-          echo "Pushing to GitHub..."
-          git push github HEAD:main --force
-        displayName: "Push repository to GitHub"
+              echo "Current branch:"
+              git branch --show-current || echo "Detached HEAD"
+
+              echo "Creating local 'main' branch from current commit..."
+              git checkout -B main
+
+              echo "Adding changes..."
+              git add .
+              git diff-index --quiet HEAD || git commit -m "Sync from Azure DevOps"
+
+              echo "Pushing to GitHub (main)..."
+              git push github main --force
