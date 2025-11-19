@@ -245,13 +245,17 @@ stages:
         persistCredentials: true
 
       - script: |
-          echo "Configuring Git credentials..."
+          echo "Configuring Git..."
           git config user.email "azuredevops@pipeline.com"
           git config user.name "Azure DevOps Pipeline"
 
           echo "Adding GitHub remote..."
           git remote remove github || true
           git remote add github https://${GH_USER}:${GH_TOKEN}@github.com/SntSca/ESIMediaG03.git
+
+          echo "Adding changes..."
+          git add .
+          git diff-index --quiet HEAD || git commit -m "Sync from Azure DevOps"
 
           echo "Pushing to GitHub..."
           git push github HEAD:main --force
