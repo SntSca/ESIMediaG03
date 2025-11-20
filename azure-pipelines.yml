@@ -232,7 +232,7 @@ stages:
   dependsOn: Build
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
   variables:
-    - group: GitHubSync  ¡
+    - group: GitHubSync
 
   jobs:
     - job: GitHubPush
