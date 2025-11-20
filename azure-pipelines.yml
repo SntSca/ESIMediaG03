@@ -232,7 +232,7 @@ stages:
   dependsOn: Build
   condition: and(succeeded(), eq(variables['Build.SourceBranch'], 'refs/heads/development'))
   variables:
-    - group: GitHubSync   # Debe contener GH_TOKEN (secret) y, si quieres, GH_USERNAME
+    - group: GitHubSync  ¡
 
   jobs:
     - job: GitHubPush
@@ -243,13 +243,13 @@ stages:
       steps:
         - checkout: self
           persistCredentials: false
-          fetchDepth: 0     # Historia completa (buena práctica para pushes)
+          fetchDepth: 0   
 
         - task: Bash@3
           displayName: "Push repository to GitHub"
           env:
             GH_TOKEN: $(GH_TOKEN)
-            GH_USERNAME: $(GH_USERNAME)   # opcional, pero cómodo
+            GH_USERNAME: $(GH_USERNAME)  
           inputs:
             targetType: 'inline'
             script: |
